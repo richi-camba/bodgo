@@ -270,14 +270,16 @@ begin
   v_exceeds := v_volume > v_capacity + 0.005;
 
   v_type := case
-    when v_mismatch > 0 and v_exceeds then 'both'
-    when v_mismatch > 0 then 'units'
-    when v_exceeds then 'volume'
+    when v_mismatch > 0 and v_exceeds then 'both'::public.discrepancy_type
+    when v_mismatch > 0 then 'units'::public.discrepancy_type
+    when v_exceeds then 'volume'::public.discrepancy_type
     else null
   end;
 
   update public.shipments set
-    status = case when v_type is null then 'received' else 'discrepancy' end,
+    status = case when v_type is null
+                  then 'received'::public.shipment_status
+                  else 'discrepancy'::public.shipment_status end,
     received_at = now(),
     received_volume_m3 = v_volume,
     capacity_m3 = v_capacity,
