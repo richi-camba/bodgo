@@ -45,7 +45,7 @@ export default async function AdminHostsPage() {
       <PageHeader title="Bodegueros" subtitle="Anfitriones de la red y su liquidación proyectada." />
 
       {!rows.length ? (
-        <EmptyState icon="👥" title="Sin bodegueros" body="Todavía nadie publicó un espacio." />
+        <EmptyState icon="bodegueros" title="Sin bodegueros" body="Todavía nadie publicó un espacio." />
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[680px] text-[13px]">

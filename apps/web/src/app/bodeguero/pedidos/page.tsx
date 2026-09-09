@@ -71,7 +71,7 @@ export default async function HostOrdersPage() {
 
         {active.length === 0 ? (
           <EmptyState
-            icon="📋"
+            icon="pedidos"
             title="Nada por preparar"
             body="Cuando una PyME con stock en tus espacios reciba una venta, el pedido aparece acá para que lo armes."
           />

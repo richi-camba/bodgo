@@ -203,11 +203,21 @@ export async function createShipment(_prev: ActionState, formData: FormData): Pr
 
 /** Marca el envío como despachado: a partir de acá lo espera el bodeguero. */
 export async function dispatchShipment(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const id = z.string().uuid().safeParse(formData.get('shipmentId'));
-  if (!id.success) return { error: 'Envío no válido.' };
+  const parsed = z
+    .object({ shipmentId: z.string().uuid(), photoPath: z.string().trim().optional() })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) return { error: 'Envío no válido.' };
+
+  if (!parsed.data.photoPath) {
+    return { error: 'Fotografía los bultos etiquetados antes de despachar.' };
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc('dispatch_shipment', { p_shipment_id: id.data });
+  const { error } = await supabase.rpc('dispatch_shipment', {
+    p_shipment_id: parsed.data.shipmentId,
+    p_photo_url: parsed.data.photoPath,
+  });
 
   if (error) return { error: readableError(error.message) };
 
@@ -252,7 +262,7 @@ const orderSchema = z.object({
   buyerAddress: z.string().trim().min(5, 'Escribe la dirección de entrega.'),
   buyerComuna: z.string().trim().min(2, 'Indica la comuna de entrega.'),
   deliveryNotes: z.string().trim().optional(),
-  deliveryMethod: z.enum(['buyer_pickup', 'external_courier', 'bodgo_courier']),
+  deliveryMethod: z.enum(['buyer_pickup', 'external_courier']),
   /** JSON: `[{ "productId": "...", "qty": 2, "unitPrice": 14990 }]` */
   items: z.string(),
 });
@@ -316,12 +326,6 @@ export async function createOrder(_prev: ActionState, formData: FormData): Promi
           { lat: warehouse?.lat ?? null, lng: warehouse?.lng ?? null },
           parsed.data.buyerComuna,
         );
-
-  if (parsed.data.deliveryMethod === 'bodgo_courier' && !quote) {
-    return {
-      error: `Todavía no llegamos con repartidor propio a ${parsed.data.buyerComuna}. Elige otro método de envío.`,
-    };
-  }
 
   const itemsTotal = items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0);
 
@@ -387,4 +391,48 @@ export async function createOrder(_prev: ActionState, formData: FormData): Promi
 
   revalidatePath('/app/pedidos');
   redirect(`/app/pedidos/${order.id}`);
+}
+
+// -----------------------------------------------------------------------------
+// Despacho con courier externo
+// -----------------------------------------------------------------------------
+const courierSchema = z.object({
+  orderId: z.string().uuid(),
+  courierName: z.string().trim().min(2, 'Indica con qué courier despachas.'),
+  trackingNumber: z.string().trim().optional(),
+  trackingUrl: z
+    .string()
+    .trim()
+    .url('El enlace de seguimiento no parece una dirección válida.')
+    .optional()
+    .or(z.literal('')),
+  courierCost: z.coerce.number().int().min(0).optional(),
+  receiptPath: z.string().trim().optional(),
+});
+
+/**
+ * Deja registrado con quién se despachó el pedido.
+ *
+ * Es lo que habilita el enlace de seguimiento del comprador: sin courier
+ * registrado, `advance_order` no deja marcar el pedido como retirado.
+ */
+export async function registerCourier(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = courierSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('register_courier', {
+    p_order_id: parsed.data.orderId,
+    p_courier_name: parsed.data.courierName,
+    p_tracking_number: parsed.data.trackingNumber || undefined,
+    p_tracking_url: parsed.data.trackingUrl || undefined,
+    p_courier_cost: parsed.data.courierCost,
+    p_receipt_url: parsed.data.receiptPath || undefined,
+  });
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/app/pedidos');
+  revalidatePath('/bodeguero/pedidos');
+  return { ok: 'Despacho registrado. Ya puedes compartir el seguimiento con el comprador.' };
 }

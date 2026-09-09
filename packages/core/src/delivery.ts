@@ -4,7 +4,9 @@ import { drivingDistanceKm, estimatedMinutes } from './geo';
  * Tarifas de despacho al comprador.
  *
  * Se cobra por zona y no por kilómetro: el comprador quiere saber cuánto paga
- * antes de comprar, no una cifra que cambie según el tráfico.
+ * antes de comprar, no una cifra que cambie según el tráfico. Lo que la PyME
+ * le pague después al courier es otra cosa — se registra aparte, con su
+ * comprobante, y la diferencia es su margen en el despacho.
  */
 export const DELIVERY_ZONES = [
   { zone: 1, maxKm: 3, price: 2_500 },
@@ -13,21 +15,14 @@ export const DELIVERY_ZONES = [
   { zone: 4, maxKm: Infinity, price: 4_900 },
 ] as const;
 
-/** Comisión que BodGo retiene de cada viaje. El resto es del repartidor. */
-export const COURIER_COMMISSION_RATE = 0.18;
-
 export type DeliveryQuote = {
   /** Distancia estimada de manejo, en km. */
   distanceKm: number;
   /** Zona tarifaria, de 1 a 4. */
   zone: number;
-  /** Lo que paga el comprador. */
+  /** Lo que se le cobra al comprador por el envío. */
   buyerFee: number;
-  /** Lo que retiene BodGo. */
-  commission: number;
-  /** Lo que gana el repartidor. */
-  courierFee: number;
-  /** Minutos estimados del viaje. */
+  /** Minutos estimados del trayecto. */
   etaMinutes: number;
 };
 
@@ -36,30 +31,21 @@ export function zoneFor(distanceKm: number) {
   return DELIVERY_ZONES.find((z) => distanceKm <= z.maxKm) ?? DELIVERY_ZONES[3];
 }
 
-/**
- * Cotiza un despacho a partir de la distancia.
- *
- * El pago al repartidor se redondea a la centena: es plata que se le muestra
- * en pantalla antes de aceptar el viaje y no tiene por qué venir con pesos
- * sueltos.
- */
+/** Cotiza el envío a partir de la distancia. */
 export function quoteDelivery(distanceKm: number): DeliveryQuote {
   const km = Math.max(0, Math.round(distanceKm * 10) / 10);
   const tier = zoneFor(km);
-  const courierFee = Math.round((tier.price * (1 - COURIER_COMMISSION_RATE)) / 100) * 100;
 
   return {
     distanceKm: km,
     zone: tier.zone,
     buyerFee: tier.price,
-    commission: tier.price - courierFee,
-    courierFee,
     etaMinutes: estimatedMinutes(km),
   };
 }
 
 /**
- * Cotiza un despacho desde una bodega hacia una comuna.
+ * Cotiza el envío desde una bodega hacia una comuna.
  * Devuelve `null` cuando no se puede estimar la distancia.
  */
 export function quoteDeliveryToComuna(
@@ -70,7 +56,37 @@ export function quoteDeliveryToComuna(
   return km == null ? null : quoteDelivery(km);
 }
 
-/** Ganancia neta de un conjunto de viajes ya entregados. */
-export function totalCourierEarnings(fees: readonly number[]): number {
-  return fees.reduce((sum, fee) => sum + fee, 0);
+/**
+ * Margen del despacho: lo cobrado al comprador menos lo pagado al courier.
+ * Negativo significa que la PyME puso plata de su bolsillo en ese envío.
+ */
+export function shippingMargin(chargedToBuyer: number, paidToCourier: number): number {
+  return chargedToBuyer - paidToCourier;
+}
+
+/**
+ * Couriers habituales en Chile, para el selector del despacho.
+ *
+ * `trackingUrl` arma el enlace de seguimiento a partir del número, cuando el
+ * courier tiene una URL estable. Los que no la tienen piden pegar el enlace a
+ * mano, que es como funciona hoy con las apps de delivery.
+ */
+export const COURIERS = [
+  { id: 'chilexpress', label: 'Chilexpress', trackingUrl: (n: string) => `https://www.chilexpress.cl/Views/ChilexpressCL/Resultado-busqueda.aspx?DATA=${encodeURIComponent(n)}` },
+  { id: 'starken', label: 'Starken', trackingUrl: (n: string) => `https://www.starken.cl/seguimiento?codigo=${encodeURIComponent(n)}` },
+  { id: 'bluexpress', label: 'Blue Express', trackingUrl: (n: string) => `https://www.blue.cl/seguimiento/?n_seguimiento=${encodeURIComponent(n)}` },
+  { id: 'correos', label: 'Correos de Chile', trackingUrl: (n: string) => `https://www.correos.cl/web/guest/seguimiento-en-linea?n=${encodeURIComponent(n)}` },
+  { id: 'uber_flash', label: 'Uber Flash', trackingUrl: null },
+  { id: 'pedidosya', label: 'PedidosYa Envíos', trackingUrl: null },
+  { id: 'cabify', label: 'Cabify Envíos', trackingUrl: null },
+  { id: 'otro', label: 'Otro courier', trackingUrl: null },
+] as const;
+
+export type CourierId = (typeof COURIERS)[number]['id'];
+
+/** Enlace de seguimiento sugerido, si el courier tiene uno predecible. */
+export function trackingUrlFor(courierId: string, trackingNumber: string): string | null {
+  const courier = COURIERS.find((c) => c.id === courierId);
+  if (!courier?.trackingUrl || !trackingNumber.trim()) return null;
+  return courier.trackingUrl(trackingNumber.trim());
 }

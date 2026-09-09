@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { Logo } from '@/components/ui/logo';
 import { NavLink } from './nav-link';
 import { SignOutButton } from './sign-out-button';
@@ -6,7 +7,7 @@ import { SignOutButton } from './sign-out-button';
 export type NavItem = {
   href: string;
   label: string;
-  icon: string;
+  icon: IconName;
   /** Sólo los ítems marcados aparecen en la barra inferior del móvil. */
   primary?: boolean;
 };

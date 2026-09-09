@@ -28,6 +28,7 @@ const receptionSchema = z.object({
   counts: z.string(),
   receivedVolumeM3: z.coerce.number().min(0).optional(),
   note: z.string().trim().optional(),
+  photoPath: z.string().trim().optional(),
 });
 
 export async function confirmReception(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -42,10 +43,17 @@ export async function confirmReception(_prev: ActionState, formData: FormData): 
   }
 
   const supabase = await createClient();
+  // La foto es el respaldo de la recepción: sin ella una diferencia posterior
+  // queda en la palabra de uno contra la del otro.
+  if (!parsed.data.photoPath) {
+    return { error: 'Saca la foto de lo recibido antes de confirmar.' };
+  }
+
   const { error } = await supabase.rpc('confirm_reception', {
     p_shipment_id: parsed.data.shipmentId,
     p_counts: counts,
     p_received_volume_m3: parsed.data.receivedVolumeM3,
+    p_photo_url: parsed.data.photoPath,
     p_note: parsed.data.note || undefined,
   });
 

@@ -74,7 +74,7 @@ export default async function PayoutsPage() {
 
         {!payouts?.length ? (
           <EmptyState
-            icon="💳"
+            icon="pagos"
             title="Todavía no hay liquidaciones"
             body="La primera se genera al cierre del mes en que recibas mercadería en tus espacios."
           />

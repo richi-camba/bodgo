@@ -2,8 +2,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icon';
+import { CourierHandoff } from '@/components/app/courier-handoff';
+import { ShareTracking } from '@/components/app/share-tracking';
 import { createClient } from '@/lib/supabase/server';
-import { formatCLP, LABELS } from '@bodgo/core';
+import { formatCLP, LABELS, shippingMargin } from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Pedido' };
 
@@ -19,6 +22,18 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
 
   if (!order) notFound();
 
+  // El registro del courier aparece desde que el pedido está preparado y hasta
+  // que se entrega: antes no hay nada que despachar, después ya no se cambia.
+  const needsCourier =
+    order.delivery_method === 'external_courier' &&
+    ['queued', 'picking', 'ready', 'picked_up', 'in_transit'].includes(order.status);
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+  const trackingUrl =
+    order.tracking_token && order.status !== 'pending'
+      ? `${site}/seguimiento/${order.tracking_token}`
+      : null;
+
   const [{ data: items }, { data: events }] = await Promise.all([
     supabase.from('order_items').select('*').eq('order_id', id),
     supabase.from('order_events').select('*').eq('order_id', id).order('created_at'),
@@ -26,8 +41,12 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-5">
-      <Link href="/app/pedidos" className="inline-block text-[13px] font-bold text-brand-600 hover:underline">
-        ← Volver a mis pedidos
+      <Link
+        href="/app/pedidos"
+        className="inline-flex items-center gap-1.5 text-[13px] font-bold text-brand-600 hover:underline"
+      >
+        <Icon name="volver" size={15} />
+        Volver a mis pedidos
       </Link>
 
       <header className="card p-6">
@@ -112,6 +131,57 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
           ) : null}
         </section>
       </div>
+
+      {needsCourier ? (
+        <CourierHandoff
+          orderId={order.id}
+          chargedToBuyer={order.shipping_cost}
+          initial={{
+            courierName: order.courier_name,
+            trackingNumber: order.tracking_number,
+            trackingUrl: order.tracking_url,
+            courierCost: order.courier_cost,
+          }}
+        />
+      ) : null}
+
+      {order.courier_name ? (
+        <section className="card p-5">
+          <h2 className="text-[15px] font-extrabold text-navy-900">Despachado con</h2>
+          <dl className="mt-4 space-y-2.5 text-[13.5px]">
+            <Row label="Courier" value={order.courier_name} />
+            {order.tracking_number ? <Row label="N° de seguimiento" value={order.tracking_number} /> : null}
+            {order.courier_cost != null ? (
+              <>
+                <Row label="Costo pagado" value={formatCLP(order.courier_cost)} />
+                <div className="flex justify-between border-t border-line-100 pt-2.5">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-ink-400">
+                    Margen del envío
+                  </dt>
+                  <dd
+                    className={`text-[13.5px] font-extrabold tabular-nums ${
+                      shippingMargin(order.shipping_cost, order.courier_cost) < 0
+                        ? 'text-danger-600'
+                        : 'text-success-700'
+                    }`}
+                  >
+                    {formatCLP(shippingMargin(order.shipping_cost, order.courier_cost))}
+                  </dd>
+                </div>
+              </>
+            ) : null}
+          </dl>
+        </section>
+      ) : null}
+
+      {trackingUrl ? (
+        <ShareTracking
+          url={trackingUrl}
+          buyerName={order.buyer_name}
+          buyerPhone={order.buyer_phone}
+          orderCode={order.code}
+        />
+      ) : null}
 
       <section className="card p-5">
         <h2 className="text-[15px] font-extrabold text-navy-900">Trazabilidad</h2>

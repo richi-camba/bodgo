@@ -33,7 +33,7 @@ export default async function ContractsPage() {
 
       {!contracts?.length ? (
         <EmptyState
-          icon="📄"
+          icon="contratos"
           title="Todavía no arriendas ningún espacio"
           body="Busca una microbodega cerca de tu demanda y contrata sólo los metros que necesitas."
           action={<ButtonLink href="/app/buscar">Buscar microbodega</ButtonLink>}

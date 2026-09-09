@@ -24,7 +24,7 @@ export default async function NewShipmentPage() {
       <div>
         <PageHeader title="Nuevo envío" />
         <EmptyState
-          icon="📄"
+          icon="contratos"
           title="Primero necesitas una bodega contratada"
           body="Un envío se manda contra un contrato vigente: eso es lo que define cuánto volumen puedes ocupar."
           action={<ButtonLink href="/app/buscar">Buscar microbodega</ButtonLink>}

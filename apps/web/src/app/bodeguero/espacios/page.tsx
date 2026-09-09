@@ -40,7 +40,7 @@ export default async function SpacesPage() {
 
       {!spaces?.length ? (
         <EmptyState
-          icon="🏬"
+          icon="espacios"
           title="Todavía no publicaste ningún espacio"
           body="Publica tu microbodega, un evaluador de BodGo agenda la visita de habilitación y, una vez aprobada, aparece en el buscador de las PyMEs."
           action={<ButtonLink href="/bodeguero/espacios/nuevo">Publicar mi espacio</ButtonLink>}

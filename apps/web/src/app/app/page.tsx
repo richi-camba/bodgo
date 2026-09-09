@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { ButtonLink } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Stat } from '@/components/ui/stat';
@@ -9,11 +10,11 @@ import { formatCLP, formatNumber, LABELS } from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Inicio' };
 
-const QUICK_LINKS = [
-  { href: '/app/buscar', icon: '🔍', title: 'Buscar bodega', body: 'Contrata un espacio' },
-  { href: '/app/despachos/nuevo', icon: '🚚', title: 'Enviar mercancía', body: 'Manifiesto y despacho' },
-  { href: '/app/inventario', icon: '📦', title: 'Mi inventario', body: 'Stock en tiempo real' },
-  { href: '/app/metricas', icon: '📊', title: 'Métricas', body: 'KPIs y reportes' },
+const QUICK_LINKS: { href: string; icon: IconName; title: string; body: string }[] = [
+  { href: '/app/buscar', icon: 'buscar', title: 'Buscar bodega', body: 'Contrata un espacio' },
+  { href: '/app/despachos/nuevo', icon: 'envios', title: 'Enviar mercancía', body: 'Manifiesto y despacho' },
+  { href: '/app/inventario', icon: 'inventario', title: 'Mi inventario', body: 'Stock en tiempo real' },
+  { href: '/app/metricas', icon: 'metricas', title: 'Métricas', body: 'KPIs y reportes' },
 ];
 
 export default async function PymeHome() {
@@ -92,8 +93,8 @@ export default async function PymeHome() {
                 href={link.href}
                 className="card flex h-full flex-col gap-2 p-4 transition-shadow hover:shadow-card"
               >
-                <span aria-hidden className="text-[19px]">
-                  {link.icon}
+                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-50 text-brand-600">
+                  <Icon name={link.icon} size={18} />
                 </span>
                 <span className="text-[13.5px] font-extrabold text-navy-900">{link.title}</span>
                 <span className="text-[11.5px] text-ink-400">{link.body}</span>

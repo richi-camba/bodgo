@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Icon, type IconName } from '@/components/ui/icon';
 
 /** Tarjeta de métrica: el número grande primero, la etiqueta debajo. */
 export function Stat({
@@ -36,17 +37,17 @@ export function EmptyState({
   title,
   body,
   action,
-  icon = '📦',
+  icon = 'sinResultados',
 }: {
   title: string;
   body: string;
   action?: ReactNode;
-  icon?: string;
+  icon?: IconName;
 }) {
   return (
     <div className="card flex flex-col items-center px-6 py-12 text-center">
-      <span aria-hidden className="text-[28px]">
-        {icon}
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 text-ink-400">
+        <Icon name={icon} size={22} />
       </span>
       <h3 className="mt-4 text-[15.5px] font-extrabold text-navy-900">{title}</h3>
       <p className="mt-1.5 max-w-sm text-[13.5px] leading-relaxed text-ink-500">{body}</p>

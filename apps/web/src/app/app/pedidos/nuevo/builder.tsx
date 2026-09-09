@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { createOrder, type ActionState } from '@/app/app/actions';
 import { Button } from '@/components/ui/button';
 import { Field, FormError, Input, Select, Textarea } from '@/components/ui/field';
+import { Icon } from '@/components/ui/icon';
 import { COMUNA_CENTROIDS, formatCLP, formatNumber, quoteDeliveryToComuna } from '@bodgo/core';
 
 type Warehouse = {
@@ -20,7 +21,7 @@ const COMUNAS = Object.keys(COMUNA_CENTROIDS).filter((c) => c !== 'Santiago Cent
 export function OrderBuilder({ warehouses }: { warehouses: Warehouse[] }) {
   const [warehouseId, setWarehouseId] = useState(warehouses[0]!.id);
   const [comuna, setComuna] = useState('');
-  const [method, setMethod] = useState<'bodgo_courier' | 'external_courier' | 'buyer_pickup'>('bodgo_courier');
+  const [method, setMethod] = useState<'external_courier' | 'buyer_pickup'>('external_courier');
   const [lines, setLines] = useState<Record<string, { qty: number; unitPrice: number }>>({});
   const [state, action] = useActionState<ActionState, FormData>(createOrder, null);
 
@@ -39,7 +40,6 @@ export function OrderBuilder({ warehouses }: { warehouses: Warehouse[] }) {
 
   const itemsTotal = items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
   const shipping = method === 'buyer_pickup' ? 0 : (quote?.buyerFee ?? 0);
-  const unreachable = method === 'bodgo_courier' && comuna !== '' && quote === null;
 
   function setLine(id: string, patch: Partial<{ qty: number; unitPrice: number }>) {
     setLines((prev) => ({
@@ -187,23 +187,15 @@ export function OrderBuilder({ warehouses }: { warehouses: Warehouse[] }) {
 
         <div className="mt-4 space-y-2">
           <MethodCard
-            active={method === 'bodgo_courier'}
-            title="Repartidor BodGo"
+            active={method === 'external_courier'}
+            title="Courier"
             body={
               !comuna
-                ? 'Elige la comuna para ver la tarifa.'
+                ? 'Elige la comuna para ver la tarifa que se le cobra al comprador.'
                 : quote
-                  ? `${formatNumber(quote.distanceKm, 1)} km · Zona ${quote.zone} · llega en ~${quote.etaMinutes} min`
-                  : `Todavía no llegamos a ${comuna} con repartidor propio.`
+                  ? `${formatNumber(quote.distanceKm, 1)} km · Zona ${quote.zone} · ~${quote.etaMinutes} min de trayecto`
+                  : `No tenemos tarifa para ${comuna}. Puedes cobrar el envío aparte.`
             }
-            price={quote && comuna ? formatCLP(quote.buyerFee) : undefined}
-            disabled={unreachable}
-            onClick={() => setMethod('bodgo_courier')}
-          />
-          <MethodCard
-            active={method === 'external_courier'}
-            title="App de delivery externa"
-            body="Uber, PedidosYa u otro courier que contrates tú."
             price={quote && comuna ? formatCLP(quote.buyerFee) : undefined}
             onClick={() => setMethod('external_courier')}
           />
@@ -239,18 +231,23 @@ export function OrderBuilder({ warehouses }: { warehouses: Warehouse[] }) {
           </div>
         </dl>
 
-        {method === 'bodgo_courier' && quote ? (
-          <p className="mt-4 rounded-field bg-brand-50 p-3.5 text-[12.5px] leading-relaxed text-navy-800">
-            🛵 Cuando el bodeguero deje el pedido listo, el viaje se ofrece a los repartidores en
-            línea. El repartidor recibe {formatCLP(quote.courierFee)} y BodGo retiene{' '}
-            {formatCLP(quote.commission)}.
-          </p>
+        {method === 'external_courier' ? (
+          <div className="mt-4 flex gap-3 rounded-field bg-brand-50 p-3.5">
+            <span className="mt-0.5 text-brand-600">
+              <Icon name="envios" size={16} />
+            </span>
+            <p className="text-[12.5px] leading-relaxed text-navy-800">
+              Esto es lo que le cobras al comprador por el envío. Cuando el pedido esté listo,
+              registras con qué courier lo despachas y cuánto te costó de verdad — la diferencia es
+              tu margen, y el comprador recibe un enlace para seguirlo.
+            </p>
+          </div>
         ) : null}
       </section>
 
       <div className="space-y-3">
         <FormError>{state?.error}</FormError>
-        <Submit disabled={items.length === 0 || !comuna || unreachable} />
+        <Submit disabled={items.length === 0 || !comuna} />
       </div>
     </form>
   );

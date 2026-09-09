@@ -3,12 +3,12 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
 
 const NAV: NavItem[] = [
-  { href: '/bodeguero', label: 'Inicio', icon: '🏠', primary: true },
-  { href: '/bodeguero/recepciones', label: 'Recepciones', icon: '📥', primary: true },
-  { href: '/bodeguero/pedidos', label: 'Pedidos', icon: '📋', primary: true },
-  { href: '/bodeguero/inventario', label: 'Inventario', icon: '📦', primary: true },
-  { href: '/bodeguero/espacios', label: 'Mis espacios', icon: '🏬' },
-  { href: '/bodeguero/pagos', label: 'Pagos', icon: '💳', primary: true },
+  { href: '/bodeguero', label: 'Inicio', icon: 'inicio', primary: true },
+  { href: '/bodeguero/recepciones', label: 'Recepciones', icon: 'recepciones', primary: true },
+  { href: '/bodeguero/pedidos', label: 'Pedidos', icon: 'pedidos', primary: true },
+  { href: '/bodeguero/inventario', label: 'Inventario', icon: 'inventario', primary: true },
+  { href: '/bodeguero/espacios', label: 'Mis espacios', icon: 'espacios' },
+  { href: '/bodeguero/pagos', label: 'Pagos', icon: 'pagos', primary: true },
 ];
 
 export default async function BodegueroLayout({ children }: { children: React.ReactNode }) {

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  COURIER_COMMISSION_RATE,
+  COURIERS,
   DELIVERY_ZONES,
   quoteDelivery,
   quoteDeliveryToComuna,
+  shippingMargin,
+  trackingUrlFor,
   zoneFor,
 } from '../delivery';
 import { drivingDistanceKm, estimatedMinutes, haversineKm } from '../geo';
@@ -18,50 +20,65 @@ describe('zoneFor', () => {
     expect(zoneFor(10).zone).toBe(3);
     expect(zoneFor(25).zone).toBe(4);
   });
+
+  it('cada zona cuesta más que la anterior', () => {
+    for (let i = 1; i < DELIVERY_ZONES.length; i += 1) {
+      expect(DELIVERY_ZONES[i]!.price).toBeGreaterThan(DELIVERY_ZONES[i - 1]!.price);
+    }
+  });
 });
 
 describe('quoteDelivery', () => {
-  it('reproduce el viaje del prototipo: 6,4 km, Zona 3, $3.900 al comprador y $3.200 al repartidor', () => {
+  it('reproduce la tarifa del prototipo: Zona 3 son $3.900 al comprador', () => {
     const q = quoteDelivery(6.4);
     expect(q.zone).toBe(3);
     expect(q.buyerFee).toBe(3_900);
-    expect(q.courierFee).toBe(3_200);
-    expect(q.commission).toBe(700);
-  });
-
-  it('lo que paga el comprador siempre es comisión más pago al repartidor', () => {
-    for (const km of [0.5, 3, 5.9, 6.1, 9.9, 14, 30]) {
-      const q = quoteDelivery(km);
-      expect(q.commission + q.courierFee).toBe(q.buyerFee);
-    }
-  });
-
-  it('la comisión ronda el porcentaje declarado', () => {
-    for (const z of DELIVERY_ZONES) {
-      if (!Number.isFinite(z.maxKm)) continue;
-      const q = quoteDelivery(z.maxKm);
-      const rate = q.commission / q.buyerFee;
-      // El redondeo del pago a la centena mueve la tasa efectiva unos puntos.
-      expect(Math.abs(rate - COURIER_COMMISSION_RATE)).toBeLessThan(0.03);
-    }
   });
 
   it('nunca cotiza una distancia negativa', () => {
     expect(quoteDelivery(-5).distanceKm).toBe(0);
     expect(quoteDelivery(-5).zone).toBe(1);
   });
+});
 
-  it('el repartidor nunca gana más de lo que paga el comprador', () => {
-    for (const km of [0, 1, 7, 40]) {
-      const q = quoteDelivery(km);
-      expect(q.courierFee).toBeLessThan(q.buyerFee);
-    }
+describe('shippingMargin', () => {
+  it('es lo cobrado menos lo pagado al courier', () => {
+    expect(shippingMargin(3_900, 3_200)).toBe(700);
+  });
+
+  it('avisa cuando el envío salió más caro de lo cobrado', () => {
+    expect(shippingMargin(2_500, 4_100)).toBe(-1_600);
+  });
+});
+
+describe('trackingUrlFor', () => {
+  it('arma el enlace de los couriers que tienen uno predecible', () => {
+    const url = trackingUrlFor('chilexpress', '990012345678');
+    expect(url).toContain('chilexpress.cl');
+    expect(url).toContain('990012345678');
+  });
+
+  it('no inventa un enlace para los que no lo tienen', () => {
+    expect(trackingUrlFor('uber_flash', '1234')).toBeNull();
+    expect(trackingUrlFor('otro', '1234')).toBeNull();
+  });
+
+  it('sin número de seguimiento no hay enlace', () => {
+    expect(trackingUrlFor('starken', '   ')).toBeNull();
+  });
+
+  it('escapa el número para no romper la URL', () => {
+    expect(trackingUrlFor('starken', 'AB 12/34')).toContain('AB%2012%2F34');
+  });
+
+  it('todos los couriers del selector tienen etiqueta', () => {
+    for (const c of COURIERS) expect(c.label.length).toBeGreaterThan(2);
   });
 });
 
 describe('distancias', () => {
   it('mide bien un tramo conocido: Providencia a Maipú son unos 22 km de calle', () => {
-    // El prototipo mostraba 6,4 km para este mismo viaje, pero era un dato de
+    // El prototipo mostraba 6,4 km para este viaje, pero era un dato de
     // maqueta: en la calle son más de veinte. La tabla de tarifas sí se
     // respeta al pie de la letra; la distancia se calcula de verdad.
     const km = drivingDistanceKm(PROVIDENCIA, 'Maipú');

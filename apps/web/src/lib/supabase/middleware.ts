@@ -6,7 +6,6 @@ import type { Database } from '@bodgo/db';
 const GUARDED: Array<{ prefix: string; roles: string[] }> = [
   { prefix: '/app', roles: ['pyme'] },
   { prefix: '/bodeguero', roles: ['bodeguero'] },
-  { prefix: '/repartidor', roles: ['repartidor'] },
   { prefix: '/admin', roles: ['admin'] },
 ];
 
@@ -14,7 +13,6 @@ const GUARDED: Array<{ prefix: string; roles: string[] }> = [
 export const HOME_BY_ROLE: Record<string, string> = {
   pyme: '/app',
   bodeguero: '/bodeguero',
-  repartidor: '/repartidor',
   admin: '/admin',
 };
 

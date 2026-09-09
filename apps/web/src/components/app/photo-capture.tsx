@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { Icon } from '@/components/ui/icon';
 
 type Props = {
   /** Nombre del campo oculto que lleva la ruta al servidor. */
@@ -93,8 +94,8 @@ export function PhotoCapture({ name, label, hint, folder }: Props) {
           htmlFor={inputId}
           className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-field border-2 border-dashed border-line-300 bg-surface-25 px-4 py-7 text-center transition-colors hover:border-navy-800"
         >
-          <span aria-hidden className="text-[22px]">
-            📷
+          <span className="text-ink-400">
+            <Icon name="camara" size={22} />
           </span>
           <span className="text-[13.5px] font-bold text-navy-900">
             {status === 'uploading' ? 'Subiendo…' : 'Tomar o subir foto'}

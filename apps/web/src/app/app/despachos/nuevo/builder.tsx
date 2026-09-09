@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { createShipment, type ActionState } from '@/app/app/actions';
 import { Button } from '@/components/ui/button';
 import { Field, FormError, Input, Textarea } from '@/components/ui/field';
+import { Icon } from '@/components/ui/icon';
 import { checkCapacityM3, formatNumber, shipmentVolumeM3 } from '@bodgo/core';
 
 type Contract = {
@@ -259,10 +260,15 @@ export function ShipmentBuilder({
       <div className="space-y-3">
         <FormError>{state?.error}</FormError>
 
-        <p className="rounded-field bg-brand-50 p-3.5 text-[12.5px] leading-relaxed text-navy-800">
-          📦 Etiqueta cada bulto con el código del envío que generaremos. Fotografía los bultos antes
-          de despachar: es tu respaldo si hay diferencias en la recepción.
-        </p>
+        <div className="flex gap-3 rounded-field bg-brand-50 p-3.5">
+          <span className="mt-0.5 text-brand-600">
+            <Icon name="bultos" size={16} />
+          </span>
+          <p className="text-[12.5px] leading-relaxed text-navy-800">
+            Etiqueta cada bulto con el código del envío que generaremos. Fotografía los bultos antes
+            de despachar: es tu respaldo si hay diferencias en la recepción.
+          </p>
+        </div>
 
         <Submit disabled={items.length === 0} />
       </div>

@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { dispatchShipment, type ActionState } from '@/app/app/actions';
 import { Button } from '@/components/ui/button';
 import { FormError } from '@/components/ui/field';
+import { PhotoCapture } from '@/components/app/photo-capture';
 
 export function DispatchButton({ shipmentId }: { shipmentId: string }) {
   const [state, action] = useActionState<ActionState, FormData>(dispatchShipment, null);
@@ -12,11 +13,21 @@ export function DispatchButton({ shipmentId }: { shipmentId: string }) {
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="shipmentId" value={shipmentId} />
+
+      <PhotoCapture
+        name="photoPath"
+        folder="despachos"
+        label="Foto de los bultos"
+        hint="Con todos los bultos y sus etiquetas a la vista"
+      />
+
       <FormError>{state?.error}</FormError>
+
       <p className="text-[12.5px] leading-relaxed text-ink-500">
         Al despachar avisamos al bodeguero para que espere la mercadería y la cuente contra este
-        manifiesto.
+        manifiesto. La foto es tu respaldo si al recibir aparece una diferencia.
       </p>
+
       <Submit />
     </form>
   );

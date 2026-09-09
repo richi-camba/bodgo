@@ -51,7 +51,7 @@ export default async function DiscrepanciesPage() {
 
       {!discrepancies?.length ? (
         <EmptyState
-          icon="✓"
+          icon="listo"
           title="Sin diferencias registradas"
           body="Todas las recepciones cuadraron con su manifiesto."
         />

@@ -62,7 +62,7 @@ export default async function BodegueroHome() {
 
       {!spaces?.length ? (
         <EmptyState
-          icon="🏬"
+          icon="espacios"
           title="Todavía no publicaste ningún espacio"
           body="Publica tu microbodega y un evaluador de BodGo agenda la visita de habilitación en 3 a 5 días hábiles. Sin costo de inscripción."
           action={<ButtonLink href="/bodeguero/espacios/nuevo">Publicar mi espacio</ButtonLink>}

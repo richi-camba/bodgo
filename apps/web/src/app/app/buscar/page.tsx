@@ -52,7 +52,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
       {listings.length === 0 ? (
         <EmptyState
-          icon="🔍"
+          icon="buscar"
           title="No encontramos microbodegas con esos filtros"
           body="Prueba con otra comuna, sube el precio máximo o baja la superficie mínima."
         />

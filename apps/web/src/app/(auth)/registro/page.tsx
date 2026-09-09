@@ -11,8 +11,7 @@ export default async function SignUpPage({
   searchParams: Promise<{ rol?: string }>;
 }) {
   const { rol } = await searchParams;
-  const role =
-    rol === 'bodeguero' || rol === 'pyme' || rol === 'repartidor' ? rol : null;
+  const role = rol === 'bodeguero' || rol === 'pyme' ? rol : null;
 
   if (!role) {
     return (
@@ -46,10 +45,6 @@ export default async function SignUpPage({
     bodeguero: {
       title: 'Publica tu espacio',
       body: 'Recibe mercancía, prepara pedidos y genera ingresos con el espacio que ya tienes.',
-    },
-    repartidor: {
-      title: 'Reparte con BodGo',
-      body: 'Retira pedidos en las microbodegas de la red y entrégalos al comprador.',
     },
   } as const;
 

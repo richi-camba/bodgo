@@ -49,7 +49,7 @@ export default async function ReceptionsPage() {
 
         {pending.length === 0 ? (
           <EmptyState
-            icon="📥"
+            icon="recepciones"
             title="No hay mercadería en camino"
             body="Cuando una PyME despache un envío a tus espacios, aparecerá acá para que lo cuentes contra el manifiesto."
           />

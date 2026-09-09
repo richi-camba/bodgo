@@ -36,18 +36,24 @@ El inventario suma lo *recibido*, nunca lo declarado.
 traducen a volumen apilable a 1,8 m de altura — 12 m² son 21,6 m³ útiles. Cada
 envío se contrasta contra esa capacidad antes de salir.
 
-**4. El último tramo, con la dirección protegida.** Cuando el bodeguero deja un
-pedido listo, el viaje se ofrece solo a los repartidores en línea, con datos a
-nivel de comuna. La dirección exacta de retiro y la del comprador aparecen
-recién al aceptar. La distancia se calcula de verdad (bodega → centro de la
-comuna, con factor de rodeo urbano) y define la zona tarifaria; el comprador
-paga esa tarifa y el repartidor cobra lo mismo menos un 18%.
+**4. El último tramo va por courier externo.** BodGo no tiene flota. Al
+comprador se le cobra el envío por zona —la distancia se calcula de verdad,
+bodega a centro de comuna con factor de rodeo urbano— y después se registra con
+qué courier se despachó, cuánto costó realmente y con qué comprobante. La
+diferencia entre lo cobrado y lo pagado es el margen de la PyME en el despacho.
+Sin courier registrado el pedido no se puede marcar como retirado: el comprador
+quedaría sin forma de seguirlo.
+
+**5. El comprador sigue su pedido sin cuenta.** Cada pedido lleva un token
+aleatorio propio, porque el código correlativo (DSP-3406) sería adivinable. El
+enlace muestra el estado, el courier y lo que compró — nunca lo que el envío le
+costó a la PyME ni la dirección de la bodega.
 
 ## Stack
 
 | Pieza | Qué es |
 |---|---|
-| `apps/web` | Next.js 15 (App Router, React 19, Tailwind v4). Web pública + apps PyME, Bodeguero, Repartidor y Admin |
+| `apps/web` | Next.js 15 (App Router, React 19, Tailwind v4). Web pública, seguimiento del comprador y apps PyME, Bodeguero y Admin |
 | `packages/core` | Lógica de negocio pura: tarifas, custodia, volumen, conciliación, zonas de despacho y distancias. Sin dependencias de framework — se reutiliza tal cual desde Expo |
 | `packages/db` | Tipos generados del esquema y helpers de cliente |
 | `supabase/` | Migraciones, RLS y funciones transaccionales |
@@ -94,8 +100,6 @@ comparten la contraseña de `BODGO_DEMO_PASSWORD`:
 | PyME | `diego@casanorte.cl` — Casa Norte Deco |
 | Bodeguero | `marcela.rios@gmail.com` — Providencia y Ñuñoa |
 | Bodeguero | `rodrigo.pena@gmail.com` — Las Condes y Vitacura |
-| Repartidor | `diego.rojas@gmail.com` — moto, en línea, con viajes disponibles |
-| Repartidor | `karla.soto@gmail.com` — moto, fuera de línea |
 | Admin | `admin@bodgo.cl` — backoffice |
 
 ### Tests
@@ -108,10 +112,10 @@ pnpm smoke        # operaciones y RLS contra la base real
 
 La prueba de humo es la que vale para el backend: contrata con la custodia,
 confirma una recepción con diferencia, verifica que el pago no se libere y que
-el inventario sume lo recibido, lanza dos repartidores sobre la misma oferta
-para comprobar que sólo uno se la lleva, y confirma que un visitante sin cuenta
-no alcance contratos ni direcciones exactas. Levanta su propia microbodega y la
-borra al terminar, así que es segura de correr sobre la base sembrada.
+el inventario sume lo recibido, comprueba que un pedido no se pueda despachar
+sin registrar el courier, y que el enlace del comprador no exponga ni el costo
+real del envío ni la tabla de pedidos. Levanta su propia microbodega y la borra
+al terminar, así que es segura de correr sobre la base sembrada.
 
 ## Seguridad
 
@@ -133,15 +137,28 @@ borra al terminar, así que es segura de correr sobre la base sembrada.
 
 ## Lo que falta
 
-- **Mapa en vivo.** El prototipo mostraba una pestaña de mapa en la app del
-  repartidor. Sin un proveedor de mapas contratado, dibujar uno falso sería
-  peor que no tenerlo: por ahora cada tramo del viaje abre la dirección en la
-  app de mapas del teléfono.
-- **Asignación por cercanía.** Hoy la oferta va a todos los repartidores en
-  línea y gana el primero que la toma. `courier_profiles.preferred_comunas` ya
-  está poblado para cuando se quiera filtrar.
+- **Enviar el enlace de seguimiento solo.** El prototipo prometía mandarlo por
+  correo y WhatsApp al guardarlo. Sin proveedor de correo contratado, decir que
+  se envía sería mentira: hoy se copia o se abre WhatsApp con el mensaje ya
+  escrito.
+- **Courier integrado por API.** `delivery_method` reserva el valor
+  `integrated_courier` para el día que se integre una flota tipo Cabify. Hoy no
+  se puede elegir al crear un pedido.
 - **Variables de entorno de *preview* en Vercel.** Producción está completa;
   los despliegues de rama necesitan que se carguen desde el panel.
+
+## Decisiones de diseño
+
+- **Iconos, no emoji.** Los emoji se dibujan distinto en cada sistema
+  operativo. `components/ui/icon.tsx` nombra cada icono por lo que significa en
+  el producto (`recepciones`, `discrepancias`) y no por su forma, así cambiar el
+  trazo se hace en un solo lugar.
+- **Fotos directo al bucket.** Las fotos de respaldo suben desde el navegador al
+  bucket privado y al servidor viaja sólo la ruta: una foto de varios megas no
+  pasa por la función. El SDK de Supabase se carga recién al sacar la foto.
+- **Lo público sale por vistas y funciones, no por políticas laxas.** El
+  buscador de bodegas, los perfiles y el seguimiento del comprador son
+  proyecciones deliberadas que listan sus columnas una a una.
 
 ## Pagos
 

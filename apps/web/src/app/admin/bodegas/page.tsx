@@ -69,7 +69,7 @@ export default async function AdminWarehousesPage() {
       ) : null}
 
       {!warehouses?.length ? (
-        <EmptyState icon="🏬" title="Sin microbodegas" body="Todavía no hay espacios publicados en la red." />
+        <EmptyState icon="bodegas" title="Sin microbodegas" body="Todavía no hay espacios publicados en la red." />
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[680px] text-[13px]">

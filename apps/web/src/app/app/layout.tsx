@@ -3,14 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
 
 const NAV: NavItem[] = [
-  { href: '/app', label: 'Inicio', icon: '🏠', primary: true },
-  { href: '/app/buscar', label: 'Buscar bodegas', icon: '🔍', primary: true },
-  { href: '/app/despachos', label: 'Envíos a bodega', icon: '🚚' },
-  { href: '/app/pedidos', label: 'Mis pedidos', icon: '📋', primary: true },
-  { href: '/app/inventario', label: 'Mi inventario', icon: '📦', primary: true },
-  { href: '/app/contratos', label: 'Mis contratos', icon: '📄' },
-  { href: '/app/metricas', label: 'Métricas', icon: '📊', primary: true },
-  { href: '/app/perfil', label: 'Mi perfil', icon: '⚙️' },
+  { href: '/app', label: 'Inicio', icon: 'inicio', primary: true },
+  { href: '/app/buscar', label: 'Buscar bodegas', icon: 'buscar', primary: true },
+  { href: '/app/despachos', label: 'Envíos a bodega', icon: 'envios' },
+  { href: '/app/pedidos', label: 'Mis pedidos', icon: 'pedidos', primary: true },
+  { href: '/app/inventario', label: 'Mi inventario', icon: 'inventario', primary: true },
+  { href: '/app/contratos', label: 'Mis contratos', icon: 'contratos' },
+  { href: '/app/metricas', label: 'Métricas', icon: 'metricas', primary: true },
+  { href: '/app/perfil', label: 'Mi perfil', icon: 'perfil' },
 ];
 
 export default async function PymeLayout({ children }: { children: React.ReactNode }) {

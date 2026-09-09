@@ -54,7 +54,7 @@ export default async function OrdersPage() {
 
       {!orders?.length ? (
         <EmptyState
-          icon="📋"
+          icon="pedidos"
           title="Todavía no tienes pedidos"
           body="Cuando conectes tu canal de venta, las ventas entran solas acá y el bodeguero recibe el aviso para preparar el despacho. También puedes crear uno a mano."
           action={<ButtonLink href="/app/pedidos/nuevo">Crear un pedido</ButtonLink>}

@@ -35,7 +35,7 @@ export default async function AdminPymesPage() {
       <PageHeader title="PyMEs" subtitle="Empresas que arriendan espacio en la red." />
 
       {!rows.length ? (
-        <EmptyState icon="🏢" title="Sin PyMEs registradas" body="Todavía nadie se ha dado de alta." />
+        <EmptyState icon="pymes" title="Sin PyMEs registradas" body="Todavía nadie se ha dado de alta." />
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[720px] text-[13px]">

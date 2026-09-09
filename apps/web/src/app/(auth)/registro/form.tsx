@@ -6,7 +6,7 @@ import { signUp, type AuthState } from '@/app/auth/actions';
 import { Button } from '@/components/ui/button';
 import { Field, FormError, Input } from '@/components/ui/field';
 
-export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' | 'repartidor' }) {
+export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' }) {
   const [state, action] = useActionState<AuthState, FormData>(signUp, null);
   const isPyme = role === 'pyme';
 
@@ -63,15 +63,7 @@ export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' | 'repartidor'
         </span>
       </label>
 
-      <Submit
-        label={
-          isPyme
-            ? 'Crear cuenta PyME'
-            : role === 'bodeguero'
-              ? 'Crear cuenta de bodeguero'
-              : 'Crear cuenta de repartidor'
-        }
-      />
+      <Submit label={isPyme ? 'Crear cuenta PyME' : 'Crear cuenta de bodeguero'} />
     </form>
   );
 }

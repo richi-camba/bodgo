@@ -20,7 +20,7 @@ export default async function NewOrderPage() {
       <div>
         <PageHeader title="Nuevo pedido" />
         <EmptyState
-          icon="📦"
+          icon="inventario"
           title="No tienes stock en bodega"
           body="Un pedido se despacha desde una microbodega. Envía mercadería y espera que el bodeguero confirme la recepción."
           action={<ButtonLink href="/app/despachos/nuevo">Preparar un envío</ButtonLink>}

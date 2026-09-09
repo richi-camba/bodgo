@@ -4,7 +4,11 @@
  * una migración.
  */
 
-export const ROLES = ['pyme', 'bodeguero', 'repartidor', 'admin'] as const;
+/**
+ * Roles del producto. La base todavía tiene un valor `repartidor` inerte:
+ * sacarlo obligaría a recrear el tipo y no hay forma de llegar a él.
+ */
+export const ROLES = ['pyme', 'bodeguero', 'admin'] as const;
 export type Role = (typeof ROLES)[number];
 
 export const WAREHOUSE_STATUSES = ['draft', 'pending_review', 'active', 'paused', 'rejected'] as const;
@@ -35,7 +39,7 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const DELIVERY_METHODS = ['buyer_pickup', 'external_courier', 'bodgo_courier'] as const;
+export const DELIVERY_METHODS = ['buyer_pickup', 'external_courier', 'integrated_courier'] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 
 export const SALES_CHANNELS = ['mercadolibre', 'shopify', 'woocommerce', 'manual'] as const;
@@ -46,20 +50,6 @@ export type DiscrepancyStatus = (typeof DISCREPANCY_STATUSES)[number];
 
 export const MOVEMENT_TYPES = ['inbound', 'outbound', 'adjustment', 'transfer'] as const;
 export type MovementType = (typeof MOVEMENT_TYPES)[number];
-
-export const DELIVERY_STATUSES = [
-  'offered',
-  'accepted',
-  'picked_up',
-  'in_transit',
-  'delivered',
-  'cancelled',
-  'expired',
-] as const;
-export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
-
-export const VEHICLE_TYPES = ['moto', 'bicicleta', 'auto', 'furgon'] as const;
-export type VehicleType = (typeof VEHICLE_TYPES)[number];
 
 export const INCIDENT_SEVERITIES = ['low', 'medium', 'high'] as const;
 export type IncidentSeverity = (typeof INCIDENT_SEVERITIES)[number];
@@ -77,12 +67,7 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
 /** Etiquetas en español para la UI. Postgres guarda el literal en inglés. */
 export const LABELS = {
-  role: {
-    pyme: 'PyME',
-    bodeguero: 'Bodeguero',
-    repartidor: 'Repartidor',
-    admin: 'Administrador',
-  },
+  role: { pyme: 'PyME', bodeguero: 'Bodeguero', admin: 'Administrador' },
   warehouseStatus: {
     draft: 'Borrador',
     pending_review: 'En revisión',
@@ -122,8 +107,10 @@ export const LABELS = {
   },
   deliveryMethod: {
     buyer_pickup: 'Retiro por el comprador',
-    external_courier: 'App de delivery externa',
-    bodgo_courier: 'Repartidor BodGo',
+    external_courier: 'Courier externo',
+    // Reservado: una flota integrada por API (Cabify o similar) todavía no
+    // existe en el producto y no se puede elegir al crear un pedido.
+    integrated_courier: 'Courier integrado',
   },
   discrepancyStatus: {
     open: 'Abierta',
@@ -138,21 +125,6 @@ export const LABELS = {
     units: 'Diferencia de unidades',
     volume: 'Exceso de volumen',
     both: 'Unidades y volumen',
-  },
-  deliveryStatus: {
-    offered: 'Disponible',
-    accepted: 'Aceptado',
-    picked_up: 'Retirado de bodega',
-    in_transit: 'En ruta',
-    delivered: 'Entregado',
-    cancelled: 'Cancelado',
-    expired: 'Vencido',
-  },
-  vehicle: {
-    moto: 'Moto',
-    bicicleta: 'Bicicleta',
-    auto: 'Auto',
-    furgon: 'Furgón',
   },
   movementType: {
     inbound: 'Ingreso',

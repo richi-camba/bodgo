@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
-import { quoteDeliveryToComuna } from '@bodgo/core';
+import { quoteDeliveryToComuna, shippingMargin } from '@bodgo/core';
 
 function readEnv(...paths) {
   const out = {};
@@ -53,6 +53,7 @@ const check = (name, ok, detail = '') => {
 const startedAt = new Date().toISOString();
 
 const pyme = await signIn('valentina@boutiquelua.cl');
+const outsider = await signIn('diego@casanorte.cl');
 const host = await signIn('marcela.rios@gmail.com');
 
 const { data: { user: pymeUser } } = await pyme.auth.getUser();
@@ -258,14 +259,8 @@ check('se devuelve la parte proporcional no usada',
 }
 
 // ------------------------------------------------------------- último tramo
-console.log('\nRepartidores');
+console.log('\nDespacho y seguimiento');
 
-const courier = await signIn('diego.rojas@gmail.com');
-const rival = await signIn('karla.soto@gmail.com');
-const { data: { user: courierUser } } = await courier.auth.getUser();
-
-// Un pedido que sale de la bodega de prueba, con las 7 unidades que quedaron
-// de la recepción anterior.
 const quote = quoteDeliveryToComuna({ lat: -33.4569, lng: -70.5975 }, 'Las Condes');
 
 const { data: testOrder } = await pyme
@@ -283,7 +278,7 @@ const { data: testOrder } = await pyme
     shipping_cost: quote!.buyerFee,
     distance_km: quote!.distanceKm,
     eta_minutes: quote!.etaMinutes,
-    delivery_method: 'bodgo_courier',
+    delivery_method: 'external_courier',
     status: 'pending',
   })
   .select()
@@ -303,119 +298,92 @@ for (const step of ['queued', 'picking', 'ready']) {
   if (error) throw new Error(`pedido → ${step}: ${error.message}`);
 }
 
-const { data: offer } = await admin
-  .from('deliveries')
-  .select('*')
-  .eq('order_id', testOrder.id)
-  .single();
-
-check('dejar el pedido listo ofrece el viaje solo', offer?.status === 'offered', offer?.code);
-check(
-  'la tarifa del viaje se parte entre BodGo y el repartidor',
-  offer?.buyer_fee === offer?.commission_amount + offer?.courier_fee,
-  `${offer?.buyer_fee} = ${offer?.commission_amount} + ${offer?.courier_fee}`,
-);
-
 {
-  await courier.rpc('set_courier_online', { p_online: false });
-  const { data: hidden } = await courier.from('delivery_offers').select('id');
-  check('fuera de línea no se ven ofertas', (hidden?.length ?? 0) === 0);
-
-  await courier.rpc('set_courier_online', { p_online: true });
-  const { data: visible } = await courier.from('delivery_offers').select('*');
-  check('en línea sí se ven', (visible?.length ?? 0) > 0, `${visible?.length} ofertas`);
-  check(
-    'la oferta no revela la dirección del comprador',
-    visible!.length > 0 && !('buyer_address' in visible![0]) && !('buyer_name' in visible![0]),
-  );
-
-  const { data: peek } = await courier.from('orders').select('buyer_address').eq('id', testOrder.id);
-  check('antes de aceptar, el repartidor no ve el pedido', (peek?.length ?? 0) === 0);
-
-  const { data: warehousePeek } = await courier
-    .from('warehouses').select('address').eq('id', testWarehouse.id);
-  check('antes de aceptar, tampoco ve la dirección de retiro', (warehousePeek?.length ?? 0) === 0);
+  const { error } = await host.rpc('advance_order', { p_order_id: testOrder.id, p_status: 'picked_up' });
+  check('no se despacha sin registrar con qué courier va', error != null);
 }
 
 {
-  const { data: pymePeek } = await pyme.from('delivery_offers').select('id');
-  check('una PyME no ve la bolsa de viajes', (pymePeek?.length ?? 0) === 0);
+  const { error } = await pyme.rpc('register_courier', {
+    p_order_id: testOrder.id,
+    p_courier_name: '   ',
+  });
+  check('el courier no puede quedar en blanco', error != null);
 }
 
-// Dos repartidores sobre la misma oferta: sólo uno se la puede llevar.
-await rival.rpc('set_courier_online', { p_online: true });
-
-const [mine, theirs] = await Promise.all([
-  courier.rpc('accept_delivery', { p_delivery_id: offer.id }),
-  rival.rpc('accept_delivery', { p_delivery_id: offer.id }),
-]);
-
-const winners = [mine, theirs].filter((r) => !r.error).length;
-check('dos repartidores sobre el mismo viaje: gana uno solo', winners === 1);
-
-const { data: claimed } = await admin.from('deliveries').select('courier_id, status').eq('id', offer.id).single();
-const winnerIsCourier = claimed?.courier_id === courierUser.id;
-const winner = winnerIsCourier ? courier : rival;
-const loser = winnerIsCourier ? rival : courier;
-
-check('el viaje queda aceptado y con dueño', claimed?.status === 'accepted' && claimed?.courier_id != null);
-
-{
-  const { data: nowVisible } = await winner
-    .from('warehouses').select('address').eq('id', testWarehouse.id);
-  check('ya aceptado, el repartidor sí ve dónde retirar', (nowVisible?.length ?? 0) === 1);
-
-  const { data: stillHidden } = await loser
-    .from('orders').select('buyer_address').eq('id', testOrder.id);
-  check('el que no se lo ganó sigue sin ver nada', (stillHidden?.length ?? 0) === 0);
-}
-
-{
-  const { error } = await loser.rpc('advance_delivery', { p_delivery_id: offer.id, p_status: 'picked_up' });
-  check('un repartidor no puede mover el viaje de otro', error != null);
-}
-
-await winner.rpc('advance_delivery', { p_delivery_id: offer.id, p_status: 'picked_up' });
-
-{
-  const { data: order } = await admin.from('orders').select('status').eq('id', testOrder.id).single();
-  check('el retiro arrastra al pedido a "retirado"', order?.status === 'picked_up', order?.status);
-}
-
-{
-  const { error } = await winner.rpc('advance_delivery', { p_delivery_id: offer.id, p_status: 'delivered' });
-  check('no se puede cerrar una entrega sin foto', error != null);
-}
-
-const { data: before } = await admin
-  .from('courier_profiles').select('trips_count').eq('profile_id', claimed!.courier_id!).single();
-
-await winner.rpc('advance_delivery', {
-  p_delivery_id: offer.id,
-  p_status: 'delivered',
-  p_photo_url: 'prueba/entrega.jpg',
+const { error: registerError } = await pyme.rpc('register_courier', {
+  p_order_id: testOrder.id,
+  p_courier_name: 'Chilexpress',
+  p_tracking_number: '990099887766',
+  p_tracking_url: 'https://www.chilexpress.cl/seguimiento?n=990099887766',
+  p_courier_cost: 3_100,
 });
+check('la PyME registra el despacho', registerError == null, registerError?.message);
 
 {
-  const { data: order } = await admin.from('orders').select('status, delivered_at').eq('id', testOrder.id).single();
-  check('la entrega cierra el pedido', order?.status === 'delivered' && order?.delivered_at != null);
-
-  const { data: after } = await admin
-    .from('courier_profiles').select('trips_count').eq('profile_id', claimed!.courier_id!).single();
-  check('el viaje se suma al contador del repartidor', after!.trips_count === before!.trips_count + 1);
-
-  const { data: events } = await admin
-    .from('order_events').select('status').eq('order_id', testOrder.id);
+  const { data: order } = await admin
+    .from('orders').select('courier_name, courier_cost, shipping_cost').eq('id', testOrder.id).single();
   check(
-    'la trazabilidad guarda cada paso del viaje',
-    ['picked_up', 'delivered'].every((st) => events!.some((e) => e.status === st)),
+    'queda el margen del envío a la vista',
+    shippingMargin(order!.shipping_cost, order!.courier_cost!) === quote!.buyerFee - 3_100,
+    `${order!.shipping_cost} − ${order!.courier_cost}`,
   );
 }
 
-await rival.rpc('set_courier_online', { p_online: false });
+{
+  const { error } = await host.rpc('advance_order', { p_order_id: testOrder.id, p_status: 'picked_up' });
+  check('con courier registrado sí se despacha', error == null, error?.message);
+}
+
+{
+  const { error } = await outsider.rpc('register_courier', {
+    p_order_id: testOrder.id,
+    p_courier_name: 'Starken',
+  });
+  check('una PyME ajena no puede tocar el despacho de otra', error != null);
+}
+
+// --------------------------------------------------- seguimiento del comprador
+const { data: tokenRow } = await admin
+  .from('orders').select('tracking_token').eq('id', testOrder.id).single();
+
+const token = tokenRow!.tracking_token;
+const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, opts);
+
+{
+  const { data } = await anonymous.rpc('track_order', { p_token: token });
+  const tracked = data?.[0];
+  check('con el enlace, un comprador sin cuenta ve su pedido', tracked?.code === testOrder.code);
+  check('el seguimiento muestra el courier', tracked?.courier_name === 'Chilexpress');
+  check(
+    'el seguimiento no expone lo que le costó el envío a la PyME',
+    tracked != null && !('courier_cost' in tracked),
+  );
+  check(
+    'el seguimiento no expone a la PyME ni la dirección de la bodega',
+    tracked != null && !('pyme_id' in tracked) && !('address' in tracked),
+  );
+
+  const { data: lines } = await anonymous.rpc('track_order_items', { p_token: token });
+  check('el seguimiento lista lo que compró', (lines?.length ?? 0) === 1);
+
+  const { data: trail } = await anonymous.rpc('track_order_events', { p_token: token });
+  check('el seguimiento trae la trazabilidad', (trail?.length ?? 0) >= 4, `${trail?.length} hitos`);
+}
+
+{
+  const { data } = await anonymous.rpc('track_order', {
+    p_token: '00000000-0000-0000-0000-000000000000',
+  });
+  check('un token inventado no devuelve nada', (data?.length ?? 0) === 0);
+}
+
+{
+  const { data } = await anonymous.from('orders').select('buyer_address');
+  check('el enlace no abre la tabla de pedidos', (data?.length ?? 0) === 0);
+}
 
 // -------------------------------------------------------------------- limpieza
-await admin.from('deliveries').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('orders').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('shipments').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('inventory').delete().eq('warehouse_id', testWarehouse.id);

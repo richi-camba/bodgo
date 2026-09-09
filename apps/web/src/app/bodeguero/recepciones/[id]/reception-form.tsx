@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { confirmReception, type ActionState } from '@/app/bodeguero/actions';
 import { Button } from '@/components/ui/button';
 import { Field, FormError, Input, Textarea } from '@/components/ui/field';
+import { PhotoCapture } from '@/components/app/photo-capture';
 import { formatNumber, reconcileReception } from '@bodgo/core';
 
 type Line = {
@@ -225,7 +226,14 @@ export function ReceptionForm({
         </p>
       </section>
 
-      <div className="space-y-4">
+      <div className="card space-y-4 p-5">
+        <PhotoCapture
+          name="photoPath"
+          folder="recepciones"
+          label="Foto de lo recibido"
+          hint="Los bultos abiertos, con las etiquetas a la vista"
+        />
+
         <Field label="Nota para la PyME (opcional)" htmlFor="note">
           <Textarea
             id="note"

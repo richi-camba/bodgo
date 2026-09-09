@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Icon, type IconName } from '@/components/ui/icon';
 
 export function NavLink({
   href,
@@ -10,7 +11,7 @@ export function NavLink({
   compact,
 }: {
   href: string;
-  icon: string;
+  icon: IconName;
   label: string;
   compact?: boolean;
 }) {
@@ -30,9 +31,7 @@ export function NavLink({
           active ? 'text-navy-800' : 'text-ink-400'
         }`}
       >
-        <span aria-hidden className="text-[17px] leading-none">
-          {icon}
-        </span>
+        <Icon name={icon} size={20} />
         <span className="max-w-full truncate">{label}</span>
       </Link>
     );
@@ -46,9 +45,7 @@ export function NavLink({
         active ? 'bg-navy-800 text-white' : 'text-ink-700 hover:bg-surface-50'
       }`}
     >
-      <span aria-hidden className="text-[15px] leading-none">
-        {icon}
-      </span>
+      <Icon name={icon} size={17} />
       {label}
     </Link>
   );

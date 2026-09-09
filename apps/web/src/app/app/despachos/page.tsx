@@ -36,7 +36,7 @@ export default async function ShipmentsPage() {
 
       {!shipments?.length ? (
         <EmptyState
-          icon="🚚"
+          icon="envios"
           title="Todavía no has enviado mercadería"
           body="Arma un envío con el detalle de lo que mandas. El bodeguero cuenta contra esa lista al recibir, y eso es lo que te protege si algo no llega."
           action={<ButtonLink href="/app/despachos/nuevo">Preparar un envío</ButtonLink>}

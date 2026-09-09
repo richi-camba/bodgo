@@ -18,7 +18,7 @@ const signUpSchema = z.object({
   password,
   fullName: z.string().trim().min(2, 'Escribe tu nombre.'),
   businessName: z.string().trim().optional(),
-  role: z.enum(['pyme', 'bodeguero', 'repartidor']),
+  role: z.enum(['pyme', 'bodeguero']),
   terms: z.literal('on', { errorMap: () => ({ message: 'Debes aceptar los términos para continuar.' }) }),
 });
 

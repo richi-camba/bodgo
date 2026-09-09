@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icon';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
 import { formatCLP, formatNumber, pricePerM3 } from '@bodgo/core';
@@ -102,11 +103,16 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
           </Step>
         </ol>
 
-        <p className="mt-5 rounded-field bg-brand-50 p-4 text-[13px] leading-relaxed text-navy-800">
-          💳 A ti se te cobra <strong className="font-bold">por adelantado</strong> al contratar. Al
-          bodeguero le pagamos <strong className="font-bold">a fin de mes</strong> por los días
-          efectivamente usados; el dinero queda en custodia mientras tanto.
-        </p>
+        <div className="mt-5 flex gap-3 rounded-field bg-brand-50 p-4">
+          <span className="mt-0.5 text-brand-600">
+            <Icon name="pagos" size={17} />
+          </span>
+          <p className="text-[13px] leading-relaxed text-navy-800">
+            A ti se te cobra <strong className="font-bold">por adelantado</strong> al contratar. Al
+            bodeguero le pagamos <strong className="font-bold">a fin de mes</strong> por los días
+            efectivamente usados; el dinero queda en custodia mientras tanto.
+          </p>
+        </div>
       </section>
 
       <ContractForm
