@@ -12,12 +12,25 @@ import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
 
-const env = Object.fromEntries(
-  readFileSync(new URL('../apps/web/.env.local', import.meta.url), 'utf8')
-    .split('\n')
-    .filter((l) => l.includes('='))
-    .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
-);
+/** Junta las variables de los dos .env locales, ninguno de los cuales va a git. */
+function readEnv(...paths) {
+  const out = {};
+  for (const path of paths) {
+    let raw;
+    try {
+      raw = readFileSync(new URL(path, import.meta.url), 'utf8');
+    } catch {
+      continue;
+    }
+    for (const line of raw.split('\n')) {
+      if (!line.includes('=') || line.trimStart().startsWith('#')) continue;
+      out[line.slice(0, line.indexOf('=')).trim()] = line.slice(line.indexOf('=') + 1).trim();
+    }
+  }
+  return out;
+}
+
+const env = readEnv('../apps/web/.env.local', '../.env.local');
 
 const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -26,7 +39,21 @@ const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_
   realtime: { transport: WebSocket },
 });
 
-const PASSWORD = 'BodGoDemo2026!';
+/**
+ * Contraseña de las cuentas de demostración.
+ *
+ * Sale del entorno a propósito y no está en el repositorio: el repo es público
+ * y el sitio desplegado usa esta misma base, así que una constante acá sería
+ * la llave del backoffice publicada en GitHub. Se define en
+ * `.env.local` (BODGO_DEMO_PASSWORD), que está fuera de git.
+ */
+const PASSWORD = env.BODGO_DEMO_PASSWORD;
+
+if (!PASSWORD) {
+  throw new Error(
+    'Falta BODGO_DEMO_PASSWORD en .env.local. Elige una contraseña para las cuentas de demostración.',
+  );
+}
 
 /** Crea el usuario si no existe y devuelve su id. */
 async function upsertUser(email, meta) {

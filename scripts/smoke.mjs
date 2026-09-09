@@ -11,18 +11,31 @@ import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
 
-const env = Object.fromEntries(
-  readFileSync(new URL('../apps/web/.env.local', import.meta.url), 'utf8')
-    .split('\n').filter((l) => l.includes('='))
-    .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
-);
+function readEnv(...paths) {
+  const out = {};
+  for (const path of paths) {
+    let raw;
+    try {
+      raw = readFileSync(new URL(path, import.meta.url), 'utf8');
+    } catch {
+      continue;
+    }
+    for (const line of raw.split('\n')) {
+      if (!line.includes('=') || line.trimStart().startsWith('#')) continue;
+      out[line.slice(0, line.indexOf('=')).trim()] = line.slice(line.indexOf('=') + 1).trim();
+    }
+  }
+  return out;
+}
+
+const env = readEnv('../apps/web/.env.local', '../.env.local');
 
 const opts = { auth: { persistSession: false, autoRefreshToken: false }, realtime: { transport: WebSocket } };
 const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, opts);
 
 async function signIn(email) {
   const c = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, opts);
-  const { error } = await c.auth.signInWithPassword({ email, password: 'BodGoDemo2026!' });
+  const { error } = await c.auth.signInWithPassword({ email, password: env.BODGO_DEMO_PASSWORD });
   if (error) throw new Error(`login ${email}: ${error.message}`);
   return c;
 }

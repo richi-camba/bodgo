@@ -18,8 +18,13 @@ port = 54323
 
 [auth]
 enabled = true
+# En producción manda lo configurado en el panel del proyecto; esto aplica al
+# entorno local levantado con `supabase start`.
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "https://bodgo.vercel.app/auth/callback",
+]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 enable_signup = true

@@ -2,6 +2,8 @@
 
 Red de microbodegas urbanas para el e-commerce de las PyMEs chilenas.
 
+**En vivo:** https://bodgo.vercel.app
+
 Una PyME que vende online no puede arrendar una bodega completa ni tener su stock
 lejos de sus clientes. BodGo conecta esa PyME con vecinos que tienen un espacio de
 8 a 15 m² desocupado: la PyME arrienda los metros que necesita cerca de su demanda,
@@ -68,12 +70,38 @@ pnpm db:types     # regenera packages/db/src/database.types.ts
 Después de cualquier migración hay que regenerar los tipos: el build falla si el
 esquema y `database.types.ts` no coinciden.
 
+### Datos de demostración
+
+```bash
+pnpm db:seed      # crea la red de prueba (idempotente)
+```
+
+Siembra 8 microbodegas en 8 comunas de Santiago, dos PyMEs con catálogo,
+contratos vigentes, envíos en distintos estados —incluido uno con
+discrepancia—, pedidos, una liquidación e incidentes de red. Las cuentas
+comparten la contraseña de `BODGO_DEMO_PASSWORD`:
+
+| Rol | Cuenta |
+|---|---|
+| PyME | `valentina@boutiquelua.cl` — Boutique Lúa |
+| PyME | `diego@casanorte.cl` — Casa Norte Deco |
+| Bodeguero | `marcela.rios@gmail.com` — Providencia y Ñuñoa |
+| Bodeguero | `rodrigo.pena@gmail.com` — Las Condes y Vitacura |
+| Admin | `admin@bodgo.cl` — backoffice |
+
 ### Tests
 
 ```bash
 pnpm test         # lógica de negocio (vitest)
 pnpm typecheck
+node scripts/smoke.mjs   # operaciones y RLS contra la base real
 ```
+
+La prueba de humo es la que vale para el backend: contrata con la custodia,
+confirma una recepción con diferencia, verifica que el pago no se libere y que
+el inventario sume lo recibido, y comprueba que un visitante sin cuenta no
+alcance contratos ni direcciones exactas. Levanta su propia microbodega y la
+borra al terminar, así que es segura de correr sobre la base sembrada.
 
 ## Seguridad
 
@@ -88,6 +116,10 @@ pnpm typecheck
   no por escrituras sueltas del cliente.
 - **`SUPABASE_SERVICE_ROLE_KEY` salta RLS.** Sólo servidor, nunca con prefijo
   `NEXT_PUBLIC_`, nunca en un commit.
+- **La contraseña de las cuentas de demostración no está en el repositorio.**
+  Sale de `BODGO_DEMO_PASSWORD` en `.env.local`: este repo es público y el
+  sitio desplegado usa la misma base, así que una constante en el código sería
+  la llave del backoffice publicada en GitHub.
 
 ## Pagos
 
@@ -95,6 +127,18 @@ El prototipo declara Transbank. Mientras no exista el convenio, el proveedor
 `demo` simula el cobro: la tarjeta terminada en `4242` aprueba y la `0002`
 rechaza por fondos insuficientes. El punto de integración está aislado en
 `create_contract` — cambiar de proveedor no toca el resto del sistema.
+
+## Despliegue
+
+Vercel, región `gru1` (São Paulo), con la base Supabase en la misma región. El
+repositorio está conectado: cada push a `main` despliega a producción.
+
+```bash
+vercel deploy --prod
+```
+
+El *Root Directory* del proyecto es `apps/web`; Vercel resuelve el workspace
+pnpm desde la raíz por su cuenta.
 
 ## Licencia
 
