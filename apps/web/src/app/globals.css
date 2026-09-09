@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+
+/* =============================================================================
+   BodGo · sistema de diseño.
+   Los valores salen del prototipo (Claude Design, ago-2026).
+   ============================================================================= */
+
+@theme {
+  /* Marca. El navy manda: fondos oscuros, botones primarios, headers. */
+  --color-navy-950: #0f2742;
+  --color-navy-900: #16243a;
+  --color-navy-800: #16365a;
+  --color-navy-700: #2b4a6b;
+  --color-navy-600: #3c4a5e;
+
+  /* Azul de acento: enlaces, foco, estados seleccionados. */
+  --color-brand-700: #1f5896;
+  --color-brand-600: #2c72b7;
+  --color-brand-400: #7fb3e6;
+  --color-brand-100: #eaf1f9;
+  --color-brand-50: #f4f8fc;
+
+  /* Semánticos. */
+  --color-success-700: #177a52;
+  --color-success-600: #1e9e6a;
+  --color-success-50: #e4f4ec;
+  --color-warning-600: #c9821f;
+  --color-warning-50: #fbf0de;
+  --color-danger-600: #d6453c;
+  --color-danger-50: #fdecea;
+
+  /* Neutros: la escala real del prototipo, no la de Tailwind. */
+  --color-ink-900: #16243a;
+  --color-ink-700: #3c4a5e;
+  --color-ink-500: #5c6b80;
+  --color-ink-400: #93a1b4;
+  --color-line-300: #cdd6e0;
+  --color-line-200: #e0e6ed;
+  --color-line-100: #e7ecf2;
+  --color-surface-100: #f1f4f8;
+  --color-surface-50: #f4f6f9;
+  --color-surface-25: #f8fafc;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, Menlo, monospace;
+
+  --radius-card: 16px;
+  --radius-field: 12px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(22, 54, 90, 0.04), 0 4px 16px rgba(22, 54, 90, 0.06);
+  --shadow-lift: 0 8px 30px rgba(22, 54, 90, 0.12);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-surface-50);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* El foco visible se respeta en todos lados: la app se usa con teclado en
+     escritorio y con lector de pantalla en móvil. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-brand-100);
+  }
+}
+
+@layer utilities {
+  /* Tipografía de etiqueta: mayúsculas chicas con tracking, muy usada en las
+     cabeceras de sección del prototipo. */
+  .text-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-400);
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-line-100);
+    border-radius: var(--radius-card);
+  }
+
+  /* Barras y contadores animan sólo si el usuario no pidió lo contrario. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

@@ -1,0 +1,29 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# env / secrets — nunca al repo
+.env
+.env.*
+!.env.example
+
+# supabase local
+supabase/.temp/
+supabase/.branches/
+
+# vercel
+.vercel
+
+# material de diseño (63 MB, referencia interna — no va al repo público)
+_design/
+
+# os
+.DS_Store
+*.log

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bodgo-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@bodgo/web", "dev"],
+      "port": 3000
+    }
+  ]
+}
