@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { checkCapacity, grossVolumeM3, pricePerM3, shipmentVolumeM3, usableCapacityM3 } from '../volume.js';
+import {
+  checkCapacity,
+  checkCapacityM3,
+  grossVolumeM3,
+  pricePerM3,
+  shipmentVolumeM3,
+  usableCapacityM3,
+} from '../volume';
 
 describe('capacidad', () => {
   it('12 m² contratados dan 21,6 m³ apilables', () => {
@@ -55,5 +62,16 @@ describe('checkCapacity', () => {
     const c = checkCapacity(21.6, 12);
     expect(c.exceeds).toBe(false);
     expect(c.percentUsed).toBe(100);
+  });
+});
+
+describe('checkCapacityM3', () => {
+  it('acepta una capacidad ya expresada en m³, sin volver a pasar por los m²', () => {
+    expect(checkCapacityM3(10, 21.6)).toEqual(checkCapacity(10, 12));
+  });
+
+  it('ignora diferencias por debajo de los 5 litros', () => {
+    expect(checkCapacityM3(21.604, 21.6).exceeds).toBe(false);
+    expect(checkCapacityM3(21.61, 21.6).exceeds).toBe(true);
   });
 });

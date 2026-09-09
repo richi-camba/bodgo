@@ -43,22 +43,28 @@ export type CapacityCheck = {
 };
 
 /**
- * Contrasta el volumen de un envío contra la capacidad contratada.
+ * Contrasta el volumen de un envío contra una capacidad ya expresada en m³.
  *
- * Un envío que excede no se bloquea: el prototipo deja despacharlo igual y
- * advierte que el bodeguero puede rechazar el excedente al recibir. Eso queda
- * registrado como discrepancia de volumen.
+ * Un envío que excede no se bloquea: se puede despachar igual, con la
+ * advertencia de que el bodeguero puede rechazar el excedente al recibir. Eso
+ * queda registrado como discrepancia de volumen.
  */
-export function checkCapacity(volumeM3: number, contractedM2: number): CapacityCheck {
-  const capacityM3 = usableCapacityM3(contractedM2);
+export function checkCapacityM3(volumeM3: number, capacityM3: number): CapacityCheck {
   const excess = volumeM3 - capacityM3;
   return {
     volumeM3: round2(volumeM3),
-    capacityM3,
+    capacityM3: round2(capacityM3),
     percentUsed: capacityM3 > 0 ? Math.round((volumeM3 / capacityM3) * 100) : 0,
+    // Tolerancia de 5 litros: por debajo de eso la diferencia es ruido de
+    // redondeo, no un exceso real que valga abrir una discrepancia.
     exceeds: excess > 0.005,
     excessM3: excess > 0 ? round2(excess) : 0,
   };
+}
+
+/** Igual que `checkCapacityM3`, pero partiendo de los m² contratados. */
+export function checkCapacity(volumeM3: number, contractedM2: number): CapacityCheck {
+  return checkCapacityM3(volumeM3, usableCapacityM3(contractedM2));
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;

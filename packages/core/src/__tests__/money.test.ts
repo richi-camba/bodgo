@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCLP, formatCompactCLP, formatNumber } from '../money.js';
+import { formatCLP, formatCompactCLP, formatNumber } from '../money';
 
 const nbsp = (s: string) => s.replace(/ /g, ' ');
 

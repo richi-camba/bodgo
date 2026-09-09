@@ -1,4 +1,4 @@
-import { checkCapacity } from './volume';
+import { checkCapacityM3 } from './volume';
 
 export type ManifestLine = {
   productId: string;
@@ -29,7 +29,7 @@ export type ReconciliationResult = {
   /** Unidades de más respecto de lo declarado. */
   unitsOver: number;
   /** Volumen medido por el bodeguero contra la capacidad del contrato. */
-  capacity: ReturnType<typeof checkCapacity>;
+  capacity: ReturnType<typeof checkCapacityM3>;
   type: DiscrepancyType;
   /** `true` si hay que abrir una discrepancia y avisar a la PyME. */
   hasDiscrepancy: boolean;
@@ -43,12 +43,15 @@ export type ReconciliationResult = {
  * Es el control central del modelo: la plata en custodia no se libera hasta que
  * esta conciliación cierra. Dos cosas pueden fallar por separado y ambas abren
  * discrepancia — que falten (o sobren) unidades, y que lo recibido no quepa en
- * los m² contratados.
+ * la capacidad contratada.
+ *
+ * `capacityM3` es la capacidad apilable del contrato, no el volumen del
+ * recinto: es el mismo número que el envío guarda congelado al despacharse.
  */
 export function reconcileReception(
   manifest: readonly ManifestLine[],
   receivedVolumeM3: number,
-  contractedM2: number,
+  capacityM3: number,
 ): ReconciliationResult {
   const lines: LineResult[] = manifest.map((line) => {
     const delta = line.received - line.declared;
@@ -65,7 +68,7 @@ export function reconcileReception(
   const unitsShort = sum(lines.filter((l) => l.delta < 0).map((l) => -l.delta));
   const unitsOver = sum(lines.filter((l) => l.delta > 0).map((l) => l.delta));
 
-  const capacity = checkCapacity(receivedVolumeM3, contractedM2);
+  const capacity = checkCapacityM3(receivedVolumeM3, capacityM3);
 
   const type: DiscrepancyType =
     mismatchCount > 0 && capacity.exceeds

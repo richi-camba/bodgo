@@ -1,0 +1,242 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+
+export type ActionState = { error?: string; ok?: string } | null;
+
+/**
+ * Traduce un error de Postgres a algo que la PyME pueda entender.
+ * Los RPC levantan mensajes en español, así que casi siempre sirven tal cual;
+ * lo que se filtra acá son los errores de plomería.
+ */
+function readableError(message: string | undefined): string {
+  if (!message) return 'Algo salió mal. Inténtalo de nuevo.';
+  if (/permission denied|row-level security|42501/i.test(message)) {
+    return 'No tienes permiso para hacer esto.';
+  }
+  if (/JWT|not authenticated/i.test(message)) return 'Tu sesión expiró. Vuelve a entrar.';
+  return message;
+}
+
+// -----------------------------------------------------------------------------
+// Contratar una microbodega
+// -----------------------------------------------------------------------------
+const contractSchema = z.object({
+  warehouseId: z.string().uuid(),
+  m2: z.coerce.number().positive('Elige cuántos m² necesitas.'),
+  paymentMethodId: z.string().uuid('Elige un medio de pago.'),
+});
+
+export async function createContract(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = contractSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('create_contract', {
+    p_warehouse_id: parsed.data.warehouseId,
+    p_m2: parsed.data.m2,
+    p_payment_method_id: parsed.data.paymentMethodId,
+  });
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/app', 'layout');
+
+  // Un contrato que vuelve sin activar es un cobro rechazado: el detalle lo
+  // explica y ofrece reintentar con otra tarjeta.
+  redirect(`/app/contratos/${data.id}`);
+}
+
+// -----------------------------------------------------------------------------
+// Terminar un contrato antes de tiempo
+// -----------------------------------------------------------------------------
+const terminateSchema = z.object({
+  contractId: z.string().uuid(),
+  daysUsed: z.coerce.number().int().min(0).max(30),
+});
+
+export async function terminateContract(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = terminateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: 'Revisa los días usados.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('terminate_contract', {
+    p_contract_id: parsed.data.contractId,
+    p_days_used: parsed.data.daysUsed,
+  });
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/app', 'layout');
+  return { ok: 'Contrato finalizado. Tu devolución está en camino.' };
+}
+
+// -----------------------------------------------------------------------------
+// Catálogo
+// -----------------------------------------------------------------------------
+const productSchema = z.object({
+  name: z.string().trim().min(2, 'Escribe el nombre del producto.'),
+  sku: z.string().trim().min(1, 'El SKU es obligatorio.'),
+  category: z.string().trim().optional(),
+  unitVolumeM3: z.coerce
+    .number()
+    .min(0, 'El volumen no puede ser negativo.')
+    .max(5, 'Un producto de más de 5 m³ no cabe en una microbodega.'),
+});
+
+export async function createProduct(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = productSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  const { error } = await supabase.from('products').insert({
+    pyme_id: user.id,
+    name: parsed.data.name,
+    sku: parsed.data.sku,
+    category: parsed.data.category || null,
+    unit_volume_m3: parsed.data.unitVolumeM3,
+  });
+
+  if (error) {
+    return {
+      error: error.code === '23505' ? 'Ya tienes un producto con ese SKU.' : readableError(error.message),
+    };
+  }
+
+  revalidatePath('/app/inventario');
+  return { ok: 'Producto creado.' };
+}
+
+// -----------------------------------------------------------------------------
+// Envío a bodega
+// -----------------------------------------------------------------------------
+const shipmentSchema = z.object({
+  warehouseId: z.string().uuid('Elige a qué bodega envías.'),
+  contractId: z.string().uuid().optional(),
+  description: z.string().trim().min(3, 'Describe brevemente qué envías.'),
+  packagesCount: z.coerce.number().int().min(1, 'Indica cuántos bultos son.'),
+  weightKg: z.coerce.number().min(0).optional(),
+  pickupAddress: z.string().trim().optional(),
+  method: z.enum(['own', 'external_courier']),
+  /** JSON: `[{ "productId": "...", "qty": 12 }]` */
+  items: z.string(),
+});
+
+const itemsSchema = z
+  .array(z.object({ productId: z.string().uuid(), qty: z.number().int().positive() }))
+  .min(1, 'Selecciona al menos un producto.');
+
+export async function createShipment(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = shipmentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  let items;
+  try {
+    items = itemsSchema.parse(JSON.parse(parsed.data.items));
+  } catch {
+    return { error: 'Selecciona al menos un producto para el manifiesto.' };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  const { data: shipment, error } = await supabase
+    .from('shipments')
+    .insert({
+      pyme_id: user.id,
+      warehouse_id: parsed.data.warehouseId,
+      contract_id: parsed.data.contractId ?? null,
+      description: parsed.data.description,
+      packages_count: parsed.data.packagesCount,
+      weight_kg: parsed.data.weightKg ?? null,
+      pickup_address: parsed.data.pickupAddress || null,
+      method: parsed.data.method,
+    })
+    .select('id')
+    .single();
+
+  if (error || !shipment) return { error: readableError(error?.message) };
+
+  // El manifiesto guarda una copia del nombre, SKU y volumen: si después
+  // renombras el producto, el envío histórico no cambia.
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, sku, name, category, unit_volume_m3')
+    .in('id', items.map((i) => i.productId));
+
+  const byId = new Map((products ?? []).map((p) => [p.id, p]));
+
+  const { error: itemsError } = await supabase.from('shipment_items').insert(
+    items.flatMap((i) => {
+      const p = byId.get(i.productId);
+      if (!p) return [];
+      return [{
+        shipment_id: shipment.id,
+        product_id: p.id,
+        sku: p.sku,
+        name: p.name,
+        category: p.category,
+        unit_volume_m3: p.unit_volume_m3,
+        declared_qty: i.qty,
+      }];
+    }),
+  );
+
+  if (itemsError) {
+    // Sin manifiesto el envío no sirve para nada, y el borrador vacío
+    // ensuciaría la bandeja del bodeguero.
+    await supabase.from('shipments').delete().eq('id', shipment.id);
+    return { error: readableError(itemsError.message) };
+  }
+
+  revalidatePath('/app/despachos');
+  redirect(`/app/despachos/${shipment.id}`);
+}
+
+/** Marca el envío como despachado: a partir de acá lo espera el bodeguero. */
+export async function dispatchShipment(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const id = z.string().uuid().safeParse(formData.get('shipmentId'));
+  if (!id.success) return { error: 'Envío no válido.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('dispatch_shipment', { p_shipment_id: id.data });
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/app/despachos');
+  return { ok: 'Envío despachado. Avisamos al bodeguero.' };
+}
+
+// -----------------------------------------------------------------------------
+// Pedidos de salida
+// -----------------------------------------------------------------------------
+export async function advanceOrder(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const schema = z.object({
+    orderId: z.string().uuid(),
+    status: z.enum(['queued', 'picking', 'ready', 'picked_up', 'in_transit', 'delivered', 'cancelled']),
+    note: z.string().trim().optional(),
+  });
+
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: 'No se pudo actualizar el pedido.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('advance_order', {
+    p_order_id: parsed.data.orderId,
+    p_status: parsed.data.status,
+    p_note: parsed.data.note || undefined,
+  });
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/app/pedidos');
+  revalidatePath('/bodeguero/pedidos');
+  return { ok: 'Pedido actualizado.' };
+}

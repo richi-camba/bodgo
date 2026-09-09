@@ -34,6 +34,10 @@ const check = (name, ok, detail = '') => {
   ok ? passed++ : failed++;
 };
 
+// Marca de tiempo para poder borrar después exactamente lo que genere esta
+// corrida, sin tocar los avisos de la red de demostración.
+const startedAt = new Date().toISOString();
+
 const pyme = await signIn('valentina@boutiquelua.cl');
 const host = await signIn('marcela.rios@gmail.com');
 
@@ -80,10 +84,33 @@ console.log('\nRLS');
 // ------------------------------------------------------------------ custodia
 console.log('\nCustodia');
 
+// La prueba levanta su propia microbodega en vez de usar una de la red de
+// demostración: así no compite por metros con los contratos sembrados, y una
+// corrida que muera a la mitad no deja espacio reservado a nadie.
+const TEST_ADDRESS = 'Calle de Prueba 1 — smoke test';
+
+await admin.from('warehouses').delete().eq('address', TEST_ADDRESS);
+
+const { data: testWarehouse, error: whError } = await admin
+  .from('warehouses')
+  .insert({
+    bodeguero_id: hostUser.id,
+    comuna: 'Ñuñoa',
+    sector_label: 'Zona de prueba',
+    address: TEST_ADDRESS,
+    total_m2: 10,
+    price_per_m2: 41_000,
+    status: 'active',
+  })
+  .select('id, price_per_m2')
+  .single();
+
+if (whError) throw new Error(`bodega de prueba: ${whError.message}`);
+
 const { data: listing } = await pyme
   .from('warehouse_listings')
   .select('id, price_per_m2, available_m2')
-  .eq('comuna', 'Ñuñoa')
+  .eq('id', testWarehouse.id)
   .single();
 
 const { data: card } = await pyme
@@ -217,10 +244,12 @@ check('se devuelve la parte proporcional no usada',
 }
 
 // -------------------------------------------------------------------- limpieza
-await admin.from('shipments').delete().eq('id', shipment.id);
-await admin.from('inventory').delete().eq('warehouse_id', listing.id);
-await admin.from('contracts').delete().in('id', [contract.id, badContract.id]);
-await admin.from('notifications').delete().eq('kind', 'reception_discrepancy');
+await admin.from('shipments').delete().eq('warehouse_id', testWarehouse.id);
+await admin.from('inventory').delete().eq('warehouse_id', testWarehouse.id);
+await admin.from('stock_movements').delete().eq('warehouse_id', testWarehouse.id);
+await admin.from('contracts').delete().eq('warehouse_id', testWarehouse.id);
+await admin.from('warehouses').delete().eq('id', testWarehouse.id);
+await admin.from('notifications').delete().gte('created_at', startedAt);
 
 console.log(`\n${passed} pasaron, ${failed} fallaron`);
 process.exit(failed > 0 ? 1 : 0);

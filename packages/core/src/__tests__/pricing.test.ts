@@ -4,7 +4,7 @@ import {
   calculateHostPayout,
   estimateByVolume,
   quoteContract,
-} from '../pricing.js';
+} from '../pricing';
 
 describe('quoteContract', () => {
   it('suma 8% de comisión sobre el arriendo', () => {

@@ -69,6 +69,8 @@ const adminId = await upsertUser('admin@bodgo.cl', {
 await db.from('profiles').update({ role: 'admin', verified: true }).eq('id', adminId);
 await db.from('profiles').update({ verified: true }).in('id', [valentinaId, marcelaId]);
 
+const SECOND_PYME = { email: 'diego@casanorte.cl', name: 'Diego Fuentes', business: 'Casa Norte Deco' };
+
 const OTHER_HOSTS = [
   { email: 'rodrigo.pena@gmail.com', name: 'Rodrigo Peña' },
   { email: 'carolina.soto@gmail.com', name: 'Carolina Soto' },
@@ -81,6 +83,22 @@ const hostIds = {};
 for (const h of OTHER_HOSTS) {
   hostIds[h.email] = await upsertUser(h.email, { role: 'bodeguero', full_name: h.name });
 }
+
+const diegoId = await upsertUser(SECOND_PYME.email, {
+  role: 'pyme',
+  full_name: SECOND_PYME.name,
+  business_name: SECOND_PYME.business,
+});
+
+await db.from('pyme_profiles').update({
+  legal_name: 'Casa Norte Deco SpA',
+  rut: '78.112.900-К'.replace('К', 'K'),
+  giro: 'Comercio de artículos de decoración',
+  phone: '+56 9 5540 1188',
+  comuna: 'Ñuñoa',
+  address: 'Av. Grecia 1120',
+  sales_channels: ['shopify'],
+}).eq('profile_id', diegoId);
 
 await db.from('pyme_profiles').update({
   legal_name: 'Boutique Lúa SpA',
@@ -415,9 +433,225 @@ if (!convo) {
   ]);
 }
 
+
+// ============================================================================
+// Segunda PyME: le da al backoffice más de un caso que mirar y prueba que el
+// aislamiento entre PyMEs funcione de verdad.
+// ============================================================================
+log('Sembrando Casa Norte Deco…');
+
+const NORTE_PRODUCTS = [
+  { name: 'Lámpara de mesa nórdica', sku: 'CN-2201', category: 'Hogar y decoración', vol: 0.0240 },
+  { name: 'Espejo redondo 60 cm', sku: 'CN-2208', category: 'Hogar y decoración', vol: 0.0310 },
+  { name: 'Cojín lino 45×45', sku: 'CN-2215', category: 'Hogar y decoración', vol: 0.0090 },
+];
+
+for (const p of NORTE_PRODUCTS) {
+  await db.from('products').upsert(
+    { pyme_id: diegoId, name: p.name, sku: p.sku, category: p.category, unit_volume_m3: p.vol },
+    { onConflict: 'pyme_id,sku' },
+  );
+}
+
+const { data: norteProducts } = await db
+  .from('products').select('id, sku, name, unit_volume_m3').eq('pyme_id', diegoId);
+const norteBySku = Object.fromEntries(norteProducts.map((p) => [p.sku, p]));
+
+await db.from('payment_methods').upsert(
+  { profile_id: diegoId, brand: 'Visa', last4: '1881', exp_month: 11, exp_year: 2028, holder_name: 'Diego Fuentes', is_default: true },
+  { onConflict: 'profile_id,last4' },
+);
+
+const nunoa = warehouseIds['Ñuñoa'];
+let { data: norteContract } = await db
+  .from('contracts').select('*').eq('pyme_id', diegoId).maybeSingle();
+
+if (!norteContract) {
+  const base = 5 * 41000;
+  const commission = Math.round(base * 0.08);
+  const { data } = await db.from('contracts').insert({
+    pyme_id: diegoId,
+    warehouse_id: nunoa,
+    m2: 5,
+    price_per_m2: 41000,
+    base_amount: base,
+    commission_amount: commission,
+    total_amount: base + commission,
+    status: 'active',
+    start_date: new Date(Date.now() - 20 * 864e5).toISOString().slice(0, 10),
+    next_charge_date: new Date(Date.now() + 10 * 864e5).toISOString().slice(0, 10),
+  }).select().single();
+  norteContract = data;
+
+  await db.from('payments').insert({
+    contract_id: norteContract.id,
+    pyme_id: diegoId,
+    amount: norteContract.total_amount,
+    status: 'held',
+    held_at: new Date().toISOString(),
+  });
+}
+
+// ----------------------------------------------------------------------------
+// Un envío que llegó con diferencia. Se arma pasando por confirm_reception para
+// que la discrepancia salga de la misma lógica que usa la app, no a mano.
+// ----------------------------------------------------------------------------
+const { data: withGap } = await db
+  .from('shipments').select('id').eq('pyme_id', diegoId).eq('status', 'discrepancy').maybeSingle();
+
+if (!withGap) {
+  const { data: shipment } = await db.from('shipments').insert({
+    pyme_id: diegoId,
+    warehouse_id: nunoa,
+    contract_id: norteContract.id,
+    description: 'Lámparas y espejos — 4 bultos',
+    packages_count: 4,
+    weight_kg: 26,
+    pickup_address: 'Av. Grecia 1120',
+    method: 'external_courier',
+    status: 'draft',
+  }).select().single();
+
+  const lines = [
+    { sku: 'CN-2201', declared: 40, received: 36 },
+    { sku: 'CN-2208', declared: 25, received: 25 },
+    { sku: 'CN-2215', declared: 90, received: 90 },
+  ];
+
+  await db.from('shipment_items').insert(
+    lines.map((l) => ({
+      shipment_id: shipment.id,
+      product_id: norteBySku[l.sku].id,
+      sku: l.sku,
+      name: norteBySku[l.sku].name,
+      unit_volume_m3: norteBySku[l.sku].unit_volume_m3,
+      declared_qty: l.declared,
+    })),
+  );
+
+  await db.rpc('dispatch_shipment', { p_shipment_id: shipment.id });
+
+  // El RPC exige ser el bodeguero dueño; acá corre con la clave de servicio,
+  // que salta RLS pero igual pasa por la validación de owns_warehouse(). Se
+  // resuelve firmando la operación como Marcela.
+  const marcela = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { transport: WebSocket },
+  });
+  await marcela.auth.signInWithPassword({ email: 'marcela.rios@gmail.com', password: PASSWORD });
+
+  const { error } = await marcela.rpc('confirm_reception', {
+    p_shipment_id: shipment.id,
+    p_counts: lines.filter((l) => l.received !== l.declared).map((l) => ({
+      product_id: norteBySku[l.sku].id,
+      received: l.received,
+    })),
+    p_received_volume_m3: 2.4,
+    p_note: 'Llegaron 36 lámparas de las 40 declaradas. Una caja venía abierta.',
+  });
+  if (error) console.warn('  aviso: no se pudo registrar la discrepancia —', error.message);
+}
+
+// ----------------------------------------------------------------------------
+// Pedidos en distintos estados, para que la bandeja no muestre siempre lo mismo.
+// ----------------------------------------------------------------------------
+log('Creando pedidos en varios estados…');
+
+const MORE_ORDERS = [
+  { ref: 'ML-88240', buyer: 'Camilo Bravo', comuna: 'Ñuñoa', address: 'Av. Irarrázaval 2210', total: 28900, ship: 3200, status: 'delivered', sku: 'SKU-0451', qty: 1, price: 28900 },
+  { ref: 'SH-10455', buyer: 'Antonia Lira', comuna: 'Providencia', address: 'Los Leones 440, depto 91', total: 19980, ship: 2900, status: 'picking', sku: 'SKU-1204', qty: 2, price: 9990, channel: 'shopify' },
+  { ref: 'ML-88301', buyer: 'Sebastián Ruiz', comuna: 'La Florida', address: 'Froilán Roa 6320', total: 14990, ship: 3900, status: 'queued', sku: 'SKU-0876', qty: 1, price: 14990 },
+];
+
+for (const o of MORE_ORDERS) {
+  const { data: exists } = await db
+    .from('orders').select('id').eq('pyme_id', valentinaId).eq('external_ref', o.ref).maybeSingle();
+  if (exists) continue;
+
+  const { data: created } = await db.from('orders').insert({
+    pyme_id: valentinaId,
+    warehouse_id: providencia,
+    channel: o.channel ?? 'mercadolibre',
+    external_ref: o.ref,
+    buyer_name: o.buyer,
+    buyer_address: o.address,
+    buyer_comuna: o.comuna,
+    items_total: o.total,
+    shipping_zone: 'Zona 2',
+    shipping_cost: o.ship,
+    delivery_method: 'external_courier',
+    status: o.status,
+    delivered_at: o.status === 'delivered' ? new Date(Date.now() - 2 * 864e5).toISOString() : null,
+  }).select().single();
+
+  await db.from('order_items').insert({
+    order_id: created.id,
+    product_id: bySku[o.sku].id,
+    sku: o.sku,
+    name: bySku[o.sku].name,
+    quantity: o.qty,
+    unit_price: o.price,
+  });
+
+  // La trazabilidad completa hasta el estado en que quedó el pedido.
+  const trail = ['pending', 'queued', 'picking', 'ready', 'picked_up', 'in_transit', 'delivered'];
+  const upTo = trail.indexOf(o.status);
+  await db.from('order_events').insert(
+    trail.slice(0, upTo + 1).map((status, i) => ({
+      order_id: created.id,
+      status,
+      note: status === 'pending' ? 'Venta recibida desde el canal' : null,
+      created_at: new Date(Date.now() - (upTo - i + 2) * 36e5).toISOString(),
+    })),
+  );
+}
+
+// ----------------------------------------------------------------------------
+// Liquidación del mes al bodeguero e incidentes de red para el backoffice.
+// ----------------------------------------------------------------------------
+log('Liquidando el mes e ingresando incidentes…');
+
+const periodStart = new Date();
+periodStart.setDate(1);
+const periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0);
+
+const gross = 640000;
+const commission = Math.round(gross * 0.15);
+
+await db.from('payouts').upsert(
+  {
+    bodeguero_id: marcelaId,
+    period_start: periodStart.toISOString().slice(0, 10),
+    period_end: periodEnd.toISOString().slice(0, 10),
+    gross_amount: gross,
+    commission_amount: commission,
+    net_amount: gross - commission,
+    status: 'scheduled',
+  },
+  { onConflict: 'bodeguero_id,period_start,period_end' },
+);
+
+const INCIDENTS = [
+  { title: 'Humedad detectada en muro sur — Maipú', severity: 'medium', comuna: 'Maipú' },
+  { title: 'Extintor vencido en visita de control — San Miguel', severity: 'high', comuna: 'San Miguel' },
+];
+
+for (const inc of INCIDENTS) {
+  const { data: exists } = await db.from('incidents').select('id').eq('title', inc.title).maybeSingle();
+  if (exists) continue;
+  await db.from('incidents').insert({
+    title: inc.title,
+    severity: inc.severity,
+    warehouse_id: warehouseIds[inc.comuna],
+    status: 'open',
+  });
+}
+
 console.log('\nListo. Cuentas de demostración (contraseña: %s)', PASSWORD);
 console.table([
-  { rol: 'PyME', correo: 'valentina@boutiquelua.cl' },
-  { rol: 'Bodeguero', correo: 'marcela.rios@gmail.com' },
-  { rol: 'Admin', correo: 'admin@bodgo.cl' },
+  { rol: 'PyME', correo: 'valentina@boutiquelua.cl', negocio: 'Boutique Lúa' },
+  { rol: 'PyME', correo: 'diego@casanorte.cl', negocio: 'Casa Norte Deco' },
+  { rol: 'Bodeguero', correo: 'marcela.rios@gmail.com', negocio: 'Providencia y Ñuñoa' },
+  { rol: 'Bodeguero', correo: 'rodrigo.pena@gmail.com', negocio: 'Las Condes y Vitacura' },
+  { rol: 'Admin', correo: 'admin@bodgo.cl', negocio: 'Backoffice' },
 ]);
