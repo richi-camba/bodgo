@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge, type Tone } from '@/components/ui/badge';
+import { ButtonLink } from '@/components/ui/button';
 import { EmptyState, PageHeader, Stat } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
 import { formatCLP, LABELS } from '@bodgo/core';
@@ -39,7 +40,11 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Mis pedidos" subtitle="Ventas que se despachan desde tus microbodegas." />
+      <PageHeader
+        title="Mis pedidos"
+        subtitle="Ventas que se despachan desde tus microbodegas."
+        action={<ButtonLink href="/app/pedidos/nuevo" size="sm">Nuevo pedido</ButtonLink>}
+      />
 
       <div className="grid grid-cols-3 gap-3">
         <Stat value={open.length} label="En curso" />
@@ -51,7 +56,8 @@ export default async function OrdersPage() {
         <EmptyState
           icon="📋"
           title="Todavía no tienes pedidos"
-          body="Cuando conectes tu canal de venta, las ventas entran solas acá y el bodeguero recibe el aviso para preparar el despacho."
+          body="Cuando conectes tu canal de venta, las ventas entran solas acá y el bodeguero recibe el aviso para preparar el despacho. También puedes crear uno a mano."
+          action={<ButtonLink href="/app/pedidos/nuevo">Crear un pedido</ButtonLink>}
         />
       ) : (
         <ul className="space-y-2.5">

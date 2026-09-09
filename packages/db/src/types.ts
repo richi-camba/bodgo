@@ -44,3 +44,6 @@ export type Ticket = Row<'tickets'>;
 export type Notification = Row<'notifications'>;
 export type Incident = Row<'incidents'>;
 export type Lead = Row<'leads'>;
+export type CourierProfile = Row<'courier_profiles'>;
+export type Delivery = Row<'deliveries'>;
+export type DeliveryOffer = View<'delivery_offers'>;

@@ -13,6 +13,12 @@ const OPTIONS = [
     title: 'Quiero ser bodeguero',
     body: 'Tengo un espacio: recibo mercancía, preparo pedidos y genero ingresos.',
   },
+  {
+    role: 'repartidor',
+    icon: '🛵',
+    title: 'Quiero repartir',
+    body: 'Tengo vehículo: retiro pedidos en las bodegas y los entrego al comprador.',
+  },
 ] as const;
 
 export function RoleChooser() {

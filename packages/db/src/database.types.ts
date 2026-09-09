@@ -261,6 +261,192 @@ export type Database = {
           },
         ]
       }
+      courier_profiles: {
+        Row: {
+          bank_account_last4: string | null
+          bank_name: string | null
+          created_at: string
+          documents_ok: boolean
+          email: string | null
+          is_online: boolean
+          last_online_at: string | null
+          phone: string | null
+          plate: string | null
+          preferred_comunas: string[]
+          profile_id: string
+          rating: number
+          ratings_count: number
+          rut: string | null
+          trips_count: number
+          updated_at: string
+          vehicle: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          bank_account_last4?: string | null
+          bank_name?: string | null
+          created_at?: string
+          documents_ok?: boolean
+          email?: string | null
+          is_online?: boolean
+          last_online_at?: string | null
+          phone?: string | null
+          plate?: string | null
+          preferred_comunas?: string[]
+          profile_id: string
+          rating?: number
+          ratings_count?: number
+          rut?: string | null
+          trips_count?: number
+          updated_at?: string
+          vehicle?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          bank_account_last4?: string | null
+          bank_name?: string | null
+          created_at?: string
+          documents_ok?: boolean
+          email?: string | null
+          is_online?: boolean
+          last_online_at?: string | null
+          phone?: string | null
+          plate?: string | null
+          preferred_comunas?: string[]
+          profile_id?: string
+          rating?: number
+          ratings_count?: number
+          rut?: string | null
+          trips_count?: number
+          updated_at?: string
+          vehicle?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deliveries: {
+        Row: {
+          accepted_at: string | null
+          buyer_fee: number
+          cancelled_at: string | null
+          code: string
+          commission_amount: number
+          courier_fee: number
+          courier_id: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
+          id: string
+          offered_at: string
+          order_id: string
+          picked_up_at: string | null
+          pickup_photo_url: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          updated_at: string
+          warehouse_id: string
+          zone: number
+        }
+        Insert: {
+          accepted_at?: string | null
+          buyer_fee: number
+          cancelled_at?: string | null
+          code?: string
+          commission_amount: number
+          courier_fee: number
+          courier_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_photo_url?: string | null
+          distance_km?: number | null
+          eta_minutes?: number | null
+          id?: string
+          offered_at?: string
+          order_id: string
+          picked_up_at?: string | null
+          pickup_photo_url?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          updated_at?: string
+          warehouse_id: string
+          zone: number
+        }
+        Update: {
+          accepted_at?: string | null
+          buyer_fee?: number
+          cancelled_at?: string | null
+          code?: string
+          commission_amount?: number
+          courier_fee?: number
+          courier_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_photo_url?: string | null
+          distance_km?: number | null
+          eta_minutes?: number | null
+          id?: string
+          offered_at?: string
+          order_id?: string
+          picked_up_at?: string | null
+          pickup_photo_url?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          updated_at?: string
+          warehouse_id?: string
+          zone?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_courier_id_fkey"
+            columns: ["courier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_courier_id_fkey"
+            columns: ["courier_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discrepancies: {
         Row: {
           capacity_m3: number | null
@@ -857,6 +1043,8 @@ export type Database = {
           delivery_method: Database["public"]["Enums"]["delivery_method"] | null
           delivery_notes: string | null
           delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
           external_ref: string | null
           id: string
           items_total: number
@@ -888,6 +1076,8 @@ export type Database = {
             | null
           delivery_notes?: string | null
           delivery_photo_url?: string | null
+          distance_km?: number | null
+          eta_minutes?: number | null
           external_ref?: string | null
           id?: string
           items_total?: number
@@ -919,6 +1109,8 @@ export type Database = {
             | null
           delivery_notes?: string | null
           delivery_photo_url?: string | null
+          distance_km?: number | null
+          eta_minutes?: number | null
           external_ref?: string | null
           id?: string
           items_total?: number
@@ -1948,6 +2140,22 @@ export type Database = {
       }
     }
     Views: {
+      delivery_offers: {
+        Row: {
+          code: string | null
+          courier_fee: number | null
+          distance_km: number | null
+          dropoff_comuna: string | null
+          eta_minutes: number | null
+          id: string | null
+          offered_at: string | null
+          order_code: string | null
+          pickup_comuna: string | null
+          pickup_sector: string | null
+          zone: number | null
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -2020,6 +2228,76 @@ export type Database = {
       }
     }
     Functions: {
+      accept_delivery: {
+        Args: { p_delivery_id: string }
+        Returns: {
+          accepted_at: string | null
+          buyer_fee: number
+          cancelled_at: string | null
+          code: string
+          commission_amount: number
+          courier_fee: number
+          courier_id: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
+          id: string
+          offered_at: string
+          order_id: string
+          picked_up_at: string | null
+          pickup_photo_url: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          updated_at: string
+          warehouse_id: string
+          zone: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "deliveries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      advance_delivery: {
+        Args: {
+          p_delivery_id: string
+          p_photo_url?: string
+          p_status: Database["public"]["Enums"]["delivery_status"]
+        }
+        Returns: {
+          accepted_at: string | null
+          buyer_fee: number
+          cancelled_at: string | null
+          code: string
+          commission_amount: number
+          courier_fee: number
+          courier_id: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
+          id: string
+          offered_at: string
+          order_id: string
+          picked_up_at: string | null
+          pickup_photo_url: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          updated_at: string
+          warehouse_id: string
+          zone: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "deliveries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       advance_order: {
         Args: {
           p_note?: string
@@ -2041,6 +2319,54 @@ export type Database = {
           delivery_method: Database["public"]["Enums"]["delivery_method"] | null
           delivery_notes: string | null
           delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
+          external_ref: string | null
+          id: string
+          items_total: number
+          packing_photo_url: string | null
+          pyme_id: string
+          rating: number | null
+          shipping_cost: number
+          shipping_zone: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total_amount: number | null
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+          warehouse_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      apply_order_status: {
+        Args: {
+          p_actor: string
+          p_note: string
+          p_order_id: string
+          p_photo_url: string
+          p_status: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: {
+          buyer_address: string
+          buyer_comuna: string
+          buyer_name: string
+          buyer_phone: string | null
+          channel: Database["public"]["Enums"]["sales_channel"]
+          code: string
+          courier_name: string | null
+          courier_receipt_url: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_method: Database["public"]["Enums"]["delivery_method"] | null
+          delivery_notes: string | null
+          delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
           external_ref: string | null
           id: string
           items_total: number
@@ -2101,6 +2427,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      courier_carries_order: {
+        Args: { target_order: string }
+        Returns: boolean
+      }
+      courier_commission_rate: { Args: never; Returns: number }
+      courier_picks_up_at: { Args: { warehouse: string }; Returns: boolean }
       create_contract: {
         Args: {
           p_m2: number
@@ -2171,6 +2503,7 @@ export type Database = {
         }
       }
       host_commission_rate: { Args: never; Returns: number }
+      host_stores_product: { Args: { product: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_warehouse_party: { Args: { warehouse: string }; Returns: boolean }
       notify: {
@@ -2186,6 +2519,41 @@ export type Database = {
       }
       owns_warehouse: { Args: { warehouse: string }; Returns: boolean }
       platform_commission_rate: { Args: never; Returns: number }
+      product_owner: { Args: { product: string }; Returns: string }
+      request_courier: {
+        Args: { p_order_id: string }
+        Returns: {
+          accepted_at: string | null
+          buyer_fee: number
+          cancelled_at: string | null
+          code: string
+          commission_amount: number
+          courier_fee: number
+          courier_id: string | null
+          created_at: string
+          delivered_at: string | null
+          delivery_photo_url: string | null
+          distance_km: number | null
+          eta_minutes: number | null
+          id: string
+          offered_at: string
+          order_id: string
+          picked_up_at: string | null
+          pickup_photo_url: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          updated_at: string
+          warehouse_id: string
+          zone: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "deliveries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_courier_online: { Args: { p_online: boolean }; Returns: boolean }
       stack_height_m: { Args: never; Returns: number }
       terminate_contract: {
         Args: { p_contract_id: string; p_days_used: number }
@@ -2220,6 +2588,14 @@ export type Database = {
     Enums: {
       contract_status: "pending_payment" | "active" | "ended" | "cancelled"
       delivery_method: "buyer_pickup" | "external_courier" | "bodgo_courier"
+      delivery_status:
+        | "offered"
+        | "accepted"
+        | "picked_up"
+        | "in_transit"
+        | "delivered"
+        | "cancelled"
+        | "expired"
       discrepancy_status:
         | "open"
         | "notified"
@@ -2251,7 +2627,8 @@ export type Database = {
         | "received"
         | "discrepancy"
       ticket_status: "open" | "in_progress" | "resolved"
-      user_role: "pyme" | "bodeguero" | "admin"
+      user_role: "pyme" | "bodeguero" | "admin" | "repartidor"
+      vehicle_type: "moto" | "bicicleta" | "auto" | "furgon"
       warehouse_status:
         | "draft"
         | "pending_review"
@@ -2852,6 +3229,15 @@ export const Constants = {
     Enums: {
       contract_status: ["pending_payment", "active", "ended", "cancelled"],
       delivery_method: ["buyer_pickup", "external_courier", "bodgo_courier"],
+      delivery_status: [
+        "offered",
+        "accepted",
+        "picked_up",
+        "in_transit",
+        "delivered",
+        "cancelled",
+        "expired",
+      ],
       discrepancy_status: [
         "open",
         "notified",
@@ -2886,7 +3272,8 @@ export const Constants = {
         "discrepancy",
       ],
       ticket_status: ["open", "in_progress", "resolved"],
-      user_role: ["pyme", "bodeguero", "admin"],
+      user_role: ["pyme", "bodeguero", "admin", "repartidor"],
+      vehicle_type: ["moto", "bicicleta", "auto", "furgon"],
       warehouse_status: [
         "draft",
         "pending_review",

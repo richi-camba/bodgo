@@ -11,7 +11,8 @@ export default async function SignUpPage({
   searchParams: Promise<{ rol?: string }>;
 }) {
   const { rol } = await searchParams;
-  const role = rol === 'bodeguero' || rol === 'pyme' ? rol : null;
+  const role =
+    rol === 'bodeguero' || rol === 'pyme' || rol === 'repartidor' ? rol : null;
 
   if (!role) {
     return (
@@ -37,18 +38,25 @@ export default async function SignUpPage({
     );
   }
 
-  const isHost = role === 'bodeguero';
+  const COPY = {
+    pyme: {
+      title: 'Crea tu cuenta PyME',
+      body: 'Guarda tu stock cerca de tus clientes y despacha más rápido.',
+    },
+    bodeguero: {
+      title: 'Publica tu espacio',
+      body: 'Recibe mercancía, prepara pedidos y genera ingresos con el espacio que ya tienes.',
+    },
+    repartidor: {
+      title: 'Reparte con BodGo',
+      body: 'Retira pedidos en las microbodegas de la red y entrégalos al comprador.',
+    },
+  } as const;
 
   return (
     <div>
-      <h1 className="text-[26px] font-extrabold tracking-tight text-white">
-        {isHost ? 'Publica tu espacio' : 'Crea tu cuenta PyME'}
-      </h1>
-      <p className="mt-2 text-[14.5px] text-white/55">
-        {isHost
-          ? 'Recibe mercancía, prepara pedidos y genera ingresos con el espacio que ya tienes.'
-          : 'Guarda tu stock cerca de tus clientes y despacha más rápido.'}
-      </p>
+      <h1 className="text-[26px] font-extrabold tracking-tight text-white">{COPY[role].title}</h1>
+      <p className="mt-2 text-[14.5px] text-white/55">{COPY[role].body}</p>
 
       <div className="mt-7 rounded-[20px] bg-white p-6 shadow-lift">
         <SignUpForm role={role} />

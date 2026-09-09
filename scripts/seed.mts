@@ -3,7 +3,7 @@
  * del prototipo, más suficientes microbodegas para que el buscador tenga algo
  * que mostrar.
  *
- *   node scripts/seed.mjs
+ *   pnpm db:seed
  *
  * Usa la clave de servicio, así que salta RLS y crea usuarios de auth. Es
  * idempotente: correrlo dos veces no duplica nada.
@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
+import { quoteDeliveryToComuna } from '@bodgo/core';
 
 /** Junta las variables de los dos .env locales, ninguno de los cuales va a git. */
 function readEnv(...paths) {
@@ -674,11 +675,260 @@ for (const inc of INCIDENTS) {
   });
 }
 
+
+// ============================================================================
+// Flota de repartidores.
+//
+// Los viajes se arman pasando por los mismos RPC que usa la app: `advance_order`
+// deja el pedido listo y ofrece el viaje, `accept_delivery` lo toma y
+// `advance_delivery` lo cierra. Así los datos sembrados no pueden quedar en un
+// estado que la aplicación real nunca produciría.
+// ============================================================================
+log('Sumando repartidores y viajes…');
+
+const COURIERS = [
+  {
+    email: 'diego.rojas@gmail.com',
+    name: 'Diego Rojas',
+    vehicle: 'moto',
+    plate: 'ABCD-12',
+    bank: 'Banco Estado',
+    last4: '8821',
+    rating: 4.9,
+    comunas: ['Providencia', 'Ñuñoa'],
+  },
+  {
+    email: 'karla.soto@gmail.com',
+    name: 'Karla Soto',
+    vehicle: 'moto',
+    plate: 'JKLM-45',
+    bank: 'Banco de Chile',
+    last4: '3402',
+    rating: 4.7,
+    comunas: ['Maipú', 'Estación Central'],
+  },
+  {
+    email: 'nicolas.tapia@gmail.com',
+    name: 'Nicolás Tapia',
+    vehicle: 'bicicleta',
+    plate: null,
+    bank: 'BCI',
+    last4: '7710',
+    rating: 4.8,
+    comunas: ['Santiago', 'Recoleta'],
+  },
+];
+
+const courierIds = {};
+for (const c of COURIERS) {
+  courierIds[c.email] = await upsertUser(c.email, { role: 'repartidor', full_name: c.name });
+
+  await db
+    .from('courier_profiles')
+    .update({
+      vehicle: c.vehicle,
+      plate: c.plate,
+      phone: '+56 9 7' + String(Math.abs(hash(c.email)) % 9000000 + 1000000),
+      bank_name: c.bank,
+      bank_account_last4: c.last4,
+      rating: c.rating,
+      ratings_count: Math.round(c.rating * 40),
+      documents_ok: true,
+      preferred_comunas: c.comunas,
+      is_online: c.email === 'diego.rojas@gmail.com',
+      last_online_at: new Date().toISOString(),
+    })
+    .eq('profile_id', courierIds[c.email]);
+}
+
+await db.from('profiles').update({ verified: true }).in('id', Object.values(courierIds));
+
+/** Hash estable para inventar teléfonos que no cambien entre corridas. */
+function hash(text) {
+  let h = 0;
+  for (let i = 0; i < text.length; i += 1) h = (h * 31 + text.charCodeAt(i)) | 0;
+  return h;
+}
+
+/** Firma operaciones como un usuario concreto, para que los RPC vean su auth.uid(). */
+async function as(email) {
+  const c = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { transport: WebSocket },
+  });
+  const { error } = await c.auth.signInWithPassword({ email, password: PASSWORD });
+  if (error) throw new Error(`login ${email}: ${error.message}`);
+  return c;
+}
+
+const marcelaClient = await as('marcela.rios@gmail.com');
+const diegoClient = await as('diego.rojas@gmail.com');
+const karlaClient = await as('karla.soto@gmail.com');
+
+/**
+ * Lleva un pedido desde donde esté hasta el estado pedido, pasando por cada
+ * transición legal. Los saltos los rechaza `advance_order`, y con razón.
+ */
+async function walkOrder(client, orderId, target) {
+  const CHAIN = ['pending', 'queued', 'picking', 'ready'];
+  const { data: current } = await db.from('orders').select('status').eq('id', orderId).single();
+  const from = CHAIN.indexOf(current.status);
+  const to = CHAIN.indexOf(target);
+  if (from < 0 || to <= from) return;
+
+  for (const next of CHAIN.slice(from + 1, to + 1)) {
+    const { error } = await client.rpc('advance_order', { p_order_id: orderId, p_status: next });
+    if (error) throw new Error(`${orderId} → ${next}: ${error.message}`);
+  }
+}
+
+/**
+ * Deja el pedido listo y con su viaje ofrecido.
+ *
+ * `advance_order` ofrece el viaje solo al pasar a 'ready', pero si el pedido ya
+ * estaba en ese estado no hay transición que lo dispare. `request_courier` es
+ * idempotente: si ya existe un viaje vivo, lo devuelve sin crear otro.
+ */
+async function readyWithOffer(client, orderId) {
+  await walkOrder(client, orderId, 'ready');
+  const { error } = await db.rpc('request_courier', { p_order_id: orderId });
+  if (error) console.warn('  aviso: no se pudo ofrecer el viaje —', error.message);
+}
+
+// Se convierten dos pedidos existentes a despacho con repartidor propio, con la
+// tarifa recalculada según la distancia real bodega → comuna.
+const { data: courierOrders } = await db
+  .from('orders')
+  .select('id, code, status, external_ref, buyer_comuna, warehouse_id, warehouses(lat, lng)')
+  .in('external_ref', ['ML-88213', 'ML-88301']);
+
+for (const order of courierOrders ?? []) {
+  const quote = quoteDeliveryToComuna(
+    { lat: order.warehouses?.lat ?? null, lng: order.warehouses?.lng ?? null },
+    order.buyer_comuna,
+  );
+  if (!quote) continue;
+
+  await db
+    .from('orders')
+    .update({
+      delivery_method: 'bodgo_courier',
+      shipping_zone: `Zona ${quote.zone}`,
+      shipping_cost: quote.buyerFee,
+      distance_km: quote.distanceKm,
+      eta_minutes: quote.etaMinutes,
+    })
+    .eq('id', order.id);
+}
+
+// El reparto de papeles es fijo, no depende del estado en que esté la base:
+// ML-88213 termina siempre como viaje entregado y ML-88301 siempre queda
+// esperando en la bolsa. Si no, cada corrida iría vaciando las ofertas.
+const mainOrder = (courierOrders ?? []).find((o) => o.external_ref === 'ML-88213');
+
+// Un viaje ya entregado: le da contenido a la pantalla de ganancias.
+if (mainOrder) {
+  await readyWithOffer(marcelaClient, mainOrder.id);
+
+  const { data: offered } = await db
+    .from('deliveries')
+    .select('id, status')
+    .eq('order_id', mainOrder.id)
+    .maybeSingle();
+
+  if (offered?.status === 'offered') {
+    const { error: acceptError } = await diegoClient.rpc('accept_delivery', {
+      p_delivery_id: offered.id,
+    });
+    if (acceptError) console.warn('  aviso: no se pudo aceptar el viaje —', acceptError.message);
+    else {
+      await diegoClient.rpc('advance_delivery', { p_delivery_id: offered.id, p_status: 'picked_up' });
+      await diegoClient.rpc('advance_delivery', {
+        p_delivery_id: offered.id,
+        p_status: 'delivered',
+        p_photo_url: 'demo/entrega-puerta.jpg',
+      });
+    }
+  }
+}
+
+// Y un viaje esperando en la bolsa, para que la app del repartidor tenga algo
+// que ofrecer apenas se abre.
+const { data: waiting } = await db
+  .from('orders')
+  .select('id, status')
+  .eq('external_ref', 'ML-88301')
+  .maybeSingle();
+
+if (waiting) {
+  await readyWithOffer(marcelaClient, waiting.id);
+}
+
+// Un tercer pedido, esta vez a la vuelta de la esquina: así la bolsa muestra
+// zonas distintas y se ve que la tarifa cambia con la distancia.
+let { data: nearby } = await db
+  .from('orders')
+  .select('id')
+  .eq('pyme_id', valentinaId)
+  .eq('external_ref', 'ML-88355')
+  .maybeSingle();
+
+if (!nearby) {
+  const nearbyQuote = quoteDeliveryToComuna(
+    { lat: -33.429, lng: -70.611 },
+    'Providencia',
+  )!;
+
+  const { data: created } = await db
+    .from('orders')
+    .insert({
+      pyme_id: valentinaId,
+      warehouse_id: providencia,
+      channel: 'mercadolibre',
+      external_ref: 'ML-88355',
+      buyer_name: 'Matías Herrera',
+      buyer_phone: '+56 9 9032 7741',
+      buyer_address: 'Av. Pedro de Valdivia 120, of. 8',
+      buyer_comuna: 'Providencia',
+      delivery_notes: 'Timbre 8, edificio con conserje.',
+      items_total: 13000,
+      shipping_zone: `Zona ${nearbyQuote.zone}`,
+      shipping_cost: nearbyQuote.buyerFee,
+      distance_km: nearbyQuote.distanceKm,
+      eta_minutes: nearbyQuote.etaMinutes,
+      delivery_method: 'bodgo_courier',
+      status: 'pending',
+    })
+    .select()
+    .single();
+
+  await db.from('order_items').insert({
+    order_id: created.id,
+    product_id: bySku['SKU-0099'].id,
+    sku: 'SKU-0099',
+    name: bySku['SKU-0099'].name,
+    quantity: 1,
+    unit_price: 13000,
+  });
+
+  nearby = created;
+}
+
+// Fuera del `if`: si el pedido ya existía pero se quedó sin viaje —porque
+// alguien lo tomó probando la app—, la oferta se vuelve a poner.
+await readyWithOffer(marcelaClient, nearby.id);
+
+// Karla queda fuera de línea a propósito: sirve para comprobar que estando
+// fuera de línea no se ven ofertas.
+await karlaClient.rpc('set_courier_online', { p_online: false });
+
 console.log('\nListo. Cuentas de demostración (contraseña: %s)', PASSWORD);
 console.table([
   { rol: 'PyME', correo: 'valentina@boutiquelua.cl', negocio: 'Boutique Lúa' },
   { rol: 'PyME', correo: 'diego@casanorte.cl', negocio: 'Casa Norte Deco' },
   { rol: 'Bodeguero', correo: 'marcela.rios@gmail.com', negocio: 'Providencia y Ñuñoa' },
   { rol: 'Bodeguero', correo: 'rodrigo.pena@gmail.com', negocio: 'Las Condes y Vitacura' },
+  { rol: 'Repartidor', correo: 'diego.rojas@gmail.com', negocio: 'Moto · en línea' },
+  { rol: 'Repartidor', correo: 'karla.soto@gmail.com', negocio: 'Moto · fuera de línea' },
   { rol: 'Admin', correo: 'admin@bodgo.cl', negocio: 'Backoffice' },
 ]);

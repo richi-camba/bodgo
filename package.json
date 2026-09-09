@@ -17,10 +17,13 @@
     "db:types": "supabase gen types typescript --linked > packages/db/src/database.types.ts",
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
-    "db:seed": "node scripts/seed.mjs"
+    "db:seed": "tsx scripts/seed.mts",
+    "smoke": "tsx scripts/smoke.mts"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.116.0",
-    "ws": "^8.21.3"
+    "tsx": "^4.23.13",
+    "ws": "^8.21.3",
+    "@bodgo/core": "workspace:*"
   }
 }

@@ -36,12 +36,19 @@ El inventario suma lo *recibido*, nunca lo declarado.
 traducen a volumen apilable a 1,8 m de altura — 12 m² son 21,6 m³ útiles. Cada
 envío se contrasta contra esa capacidad antes de salir.
 
+**4. El último tramo, con la dirección protegida.** Cuando el bodeguero deja un
+pedido listo, el viaje se ofrece solo a los repartidores en línea, con datos a
+nivel de comuna. La dirección exacta de retiro y la del comprador aparecen
+recién al aceptar. La distancia se calcula de verdad (bodega → centro de la
+comuna, con factor de rodeo urbano) y define la zona tarifaria; el comprador
+paga esa tarifa y el repartidor cobra lo mismo menos un 18%.
+
 ## Stack
 
 | Pieza | Qué es |
 |---|---|
-| `apps/web` | Next.js 15 (App Router, React 19, Tailwind v4). Web pública + apps PyME, Bodeguero y Admin |
-| `packages/core` | Lógica de negocio pura: tarifas, custodia, volumen, conciliación. Sin dependencias de framework — se reutiliza tal cual desde Expo |
+| `apps/web` | Next.js 15 (App Router, React 19, Tailwind v4). Web pública + apps PyME, Bodeguero, Repartidor y Admin |
+| `packages/core` | Lógica de negocio pura: tarifas, custodia, volumen, conciliación, zonas de despacho y distancias. Sin dependencias de framework — se reutiliza tal cual desde Expo |
 | `packages/db` | Tipos generados del esquema y helpers de cliente |
 | `supabase/` | Migraciones, RLS y funciones transaccionales |
 
@@ -87,6 +94,8 @@ comparten la contraseña de `BODGO_DEMO_PASSWORD`:
 | PyME | `diego@casanorte.cl` — Casa Norte Deco |
 | Bodeguero | `marcela.rios@gmail.com` — Providencia y Ñuñoa |
 | Bodeguero | `rodrigo.pena@gmail.com` — Las Condes y Vitacura |
+| Repartidor | `diego.rojas@gmail.com` — moto, en línea, con viajes disponibles |
+| Repartidor | `karla.soto@gmail.com` — moto, fuera de línea |
 | Admin | `admin@bodgo.cl` — backoffice |
 
 ### Tests
@@ -94,13 +103,14 @@ comparten la contraseña de `BODGO_DEMO_PASSWORD`:
 ```bash
 pnpm test         # lógica de negocio (vitest)
 pnpm typecheck
-node scripts/smoke.mjs   # operaciones y RLS contra la base real
+pnpm smoke        # operaciones y RLS contra la base real
 ```
 
 La prueba de humo es la que vale para el backend: contrata con la custodia,
 confirma una recepción con diferencia, verifica que el pago no se libere y que
-el inventario sume lo recibido, y comprueba que un visitante sin cuenta no
-alcance contratos ni direcciones exactas. Levanta su propia microbodega y la
+el inventario sume lo recibido, lanza dos repartidores sobre la misma oferta
+para comprobar que sólo uno se la lleva, y confirma que un visitante sin cuenta
+no alcance contratos ni direcciones exactas. Levanta su propia microbodega y la
 borra al terminar, así que es segura de correr sobre la base sembrada.
 
 ## Seguridad
@@ -120,6 +130,18 @@ borra al terminar, así que es segura de correr sobre la base sembrada.
   Sale de `BODGO_DEMO_PASSWORD` en `.env.local`: este repo es público y el
   sitio desplegado usa la misma base, así que una constante en el código sería
   la llave del backoffice publicada en GitHub.
+
+## Lo que falta
+
+- **Mapa en vivo.** El prototipo mostraba una pestaña de mapa en la app del
+  repartidor. Sin un proveedor de mapas contratado, dibujar uno falso sería
+  peor que no tenerlo: por ahora cada tramo del viaje abre la dirección en la
+  app de mapas del teléfono.
+- **Asignación por cercanía.** Hoy la oferta va a todos los repartidores en
+  línea y gana el primero que la toma. `courier_profiles.preferred_comunas` ya
+  está poblado para cuando se quiera filtrar.
+- **Variables de entorno de *preview* en Vercel.** Producción está completa;
+  los despliegues de rama necesitan que se carguen desde el panel.
 
 ## Pagos
 

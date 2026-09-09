@@ -4,7 +4,7 @@
  * una migración.
  */
 
-export const ROLES = ['pyme', 'bodeguero', 'admin'] as const;
+export const ROLES = ['pyme', 'bodeguero', 'repartidor', 'admin'] as const;
 export type Role = (typeof ROLES)[number];
 
 export const WAREHOUSE_STATUSES = ['draft', 'pending_review', 'active', 'paused', 'rejected'] as const;
@@ -47,6 +47,20 @@ export type DiscrepancyStatus = (typeof DISCREPANCY_STATUSES)[number];
 export const MOVEMENT_TYPES = ['inbound', 'outbound', 'adjustment', 'transfer'] as const;
 export type MovementType = (typeof MOVEMENT_TYPES)[number];
 
+export const DELIVERY_STATUSES = [
+  'offered',
+  'accepted',
+  'picked_up',
+  'in_transit',
+  'delivered',
+  'cancelled',
+  'expired',
+] as const;
+export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
+
+export const VEHICLE_TYPES = ['moto', 'bicicleta', 'auto', 'furgon'] as const;
+export type VehicleType = (typeof VEHICLE_TYPES)[number];
+
 export const INCIDENT_SEVERITIES = ['low', 'medium', 'high'] as const;
 export type IncidentSeverity = (typeof INCIDENT_SEVERITIES)[number];
 
@@ -63,7 +77,12 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
 /** Etiquetas en español para la UI. Postgres guarda el literal en inglés. */
 export const LABELS = {
-  role: { pyme: 'PyME', bodeguero: 'Bodeguero', admin: 'Administrador' },
+  role: {
+    pyme: 'PyME',
+    bodeguero: 'Bodeguero',
+    repartidor: 'Repartidor',
+    admin: 'Administrador',
+  },
   warehouseStatus: {
     draft: 'Borrador',
     pending_review: 'En revisión',
@@ -119,6 +138,21 @@ export const LABELS = {
     units: 'Diferencia de unidades',
     volume: 'Exceso de volumen',
     both: 'Unidades y volumen',
+  },
+  deliveryStatus: {
+    offered: 'Disponible',
+    accepted: 'Aceptado',
+    picked_up: 'Retirado de bodega',
+    in_transit: 'En ruta',
+    delivered: 'Entregado',
+    cancelled: 'Cancelado',
+    expired: 'Vencido',
+  },
+  vehicle: {
+    moto: 'Moto',
+    bicicleta: 'Bicicleta',
+    auto: 'Auto',
+    furgon: 'Furgón',
   },
   movementType: {
     inbound: 'Ingreso',

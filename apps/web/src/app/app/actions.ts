@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { quoteDeliveryToComuna } from '@bodgo/core';
 import { createClient } from '@/lib/supabase/server';
 
 export type ActionState = { error?: string; ok?: string } | null;
@@ -239,4 +240,151 @@ export async function advanceOrder(_prev: ActionState, formData: FormData): Prom
   revalidatePath('/app/pedidos');
   revalidatePath('/bodeguero/pedidos');
   return { ok: 'Pedido actualizado.' };
+}
+
+// -----------------------------------------------------------------------------
+// Crear un pedido de salida
+// -----------------------------------------------------------------------------
+const orderSchema = z.object({
+  warehouseId: z.string().uuid('Elige desde qué bodega despachas.'),
+  buyerName: z.string().trim().min(2, 'Escribe el nombre del comprador.'),
+  buyerPhone: z.string().trim().optional(),
+  buyerAddress: z.string().trim().min(5, 'Escribe la dirección de entrega.'),
+  buyerComuna: z.string().trim().min(2, 'Indica la comuna de entrega.'),
+  deliveryNotes: z.string().trim().optional(),
+  deliveryMethod: z.enum(['buyer_pickup', 'external_courier', 'bodgo_courier']),
+  /** JSON: `[{ "productId": "...", "qty": 2, "unitPrice": 14990 }]` */
+  items: z.string(),
+});
+
+const orderItemsSchema = z
+  .array(
+    z.object({
+      productId: z.string().uuid(),
+      qty: z.number().int().positive(),
+      unitPrice: z.number().int().min(0),
+    }),
+  )
+  .min(1, 'Agrega al menos un producto al pedido.');
+
+export async function createOrder(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = orderSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  let items;
+  try {
+    items = orderItemsSchema.parse(JSON.parse(parsed.data.items));
+  } catch {
+    return { error: 'Agrega al menos un producto al pedido.' };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  // Hay que poder despachar lo que se vende: si no hay stock en esa bodega, el
+  // pedido no debería nacer.
+  const { data: stock } = await supabase
+    .from('inventory')
+    .select('product_id, quantity, products(name, sku)')
+    .eq('warehouse_id', parsed.data.warehouseId)
+    .in('product_id', items.map((i) => i.productId));
+
+  const stockByProduct = new Map((stock ?? []).map((s) => [s.product_id, s]));
+
+  for (const item of items) {
+    const row = stockByProduct.get(item.productId);
+    if (!row || row.quantity < item.qty) {
+      return {
+        error: `No hay stock suficiente de ${row?.products?.name ?? 'un producto'} en esa bodega (${row?.quantity ?? 0} unidades).`,
+      };
+    }
+  }
+
+  // La tarifa se congela ahora: la distancia se calcula desde las coordenadas
+  // de la bodega hasta el centro de la comuna de destino.
+  const { data: warehouse } = await supabase
+    .from('warehouses')
+    .select('lat, lng')
+    .eq('id', parsed.data.warehouseId)
+    .single();
+
+  const quote =
+    parsed.data.deliveryMethod === 'buyer_pickup'
+      ? null
+      : quoteDeliveryToComuna(
+          { lat: warehouse?.lat ?? null, lng: warehouse?.lng ?? null },
+          parsed.data.buyerComuna,
+        );
+
+  if (parsed.data.deliveryMethod === 'bodgo_courier' && !quote) {
+    return {
+      error: `Todavía no llegamos con repartidor propio a ${parsed.data.buyerComuna}. Elige otro método de envío.`,
+    };
+  }
+
+  const itemsTotal = items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0);
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .insert({
+      pyme_id: user.id,
+      warehouse_id: parsed.data.warehouseId,
+      channel: 'manual',
+      buyer_name: parsed.data.buyerName,
+      buyer_phone: parsed.data.buyerPhone || null,
+      buyer_address: parsed.data.buyerAddress,
+      buyer_comuna: parsed.data.buyerComuna,
+      delivery_notes: parsed.data.deliveryNotes || null,
+      delivery_method: parsed.data.deliveryMethod,
+      items_total: itemsTotal,
+      shipping_zone: quote ? `Zona ${quote.zone}` : null,
+      shipping_cost: quote?.buyerFee ?? 0,
+      distance_km: quote?.distanceKm ?? null,
+      eta_minutes: quote?.etaMinutes ?? null,
+      status: 'pending',
+    })
+    .select('id')
+    .single();
+
+  if (error || !order) return { error: readableError(error?.message) };
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, sku, name')
+    .in('id', items.map((i) => i.productId));
+
+  const byId = new Map((products ?? []).map((p) => [p.id, p]));
+
+  const { error: itemsError } = await supabase.from('order_items').insert(
+    items.flatMap((i) => {
+      const p = byId.get(i.productId);
+      if (!p) return [];
+      return [{
+        order_id: order.id,
+        product_id: p.id,
+        sku: p.sku,
+        name: p.name,
+        quantity: i.qty,
+        unit_price: i.unitPrice,
+      }];
+    }),
+  );
+
+  if (itemsError) {
+    // Un pedido sin líneas no le sirve a nadie y ensuciaría la bandeja del
+    // bodeguero.
+    await supabase.from('orders').delete().eq('id', order.id);
+    return { error: readableError(itemsError.message) };
+  }
+
+  await supabase.from('order_events').insert({
+    order_id: order.id,
+    status: 'pending',
+    note: 'Pedido creado a mano desde la app',
+    actor_id: user.id,
+  });
+
+  revalidatePath('/app/pedidos');
+  redirect(`/app/pedidos/${order.id}`);
 }

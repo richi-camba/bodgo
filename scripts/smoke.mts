@@ -5,11 +5,12 @@
  * bloquee lo que tiene que bloquear. Crea sus propios datos y los borra al
  * terminar, así que es seguro correrla sobre la base sembrada.
  *
- *   node scripts/smoke.mjs
+ *   pnpm smoke
  */
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
+import { quoteDeliveryToComuna } from '@bodgo/core';
 
 function readEnv(...paths) {
   const out = {};
@@ -256,7 +257,166 @@ check('se devuelve la parte proporcional no usada',
   check('el pago queda como devuelto', pay?.status === 'refunded', pay?.status);
 }
 
+// ------------------------------------------------------------- último tramo
+console.log('\nRepartidores');
+
+const courier = await signIn('diego.rojas@gmail.com');
+const rival = await signIn('karla.soto@gmail.com');
+const { data: { user: courierUser } } = await courier.auth.getUser();
+
+// Un pedido que sale de la bodega de prueba, con las 7 unidades que quedaron
+// de la recepción anterior.
+const quote = quoteDeliveryToComuna({ lat: -33.4569, lng: -70.5975 }, 'Las Condes');
+
+const { data: testOrder } = await pyme
+  .from('orders')
+  .insert({
+    pyme_id: pymeUser.id,
+    warehouse_id: testWarehouse.id,
+    channel: 'manual',
+    buyer_name: 'Comprador de prueba',
+    buyer_phone: '+56 9 0000 0000',
+    buyer_address: 'Secreto 123, depto 4',
+    buyer_comuna: 'Las Condes',
+    items_total: 10_000,
+    shipping_zone: `Zona ${quote!.zone}`,
+    shipping_cost: quote!.buyerFee,
+    distance_km: quote!.distanceKm,
+    eta_minutes: quote!.etaMinutes,
+    delivery_method: 'bodgo_courier',
+    status: 'pending',
+  })
+  .select()
+  .single();
+
+await pyme.from('order_items').insert({
+  order_id: testOrder.id,
+  product_id: prods[0].id,
+  sku: prods[0].sku,
+  name: prods[0].name,
+  quantity: 2,
+  unit_price: 5_000,
+});
+
+for (const step of ['queued', 'picking', 'ready']) {
+  const { error } = await host.rpc('advance_order', { p_order_id: testOrder.id, p_status: step });
+  if (error) throw new Error(`pedido → ${step}: ${error.message}`);
+}
+
+const { data: offer } = await admin
+  .from('deliveries')
+  .select('*')
+  .eq('order_id', testOrder.id)
+  .single();
+
+check('dejar el pedido listo ofrece el viaje solo', offer?.status === 'offered', offer?.code);
+check(
+  'la tarifa del viaje se parte entre BodGo y el repartidor',
+  offer?.buyer_fee === offer?.commission_amount + offer?.courier_fee,
+  `${offer?.buyer_fee} = ${offer?.commission_amount} + ${offer?.courier_fee}`,
+);
+
+{
+  await courier.rpc('set_courier_online', { p_online: false });
+  const { data: hidden } = await courier.from('delivery_offers').select('id');
+  check('fuera de línea no se ven ofertas', (hidden?.length ?? 0) === 0);
+
+  await courier.rpc('set_courier_online', { p_online: true });
+  const { data: visible } = await courier.from('delivery_offers').select('*');
+  check('en línea sí se ven', (visible?.length ?? 0) > 0, `${visible?.length} ofertas`);
+  check(
+    'la oferta no revela la dirección del comprador',
+    visible!.length > 0 && !('buyer_address' in visible![0]) && !('buyer_name' in visible![0]),
+  );
+
+  const { data: peek } = await courier.from('orders').select('buyer_address').eq('id', testOrder.id);
+  check('antes de aceptar, el repartidor no ve el pedido', (peek?.length ?? 0) === 0);
+
+  const { data: warehousePeek } = await courier
+    .from('warehouses').select('address').eq('id', testWarehouse.id);
+  check('antes de aceptar, tampoco ve la dirección de retiro', (warehousePeek?.length ?? 0) === 0);
+}
+
+{
+  const { data: pymePeek } = await pyme.from('delivery_offers').select('id');
+  check('una PyME no ve la bolsa de viajes', (pymePeek?.length ?? 0) === 0);
+}
+
+// Dos repartidores sobre la misma oferta: sólo uno se la puede llevar.
+await rival.rpc('set_courier_online', { p_online: true });
+
+const [mine, theirs] = await Promise.all([
+  courier.rpc('accept_delivery', { p_delivery_id: offer.id }),
+  rival.rpc('accept_delivery', { p_delivery_id: offer.id }),
+]);
+
+const winners = [mine, theirs].filter((r) => !r.error).length;
+check('dos repartidores sobre el mismo viaje: gana uno solo', winners === 1);
+
+const { data: claimed } = await admin.from('deliveries').select('courier_id, status').eq('id', offer.id).single();
+const winnerIsCourier = claimed?.courier_id === courierUser.id;
+const winner = winnerIsCourier ? courier : rival;
+const loser = winnerIsCourier ? rival : courier;
+
+check('el viaje queda aceptado y con dueño', claimed?.status === 'accepted' && claimed?.courier_id != null);
+
+{
+  const { data: nowVisible } = await winner
+    .from('warehouses').select('address').eq('id', testWarehouse.id);
+  check('ya aceptado, el repartidor sí ve dónde retirar', (nowVisible?.length ?? 0) === 1);
+
+  const { data: stillHidden } = await loser
+    .from('orders').select('buyer_address').eq('id', testOrder.id);
+  check('el que no se lo ganó sigue sin ver nada', (stillHidden?.length ?? 0) === 0);
+}
+
+{
+  const { error } = await loser.rpc('advance_delivery', { p_delivery_id: offer.id, p_status: 'picked_up' });
+  check('un repartidor no puede mover el viaje de otro', error != null);
+}
+
+await winner.rpc('advance_delivery', { p_delivery_id: offer.id, p_status: 'picked_up' });
+
+{
+  const { data: order } = await admin.from('orders').select('status').eq('id', testOrder.id).single();
+  check('el retiro arrastra al pedido a "retirado"', order?.status === 'picked_up', order?.status);
+}
+
+{
+  const { error } = await winner.rpc('advance_delivery', { p_delivery_id: offer.id, p_status: 'delivered' });
+  check('no se puede cerrar una entrega sin foto', error != null);
+}
+
+const { data: before } = await admin
+  .from('courier_profiles').select('trips_count').eq('profile_id', claimed!.courier_id!).single();
+
+await winner.rpc('advance_delivery', {
+  p_delivery_id: offer.id,
+  p_status: 'delivered',
+  p_photo_url: 'prueba/entrega.jpg',
+});
+
+{
+  const { data: order } = await admin.from('orders').select('status, delivered_at').eq('id', testOrder.id).single();
+  check('la entrega cierra el pedido', order?.status === 'delivered' && order?.delivered_at != null);
+
+  const { data: after } = await admin
+    .from('courier_profiles').select('trips_count').eq('profile_id', claimed!.courier_id!).single();
+  check('el viaje se suma al contador del repartidor', after!.trips_count === before!.trips_count + 1);
+
+  const { data: events } = await admin
+    .from('order_events').select('status').eq('order_id', testOrder.id);
+  check(
+    'la trazabilidad guarda cada paso del viaje',
+    ['picked_up', 'delivered'].every((st) => events!.some((e) => e.status === st)),
+  );
+}
+
+await rival.rpc('set_courier_online', { p_online: false });
+
 // -------------------------------------------------------------------- limpieza
+await admin.from('deliveries').delete().eq('warehouse_id', testWarehouse.id);
+await admin.from('orders').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('shipments').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('inventory').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('stock_movements').delete().eq('warehouse_id', testWarehouse.id);

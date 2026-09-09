@@ -7,6 +7,7 @@ const NAV: NavItem[] = [
   { href: '/admin/bodegas', label: 'Microbodegas', icon: '🏬', primary: true },
   { href: '/admin/pymes', label: 'PyMEs', icon: '🏢', primary: true },
   { href: '/admin/bodegueros', label: 'Bodegueros', icon: '👥' },
+  { href: '/admin/repartidores', label: 'Repartidores', icon: '🛵' },
   { href: '/admin/corfo', label: 'Indicadores Corfo', icon: '🎯', primary: true },
 ];
 

@@ -18,7 +18,7 @@ const signUpSchema = z.object({
   password,
   fullName: z.string().trim().min(2, 'Escribe tu nombre.'),
   businessName: z.string().trim().optional(),
-  role: z.enum(['pyme', 'bodeguero']),
+  role: z.enum(['pyme', 'bodeguero', 'repartidor']),
   terms: z.literal('on', { errorMap: () => ({ message: 'Debes aceptar los términos para continuar.' }) }),
 });
 
@@ -81,7 +81,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   }
 
   revalidatePath('/', 'layout');
-  redirect(role === 'bodeguero' ? '/bodeguero' : '/app');
+  redirect(HOME_BY_ROLE[role] ?? '/app');
 }
 
 export async function signOut() {
