@@ -26,17 +26,19 @@ export default function OpenGraphImage() {
           fontFamily: 'sans-serif',
         }}
       >
-        {/* Resplandor de acento, igual que el del hero. */}
+        {/* Acento de marca. Satori no hace desenfoque, así que en vez de un
+            resplandor va un círculo apenas insinuado y bien afuera del
+            recorrido de lectura: cruzando el titular competiría con él. */}
         <div
           style={{
             position: 'absolute',
-            top: -180,
-            right: -140,
-            width: 620,
-            height: 620,
+            top: -260,
+            right: -220,
+            width: 640,
+            height: 640,
             borderRadius: 999,
             background: '#2C72B7',
-            opacity: 0.28,
+            opacity: 0.16,
           }}
         />
 
