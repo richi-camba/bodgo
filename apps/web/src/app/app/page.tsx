@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Icon, type IconName } from '@/components/ui/icon';
-import { ButtonLink } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Stat } from '@/components/ui/stat';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { HowItWorks } from '@/components/app/how-it-works';
+import { PromoCard } from '@/components/app/promo-card';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
 import { formatCLP, formatNumber, LABELS } from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Inicio' };
 
-const QUICK_LINKS: { href: string; icon: IconName; title: string; body: string }[] = [
+const ACCESOS: { href: string; icon: IconName; title: string; body: string }[] = [
   { href: '/app/buscar', icon: 'buscar', title: 'Buscar bodega', body: 'Contrata un espacio' },
-  { href: '/app/despachos/nuevo', icon: 'envios', title: 'Enviar mercancía', body: 'Manifiesto y despacho' },
+  { href: '/app/pedidos', icon: 'pedidos', title: 'Mis pedidos', body: 'Envíos y entregas' },
   { href: '/app/inventario', icon: 'inventario', title: 'Mi inventario', body: 'Stock en tiempo real' },
   { href: '/app/metricas', icon: 'metricas', title: 'Métricas', body: 'KPIs y reportes' },
 ];
@@ -21,18 +21,18 @@ export default async function PymeHome() {
   const user = await requireUser('pyme');
   const supabase = await createClient();
 
+  const desdeHoy = new Date();
+  desdeHoy.setHours(0, 0, 0, 0);
+
   const [{ data: contracts }, { data: inventory }, { data: orders }, { data: notifications }] =
     await Promise.all([
-      supabase
-        .from('contracts')
-        .select('id, m2, status, warehouse_id, warehouses(comuna)')
-        .eq('status', 'active'),
+      supabase.from('contracts').select('warehouse_id').eq('status', 'active'),
       supabase.from('inventory').select('quantity, product_id'),
       supabase
         .from('orders')
         .select('id, code, status, buyer_name, buyer_comuna, total_amount, created_at')
         .order('created_at', { ascending: false })
-        .limit(5),
+        .limit(4),
       supabase
         .from('notifications')
         .select('id, title, body, created_at, read_at')
@@ -40,70 +40,59 @@ export default async function PymeHome() {
         .limit(4),
     ]);
 
-  const activeWarehouses = new Set((contracts ?? []).map((c) => c.warehouse_id)).size;
-  const units = (inventory ?? []).reduce((sum, i) => sum + i.quantity, 0);
-  const skus = new Set((inventory ?? []).filter((i) => i.quantity > 0).map((i) => i.product_id)).size;
-  const openOrders = (orders ?? []).filter(
-    (o) => !['delivered', 'cancelled'].includes(o.status),
-  ).length;
+  const { count: despachosHoy } = await supabase
+    .from('orders')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', desdeHoy.toISOString());
 
-  const firstName = user.fullName.split(' ')[0];
+  const bodegas = new Set((contracts ?? []).map((c) => c.warehouse_id)).size;
+  const skus = new Set((inventory ?? []).filter((i) => i.quantity > 0).map((i) => i.product_id)).size;
+
+  const nombre = user.fullName.split(' ')[0];
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-[13.5px] text-ink-500">Hola, {firstName} 👋</p>
-        <h1 className="mt-0.5 text-[24px] font-extrabold tracking-tight text-navy-900">
+        <p className="text-[13px] text-ink-500">Hola, {nombre} 👋</p>
+        <h1 className="mt-0.5 text-[22px] font-extrabold tracking-tight text-navy-900">
           Bienvenida a tu centro logístico
         </h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat value={activeWarehouses} label={activeWarehouses === 1 ? 'Bodega activa' : 'Bodegas activas'} />
-        <Stat value={openOrders} label="Pedidos en curso" />
-        <Stat value={skus} label="SKUs en stock" />
-        <Stat value={formatNumber(units)} label="Unidades guardadas" />
-      </div>
+      {/* Tres cifras, como en el prototipo: el número grande arriba y la
+          etiqueta debajo, en tarjetas blancas de esquina 16. */}
+      <dl className="grid grid-cols-3 gap-2.5">
+        <Cifra valor={String(bodegas)} etiqueta={bodegas === 1 ? 'Bodega activa' : 'Bodegas activas'} />
+        <Cifra valor={String(despachosHoy ?? 0)} etiqueta="Despachos hoy" />
+        <Cifra valor={formatNumber(skus)} etiqueta="SKUs en stock" />
+      </dl>
 
-      {activeWarehouses === 0 ? (
-        <section className="overflow-hidden rounded-[20px] bg-navy-800 p-7 text-white">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-brand-400">Para PyMEs</p>
-          <h2 className="mt-3 max-w-sm text-[24px] font-extrabold leading-tight tracking-tight">
-            Acerca tu stock a tus clientes
-          </h2>
-          <p className="mt-3 max-w-md text-[14px] leading-relaxed text-white/70">
-            Contrata una microbodega cerca de tu demanda y despacha más rápido, sin bodega propia.
-          </p>
-          <ButtonLink
-            href="/app/buscar"
-            className="mt-6 border-transparent bg-white text-navy-800 hover:bg-white/90"
-            variant="secondary"
-          >
-            Buscar microbodega
-          </ButtonLink>
-        </section>
-      ) : null}
+      <PromoCard />
 
-      <section>
-        <h2 className="mb-3 text-[15px] font-extrabold text-navy-900">Accesos rápidos</h2>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {QUICK_LINKS.map((link) => (
-            <li key={link.href}>
+      <HowItWorks />
+
+      {/* ------------------------------------------------ accesos rápidos */}
+      <section className="rounded-[20px] bg-navy-800 p-4">
+        <h2 className="px-1 pb-3 text-[15px] font-extrabold text-white">Accesos rápidos</h2>
+        <ul className="grid grid-cols-2 gap-2.5">
+          {ACCESOS.map((a) => (
+            <li key={a.href}>
               <Link
-                href={link.href}
-                className="card flex h-full flex-col gap-2 p-4 transition-shadow hover:shadow-card"
+                href={a.href}
+                className="flex h-full flex-col rounded-[18px] bg-white/[0.07] p-4 transition-colors hover:bg-white/[0.12]"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-50 text-brand-600">
-                  <Icon name={link.icon} size={18} />
+                <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/15 text-white">
+                  <Icon name={a.icon} size={17} />
                 </span>
-                <span className="text-[13.5px] font-extrabold text-navy-900">{link.title}</span>
-                <span className="text-[11.5px] text-ink-400">{link.body}</span>
+                <span className="mt-3 block text-[15px] font-extrabold text-white">{a.title}</span>
+                <span className="mt-1 block text-[12px] text-white/70">{a.body}</span>
               </Link>
             </li>
           ))}
         </ul>
       </section>
 
+      {/* ----------------------------------------------------- actividad */}
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="card">
           <div className="flex items-center justify-between px-5 pt-5">
@@ -119,7 +108,7 @@ export default async function PymeHome() {
                 <li key={order.id} className="flex items-center gap-3 px-5 py-3.5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13.5px] font-bold text-navy-900">{order.code}</p>
-                    <p className="truncate text-[12px] text-ink-400">
+                    <p className="truncate text-[12px] text-ink-500">
                       {order.buyer_name} · {order.buyer_comuna}
                     </p>
                   </div>
@@ -133,38 +122,63 @@ export default async function PymeHome() {
               ))}
             </ul>
           ) : (
-            <p className="px-5 py-8 text-center text-[13.5px] text-ink-400">
+            <p className="px-5 py-8 text-center text-[13.5px] text-ink-500">
               Todavía no tienes pedidos.
             </p>
           )}
         </section>
 
         <section className="card">
-          <h2 className="px-5 pt-5 text-[15px] font-extrabold text-navy-900">Notificaciones</h2>
+          <div className="flex items-center justify-between px-5 pt-5">
+            <h2 className="text-[15px] font-extrabold text-navy-900">Notificaciones</h2>
+            <Link
+              href="/app/notificaciones"
+              className="text-[12.5px] font-bold text-brand-600 hover:underline"
+            >
+              Ver todas
+            </Link>
+          </div>
 
           {notifications?.length ? (
             <ul className="mt-3 divide-y divide-line-100">
               {notifications.map((n) => (
-                <li key={n.id} className="px-5 py-3.5">
-                  <div className="flex items-start gap-2">
-                    {!n.read_at ? (
-                      <span aria-label="Sin leer" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-600" />
-                    ) : (
-                      <span className="mt-1.5 h-2 w-2 shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-[13.5px] font-bold text-navy-900">{n.title}</p>
-                      {n.body ? <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-500">{n.body}</p> : null}
-                    </div>
+                <li key={n.id} className="flex items-start gap-2 px-5 py-3.5">
+                  {!n.read_at ? (
+                    <span aria-label="Sin leer" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                  ) : (
+                    <span className="mt-1.5 h-2 w-2 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[13.5px] font-bold text-navy-900">{n.title}</p>
+                    {n.body ? (
+                      <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-500">{n.body}</p>
+                    ) : null}
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="px-5 py-8 text-center text-[13.5px] text-ink-400">Nada por aquí.</p>
+            <p className="px-5 py-8 text-center text-[13.5px] text-ink-500">Nada por aquí.</p>
           )}
         </section>
       </div>
+    </div>
+  );
+}
+
+/** Cifra de la portada: número arriba, etiqueta debajo. */
+function Cifra({ valor, etiqueta }: { valor: string; etiqueta: string }) {
+  return (
+    <div className="rounded-[16px] bg-white p-3.5">
+      <dt className="sr-only">{etiqueta}</dt>
+      <dd>
+        <span className="block text-[22px] font-extrabold leading-none text-navy-800 tabular-nums">
+          {valor}
+        </span>
+        <span className="mt-1.5 block text-[11px] font-semibold leading-snug text-ink-500">
+          {etiqueta}
+        </span>
+      </dd>
     </div>
   );
 }

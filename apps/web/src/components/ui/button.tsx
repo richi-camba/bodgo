@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'sm' | 'md' | 'lg' | 'tarjeta';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
@@ -18,6 +18,8 @@ const SIZES: Record<Size, string> = {
   sm: 'h-9 px-3.5 text-[13px] rounded-[10px]',
   md: 'h-11 px-5 text-sm rounded-field',
   lg: 'h-13 px-6 text-[15px] rounded-field',
+  // Acción de tarjeta: 37px de alto y 14px de texto, como en el prototipo.
+  tarjeta: 'h-[37px] px-4 text-[14px] rounded-[12px]',
 };
 
 const BASE =

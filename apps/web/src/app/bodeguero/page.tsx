@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
+import { TaskCard } from '@/components/app/task-card';
 import { EmptyState, Stat } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
@@ -54,10 +55,14 @@ export default async function BodegueroHome() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat value={spaces?.length ?? 0} label={spaces?.length === 1 ? 'Espacio' : 'Espacios'} />
-        <Stat value={`${occupancy}%`} label="Ocupación" />
-        <Stat value={incoming?.length ?? 0} label="Por recibir" />
-        <Stat value={formatCLP(payout.net)} label="Por liberar este mes" />
+        <Stat
+          value={spaces?.length ?? 0}
+          label={spaces?.length === 1 ? 'Mi espacio' : 'Mis espacios'}
+          orden="etiqueta-primero"
+        />
+        <Stat value={`${occupancy}%`} label="Ocupación" orden="etiqueta-primero" />
+        <Stat value={incoming?.length ?? 0} label="Por recibir" orden="etiqueta-primero" />
+        <Stat value={formatCLP(payout.net)} label="Por liberar" orden="etiqueta-primero" />
       </div>
 
       {!spaces?.length ? (
@@ -81,26 +86,32 @@ export default async function BodegueroHome() {
         {incoming?.length ? (
           <ul className="space-y-2.5">
             {incoming.map((s) => (
-              <li key={s.id} className="card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Badge tone="brand">Entrante</Badge>
-                      <span className="text-[12px] font-bold text-ink-400">{s.code}</span>
-                    </div>
-                    <h3 className="mt-1.5 text-[15px] font-extrabold text-navy-900">
-                      {businessById.get(s.pyme_id) ?? 'PyME'}
-                    </h3>
-                    <p className="text-[12.5px] text-ink-400">
-                      {s.packages_count} bultos · {formatNumber(Number(s.declared_volume_m3 ?? 0), 2)} m³
-                      · destino {s.warehouses?.comuna}
-                    </p>
-                  </div>
-
-                  <ButtonLink href={`/bodeguero/recepciones/${s.id}`} size="sm">
-                    Verificar y confirmar
-                  </ButtonLink>
-                </div>
+              <li key={s.id}>
+                <TaskCard
+                  titulo="Recepción de mercancía"
+                  etiqueta="Entrante"
+                  tono="brand"
+                  meta={
+                    <>
+                      PyME <strong className="font-bold text-navy-900">
+                        {businessById.get(s.pyme_id) ?? 'PyME'}
+                      </strong>{' '}
+                      · {s.packages_count} bultos
+                      <br />
+                      Destino: {s.warehouses?.comuna}
+                    </>
+                  }
+                  detalle={{
+                    icon: 'bultos',
+                    titulo: `${s.packages_count} bultos declarados`,
+                    texto: `${s.description ?? 'Sin descripción'} · ${formatNumber(Number(s.declared_volume_m3 ?? 0), 2)} m³`,
+                  }}
+                  accion={
+                    <ButtonLink href={`/bodeguero/recepciones/${s.id}`} size="tarjeta" full>
+                      Verificar y confirmar recepción
+                    </ButtonLink>
+                  }
+                />
               </li>
             ))}
           </ul>
