@@ -180,6 +180,10 @@ crear su cuenta.
 - **Lo público sale por vistas y funciones, no por políticas laxas.** El
   buscador de bodegas, los perfiles y el seguimiento del comprador son
   proyecciones deliberadas que listan sus columnas una a una.
+- **Cada lado del marketplace tiene su página.** `/precios` y
+  `/para-bodegueros` no repiten la portada: la primera desglosa qué entra en
+  el precio y qué no, la segunda calcula lo que un anfitrión recibiría neto de
+  comisión. Las cifras salen de los precios reales de la red, no de ejemplos.
 - **Sin testimonios inventados.** El prototipo tenía un carrusel de citas de
   PyMEs. Con cero clientes reales, publicarlas en un sitio en línea sería
   fabricar prueba social: en su lugar la portada muestra respaldos

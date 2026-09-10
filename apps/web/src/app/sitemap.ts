@@ -22,6 +22,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: site, lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: `${site}/bodegas`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${site}/precios`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${site}/para-bodegueros`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${site}/registro`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     ...comunas.map((c) => ({
       url: `${site}/bodegas?comuna=${encodeURIComponent(c)}`,
