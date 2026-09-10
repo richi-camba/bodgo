@@ -1963,6 +1963,29 @@ export type Database = {
       }
     }
     Views: {
+      host_escrow: {
+        Row: {
+          bodeguero_id: string | null
+          held_base_amount: number | null
+          held_payments: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouses_bodeguero_id_fkey"
+            columns: ["bodeguero_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouses_bodeguero_id_fkey"
+            columns: ["bodeguero_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null

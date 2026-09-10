@@ -26,12 +26,18 @@ export default async function BodegueroHome() {
         .from('orders')
         .select('id, code, status, buyer_comuna, warehouses(comuna)')
         .in('status', ['pending', 'queued', 'picking', 'ready']),
-      supabase.from('contracts').select('id, m2, base_amount, status').eq('status', 'active'),
+      supabase.from('contracts').select('id, m2, status').eq('status', 'active'),
       supabase.from('inventory').select('quantity, warehouse_id, products(unit_volume_m3)'),
     ]);
 
-  const gross = (contracts ?? []).reduce((s, c) => s + c.base_amount, 0);
-  const payout = calculateHostPayout(gross);
+  // «Por liberar» es la custodia, no el devengado: es la plata que se suelta
+  // cuando este bodeguero confirme las recepciones que tiene pendientes.
+  const { data: escrow } = await supabase
+    .from('host_escrow')
+    .select('held_base_amount')
+    .maybeSingle();
+
+  const payout = calculateHostPayout(Number(escrow?.held_base_amount ?? 0));
 
   const totalM2 = (spaces ?? []).reduce((s, w) => s + Number(w.total_m2), 0);
   const takenM2 = (contracts ?? []).reduce((s, c) => s + Number(c.m2), 0);
@@ -78,7 +84,7 @@ export default async function BodegueroHome() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-[15px] font-extrabold text-navy-900">Recepción de mercancía</h2>
-          <Link href="/bodeguero/recepciones" className="text-[12.5px] font-bold text-brand-600 hover:underline">
+          <Link href="/bodeguero/pedidos?tipo=recibir" className="text-[12.5px] font-bold text-brand-600 hover:underline">
             Ver todas
           </Link>
         </div>

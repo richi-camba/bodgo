@@ -1,41 +1,61 @@
 import type { Metadata } from 'next';
-import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Badge, type Tone } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, PageHeader } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
-import { formatCLP, formatNumber, LABELS, pricePerM3 } from '@bodgo/core';
-import { WarehouseToggle } from './toggle';
+import { formatCLP, formatNumber, LABELS } from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Mis espacios' };
 
-const TONE = {
+const TONE: Record<string, Tone> = {
   draft: 'neutral',
   pending_review: 'warning',
   active: 'success',
   paused: 'neutral',
   rejected: 'danger',
-} as const;
+};
 
 export default async function SpacesPage() {
   const supabase = await createClient();
 
-  const [{ data: spaces }, { data: contracts }, { data: checklist }] = await Promise.all([
-    supabase.from('warehouses').select('*').order('created_at'),
-    supabase.from('contracts').select('warehouse_id, m2').eq('status', 'active'),
-    supabase.from('warehouse_checklist').select('warehouse_id, item, status'),
-  ]);
+  const [{ data: spaces }, { data: contracts }, { data: inventory }, { data: photos }] =
+    await Promise.all([
+      supabase.from('warehouses').select('*').order('created_at'),
+      supabase.from('contracts').select('warehouse_id, m2').eq('status', 'active'),
+      supabase.from('inventory').select('warehouse_id, product_id').gt('quantity', 0),
+      supabase.from('warehouse_photos').select('warehouse_id, storage_path').order('sort_order'),
+    ]);
 
-  const takenByWarehouse = new Map<string, number>();
+  const arrendados = new Map<string, number>();
   for (const c of contracts ?? []) {
-    takenByWarehouse.set(c.warehouse_id, (takenByWarehouse.get(c.warehouse_id) ?? 0) + Number(c.m2));
+    arrendados.set(c.warehouse_id, (arrendados.get(c.warehouse_id) ?? 0) + Number(c.m2));
+  }
+
+  const skus = new Map<string, Set<string>>();
+  for (const i of inventory ?? []) {
+    const set = skus.get(i.warehouse_id) ?? new Set<string>();
+    set.add(i.product_id);
+    skus.set(i.warehouse_id, set);
+  }
+
+  const foto = new Map<string, string>();
+  for (const p of photos ?? []) {
+    if (!foto.has(p.warehouse_id)) foto.set(p.warehouse_id, p.storage_path);
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         title="Mis espacios"
-        subtitle="Microbodegas que tienes publicadas en la red."
-        action={<ButtonLink href="/bodeguero/espacios/nuevo" size="sm">Publicar espacio</ButtonLink>}
+        subtitle="Microbodegas publicadas en la red"
+        action={
+          <ButtonLink href="/bodeguero/espacios/nuevo" size="sm">
+            Publicar espacio
+          </ButtonLink>
+        }
       />
 
       {!spaces?.length ? (
@@ -48,85 +68,95 @@ export default async function SpacesPage() {
       ) : (
         <ul className="space-y-3">
           {spaces.map((w) => {
-            const taken = takenByWarehouse.get(w.id) ?? 0;
-            const free = Number(w.total_m2) - taken;
-            const pct = Number(w.total_m2) > 0 ? Math.round((taken / Number(w.total_m2)) * 100) : 0;
-            const pendingChecks = (checklist ?? []).filter(
-              (c) => c.warehouse_id === w.id && c.status === 'pending',
-            );
+            const total = Number(w.total_m2);
+            const usados = arrendados.get(w.id) ?? 0;
+            const libres = Math.max(0, total - usados);
+            const pct = total > 0 ? Math.round((usados / total) * 100) : 0;
+            const guardados = skus.get(w.id)?.size ?? 0;
+            const imagen = foto.get(w.id);
 
             return (
-              <li key={w.id} className="card p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-[16px] font-extrabold text-navy-900">{w.comuna}</h2>
-                      <Badge tone={TONE[w.status]}>{LABELS.warehouseStatus[w.status]}</Badge>
+              <li key={w.id}>
+                <Link
+                  href={`/bodeguero/espacios/${w.id}`}
+                  className="block rounded-[18px] border border-line-100 bg-white p-4 shadow-[0_2px_6px_rgba(16,36,58,.04)] transition-colors hover:border-navy-800"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-[12px] bg-rayado">
+                      {imagen ? (
+                        <Image src={imagen} alt="" fill sizes="48px" className="object-cover" />
+                      ) : null}
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[16px] font-extrabold text-navy-900">
+                        {w.comuna} · {formatNumber(total, 0)} m²
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-ink-500">
+                        {guardados === 0
+                          ? 'Sin mercadería guardada'
+                          : `${guardados} ${guardados === 1 ? 'SKU almacenado' : 'SKUs almacenados'}`}
+                      </p>
                     </div>
-                    <p className="mt-0.5 text-[12.5px] text-ink-400">
-                      {w.code} · {w.address}
-                    </p>
-                  </div>
 
-                  <div className="text-right">
-                    <p className="text-[15px] font-extrabold text-navy-900 tabular-nums">
-                      {formatCLP(w.price_per_m2)}
-                      <span className="text-[11px] font-bold text-ink-400"> /m² al mes</span>
-                    </p>
-                    <p className="text-[11.5px] text-ink-400">
-                      ≈ {formatCLP(pricePerM3(w.price_per_m2))} por m³
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <div className="flex items-baseline justify-between text-[12.5px]">
-                    <span className="text-ink-500">
-                      {formatNumber(taken, 1)} de {formatNumber(Number(w.total_m2), 1)} m² arrendados
-                    </span>
-                    <span className="font-bold text-navy-900">
-                      quedan {formatNumber(free, 1)} m² · {pct}%
+                    <Badge tone={TONE[w.status] ?? 'neutral'}>
+                      {LABELS.warehouseStatus[w.status]}
+                    </Badge>
+                    <span aria-hidden className="shrink-0 text-line-300">
+                      <Icon name="siguiente" size={14} />
                     </span>
                   </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-pill bg-line-100">
-                    <div className="h-full rounded-pill bg-navy-800" style={{ width: `${Math.min(100, pct)}%` }} />
-                  </div>
-                </div>
 
-                {w.status === 'pending_review' ? (
-                  <div className="mt-4 rounded-field bg-warning-50 p-4">
-                    <p className="text-[13px] font-bold text-warning-700">Enviado a revisión</p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-ink-700">
-                      Un evaluador de BodGo agenda la visita de habilitación en los próximos 3 a 5
-                      días hábiles. Mientras tanto: despeja el espacio, deja el extintor a la vista y
-                      ten a mano el certificado de dominio o el contrato de arriendo.
-                    </p>
-                    {pendingChecks.length > 0 ? (
-                      <ul className="mt-3 space-y-1">
-                        {pendingChecks.map((c) => (
-                          <li key={c.item} className="text-[12px] text-ink-500">
-                            ○ {c.item}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
+                  <p className="mt-3 flex items-baseline gap-2">
+                    <span className="text-[14px] font-extrabold text-navy-800 tabular-nums">
+                      {formatNumber(usados, 1)} / {formatNumber(total, 0)} m² usados
+                    </span>
+                    <span className="text-[11px] font-bold text-ink-500">· {pct}%</span>
+                  </p>
 
-                {w.status === 'active' || w.status === 'paused' ? (
-                  <div className="mt-4 border-t border-line-100 pt-4">
-                    <WarehouseToggle warehouseId={w.id} status={w.status} />
+                  <div className="mt-2 flex items-center gap-2">
+                    <div
+                      role="progressbar"
+                      aria-valuenow={Math.min(100, pct)}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Ocupación del espacio"
+                      className="h-[7px] flex-1 overflow-hidden rounded-pill bg-line-100"
+                    >
+                      <div
+                        className={`h-full rounded-pill ${pct >= 100 ? 'bg-danger-600' : pct >= 85 ? 'bg-warning-600' : 'bg-success-600'}`}
+                        style={{ width: `${Math.min(100, pct)}%` }}
+                      />
+                    </div>
+                    <span
+                      className={`shrink-0 text-[12px] font-bold ${libres > 0 ? 'text-success-700' : 'text-ink-500'}`}
+                    >
+                      {libres > 0 ? `quedan ${formatNumber(libres, 1)} m²` : 'completo'}
+                    </span>
                   </div>
-                ) : null}
+
+                  <p className="mt-3 border-t border-line-100 pt-3 text-[12px] text-ink-500">
+                    {formatCLP(w.price_per_m2)} por m² al mes · {w.code}
+                  </p>
+                </Link>
               </li>
             );
           })}
         </ul>
       )}
 
-      <p className="text-center text-[12.5px] text-ink-400">
-        Al publicar quedas cubierto por el seguro de la red, que responde por robo e incendio hasta 2
-        millones por PyME.
+      <p className="rounded-[16px] border-[1.5px] border-line-100 bg-surface-25 p-4 text-center">
+        <span className="block text-[13px] font-bold text-ink-500">
+          Puedes publicar más de un espacio
+        </span>
+        <span className="mt-1 block text-[12px] text-ink-500">
+          Cada uno pasa por su propia visita de habilitación antes de aparecer en el buscador.
+        </span>
+      </p>
+
+      <p className="text-center text-[12px] text-ink-500">
+        Al publicar quedas cubierto por el seguro de la red, que responde por robo e incendio hasta
+        2 millones por PyME.
       </p>
     </div>
   );

@@ -143,6 +143,11 @@ al terminar, así que es segura de correr sobre la base sembrada.
   omite la dirección exacta a propósito (se revela con el contrato firmado), y
   `public_profiles` expone sólo nombre, rol y avatar. El contacto y los datos
   tributarios viven en tablas cerradas.
+- **`host_escrow` es la excepción medida.** El bodeguero no puede leer
+  `payments` —ahí están el medio de pago de la PyME, los intentos fallidos y
+  el motivo del rechazo— pero sí necesita saber cuánta plata suya está
+  retenida. La vista devuelve un agregado, filtrado por `auth.uid()` adentro,
+  y la prueba de humo verifica que nadie vea la custodia de otro.
 - **La plata y el stock se mueven por funciones transaccionales** en Postgres
   (`create_contract`, `confirm_reception`, `advance_order`, `terminate_contract`),
   no por escrituras sueltas del cliente.

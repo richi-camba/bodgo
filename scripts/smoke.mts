@@ -383,6 +383,24 @@ const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUP
   check('el enlace no abre la tabla de pedidos', (data?.length ?? 0) === 0);
 }
 
+// ------------------------------------------------------- custodia del bodeguero
+{
+  const { data: mia } = await host.from('host_escrow').select('*');
+  check(
+    'el bodeguero ve su propia custodia',
+    (mia?.length ?? 0) === 1 && Number(mia[0].held_base_amount) > 0,
+    `${mia?.[0]?.held_payments ?? 0} en custodia`,
+  );
+
+  // Es el punto de la vista: atraviesa el RLS de `payments` pero sólo para
+  // devolverle a cada quien su propia fila.
+  const { data: ajena } = await outsider.from('host_escrow').select('*');
+  check('la custodia de un bodeguero no la ve nadie más', (ajena?.length ?? 0) === 0);
+
+  const { data: pagos } = await host.from('payments').select('id, amount');
+  check('el bodeguero sigue sin poder leer pagos individuales', (pagos?.length ?? 0) === 0);
+}
+
 // -------------------------------------------------------------------- limpieza
 await admin.from('orders').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('shipments').delete().eq('warehouse_id', testWarehouse.id);

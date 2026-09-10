@@ -109,6 +109,55 @@ export async function createWarehouse(_prev: ActionState, formData: FormData): P
   redirect('/bodeguero/espacios');
 }
 
+/**
+ * Editar un espacio ya publicado.
+ *
+ * La capacidad no puede bajar de lo que ya está arrendado: el contrato firmado
+ * manda, y dejar el espacio sobrevendido rompería el cálculo de ocupación y el
+ * aviso de «no cabe» de los envíos.
+ */
+export async function updateWarehouse(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = warehouseSchema
+    .omit({ access247: true })
+    .extend({ warehouseId: z.string().uuid(), access247: z.string().optional() })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  const supabase = await createClient();
+
+  const { data: contracts } = await supabase
+    .from('contracts')
+    .select('m2')
+    .eq('warehouse_id', parsed.data.warehouseId)
+    .eq('status', 'active');
+
+  const arrendados = (contracts ?? []).reduce((s, c) => s + Number(c.m2), 0);
+  if (parsed.data.totalM2 < arrendados) {
+    return {
+      error: `Ya tienes ${arrendados} m² arrendados en este espacio: la capacidad no puede quedar por debajo.`,
+    };
+  }
+
+  const { error } = await supabase
+    .from('warehouses')
+    .update({
+      comuna: parsed.data.comuna,
+      address: parsed.data.address,
+      address_reference: parsed.data.addressReference || null,
+      total_m2: parsed.data.totalM2,
+      price_per_m2: parsed.data.pricePerM2,
+      description: parsed.data.description || null,
+      access_24_7: parsed.data.access247 === 'on',
+    })
+    .eq('id', parsed.data.warehouseId);
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/bodeguero/espacios', 'layout');
+  return { ok: 'Cambios guardados.' };
+}
+
 /** Pausa o reactiva un espacio ya habilitado. */
 export async function toggleWarehouse(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const schema = z.object({
@@ -127,7 +176,7 @@ export async function toggleWarehouse(_prev: ActionState, formData: FormData): P
 
   if (error) return { error: readableError(error.message) };
 
-  revalidatePath('/bodeguero/espacios');
+  revalidatePath('/bodeguero/espacios', 'layout');
   return { ok: parsed.data.next === 'active' ? 'Espacio reactivado.' : 'Espacio pausado.' };
 }
 

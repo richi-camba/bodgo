@@ -45,7 +45,7 @@ export default async function ReceptionDetail({ params }: { params: Promise<{ id
   if (shipment.status === 'in_transit') {
     return (
       <div>
-        <StepHeader titulo="Verificar recepción" subtitulo={meta} volverA="/bodeguero/recepciones" />
+        <StepHeader titulo="Verificar recepción" subtitulo={meta} volverA="/bodeguero/pedidos?tipo=recibir" />
 
         {shipment.description ? (
           <p className="mb-4 rounded-field bg-white p-3.5 text-[13px] text-ink-700">
@@ -76,7 +76,7 @@ export default async function ReceptionDetail({ params }: { params: Promise<{ id
       <StepHeader
         titulo="Recepción registrada"
         subtitulo={meta}
-        volverA="/bodeguero/recepciones"
+        volverA="/bodeguero/pedidos?tipo=recibir"
         tomaLaPantalla={false}
         accion={
           <Badge tone={shipment.status === 'discrepancy' ? 'danger' : 'success'}>

@@ -4,10 +4,9 @@ import { requireUser } from '@/lib/session';
 
 const NAV: NavItem[] = [
   { href: '/bodeguero', label: 'Inicio', icon: 'inicio', primary: true },
-  { href: '/bodeguero/recepciones', label: 'Recepciones', icon: 'recepciones', primary: true },
   { href: '/bodeguero/pedidos', label: 'Pedidos', icon: 'pedidos', primary: true },
+  { href: '/bodeguero/espacios', label: 'Mis espacios', icon: 'espacios', primary: true },
   { href: '/bodeguero/inventario', label: 'Inventario', icon: 'inventario', primary: true },
-  { href: '/bodeguero/espacios', label: 'Mis espacios', icon: 'espacios' },
   { href: '/bodeguero/pagos', label: 'Pagos', icon: 'pagos', primary: true },
   { href: '/bodeguero/notificaciones', label: 'Notificaciones', icon: 'notificaciones' },
 ];
