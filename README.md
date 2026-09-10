@@ -159,6 +159,14 @@ al terminar, así que es segura de correr sobre la base sembrada.
 - **Lo público sale por vistas y funciones, no por políticas laxas.** El
   buscador de bodegas, los perfiles y el seguimiento del comprador son
   proyecciones deliberadas que listan sus columnas una a una.
+- **Sin testimonios inventados.** El prototipo tenía un carrusel de citas de
+  PyMEs. Con cero clientes reales, publicarlas en un sitio en línea sería
+  fabricar prueba social: en su lugar la portada muestra respaldos
+  comprobables — la custodia, el seguro, la verificación de espacios.
+- **La fotografía es la del prototipo**, en `public/fotos/`. Venía en PNG
+  (4,5 MB); convertida a JPEG queda en 413 KB y `next/image` la sirve en WebP
+  con srcset. El logo de Corfo va en sus colores sobre fondo blanco: la marca
+  de un organismo público no se recolorea.
 
 ## Pagos
 
