@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { signIn, type AuthState } from '@/app/auth/actions';
+import { AuthTabs } from '@/components/app/auth-tabs';
+import { SocialAuth } from '@/components/app/social-auth';
 import { Button } from '@/components/ui/button';
-import { Field, FormError, Input } from '@/components/ui/field';
+import { Field, FormError, InputConIcono } from '@/components/ui/field';
 
 const CALLBACK_ERRORS: Record<string, string> = {
   'sin-codigo': 'El enlace de acceso venció o ya se usó. Inicia sesión de nuevo.',
@@ -16,41 +18,54 @@ export function SignInForm({ next, callbackError }: { next?: string; callbackErr
   const [state, action] = useActionState<AuthState, FormData>(signIn, null);
 
   return (
-    <form action={action} className="space-y-4">
-      <FormError>{state?.error ?? (callbackError ? CALLBACK_ERRORS[callbackError] : null)}</FormError>
+    <div className="space-y-5">
+      <AuthTabs activa="ingresar" />
 
-      {next ? <input type="hidden" name="next" value={next} /> : null}
+      <form action={action} className="space-y-4">
+        <FormError>
+          {state?.error ?? (callbackError ? CALLBACK_ERRORS[callbackError] : null)}
+        </FormError>
 
-      <Field label="Correo" htmlFor="email">
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          placeholder="tucorreo@empresa.cl"
-        />
-      </Field>
+        {next ? <input type="hidden" name="next" value={next} /> : null}
 
-      <Field label="Contraseña" htmlFor="password">
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          placeholder="Tu contraseña"
-        />
-      </Field>
+        <Field label="Correo" htmlFor="email">
+          <InputConIcono
+            icon="correo"
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="tucorreo@empresa.cl"
+          />
+        </Field>
 
-      <p className="text-right">
-        <Link href="/recuperar" className="text-[12.5px] font-semibold text-brand-600 hover:underline">
-          ¿Olvidaste tu contraseña?
-        </Link>
-      </p>
+        <Field label="Contraseña" htmlFor="password">
+          <InputConIcono
+            icon="clave"
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            placeholder="Tu contraseña"
+          />
+        </Field>
 
-      <Submit />
-    </form>
+        <p className="text-right">
+          <Link
+            href="/recuperar"
+            className="text-[12.5px] font-semibold text-brand-600 hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
+
+        <Submit />
+      </form>
+
+      <SocialAuth next={next} />
+    </div>
   );
 }
 

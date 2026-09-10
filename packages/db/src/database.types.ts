@@ -2004,6 +2004,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           occupancy_pct: number | null
+          photo_path: string | null
           price_per_m2: number | null
           published_at: string | null
           rating: number | null

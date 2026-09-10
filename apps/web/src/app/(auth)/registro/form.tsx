@@ -3,24 +3,29 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { signUp, type AuthState } from '@/app/auth/actions';
+import { AuthTabs } from '@/components/app/auth-tabs';
+import { SocialAuth } from '@/components/app/social-auth';
 import { Button } from '@/components/ui/button';
-import { Field, FormError, Input } from '@/components/ui/field';
+import { Field, FormError, Input, InputConIcono } from '@/components/ui/field';
 
 export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' }) {
   const [state, action] = useActionState<AuthState, FormData>(signUp, null);
   const isPyme = role === 'pyme';
 
   return (
-    <form action={action} className="space-y-4">
-      <FormError>{state?.error}</FormError>
+    <div className="space-y-5">
+      <AuthTabs activa="registro" rol={role === 'pyme' ? undefined : role} />
 
-      <input type="hidden" name="role" value={role} />
+      <form action={action} className="space-y-4">
+        <FormError>{state?.error}</FormError>
 
-      <Field label="Nombre y apellido" htmlFor="fullName">
+        <input type="hidden" name="role" value={role} />
+
+        <Field label="Nombre y apellido" htmlFor="fullName">
         <Input id="fullName" name="fullName" autoComplete="name" required placeholder="Valentina Castro" />
-      </Field>
+        </Field>
 
-      {isPyme ? (
+        {isPyme ? (
         <Field label="Nombre del negocio" htmlFor="businessName" hint="Como lo conocen tus clientes.">
           <Input
             id="businessName"
@@ -29,14 +34,23 @@ export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' }) {
             placeholder="Boutique Lúa"
           />
         </Field>
-      ) : null}
+        ) : null}
 
-      <Field label="Correo" htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required placeholder="tucorreo@empresa.cl" />
-      </Field>
+        <Field label="Correo" htmlFor="email">
+        <InputConIcono
+          icon="correo"
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          placeholder="tucorreo@empresa.cl"
+        />
+        </Field>
 
-      <Field label="Contraseña" htmlFor="password" hint="Mínimo 8 caracteres.">
-        <Input
+        <Field label="Contraseña" htmlFor="password" hint="Mínimo 8 caracteres.">
+        <InputConIcono
+          icon="clave"
           id="password"
           name="password"
           type="password"
@@ -45,9 +59,9 @@ export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' }) {
           minLength={8}
           placeholder="Crea una contraseña"
         />
-      </Field>
+        </Field>
 
-      <label className="flex items-start gap-2.5 pt-1 text-[12.5px] leading-relaxed text-ink-500">
+        <label className="flex items-start gap-2.5 pt-1 text-[12.5px] leading-relaxed text-ink-500">
         <input
           type="checkbox"
           name="terms"
@@ -61,10 +75,13 @@ export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' }) {
           </a>{' '}
           y la Política de Privacidad (Ley 19.628).
         </span>
-      </label>
+        </label>
 
-      <Submit label={isPyme ? 'Crear cuenta PyME' : 'Crear cuenta de bodeguero'} />
-    </form>
+        <Submit label={isPyme ? 'Crear cuenta PyME' : 'Crear cuenta de bodeguero'} />
+      </form>
+
+      <SocialAuth />
+    </div>
   );
 }
 

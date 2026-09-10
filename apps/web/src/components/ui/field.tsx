@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
+import { Icon, type IconName } from '@/components/ui/icon';
 
 const INPUT =
   'h-12 w-full rounded-field border border-line-200 bg-white px-3.5 text-[14.5px] text-navy-900 ' +
@@ -60,5 +61,26 @@ export function FormError({ children }: { children?: ReactNode }) {
     >
       {children}
     </p>
+  );
+}
+
+/**
+ * Campo con icono adentro, como los del prototipo.
+ *
+ * El icono es decorativo: la etiqueta ya dice qué va en el campo, así que
+ * repetirlo para un lector de pantalla sería ruido.
+ */
+export function InputConIcono({
+  icon,
+  className = '',
+  ...rest
+}: { icon: IconName } & ComponentProps<'input'>) {
+  return (
+    <span className="relative block">
+      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400">
+        <Icon name={icon} size={16} />
+      </span>
+      <input className={`${INPUT} pl-10 ${className}`} {...rest} />
+    </span>
   );
 }

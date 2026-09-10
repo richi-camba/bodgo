@@ -20,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       userName={user.fullName}
       userSubtitle="Tamayaz SpA"
       initials={user.initials}
+      tono="navy"
     >
       {children}
     </AppShell>

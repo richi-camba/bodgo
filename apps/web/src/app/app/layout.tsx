@@ -10,6 +10,7 @@ const NAV: NavItem[] = [
   { href: '/app/inventario', label: 'Mi inventario', icon: 'inventario', primary: true },
   { href: '/app/contratos', label: 'Mis contratos', icon: 'contratos' },
   { href: '/app/metricas', label: 'Métricas', icon: 'metricas', primary: true },
+  { href: '/app/notificaciones', label: 'Notificaciones', icon: 'notificaciones' },
   { href: '/app/perfil', label: 'Mi perfil', icon: 'perfil' },
 ];
 
@@ -17,11 +18,13 @@ export default async function PymeLayout({ children }: { children: React.ReactNo
   const user = await requireUser('pyme');
   const supabase = await createClient();
 
-  const { data: pyme } = await supabase
-    .from('pyme_profiles')
-    .select('business_name')
-    .eq('profile_id', user.id)
-    .single();
+  const [{ data: pyme }, { count: sinLeer }] = await Promise.all([
+    supabase.from('pyme_profiles').select('business_name').eq('profile_id', user.id).single(),
+    supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .is('read_at', null),
+  ]);
 
   return (
     <AppShell
@@ -30,6 +33,8 @@ export default async function PymeLayout({ children }: { children: React.ReactNo
       userName={user.fullName}
       userSubtitle={pyme?.business_name ?? undefined}
       initials={user.initials}
+      tono="navy"
+      avisos={{ href: '/app/notificaciones', sinLeer: sinLeer ?? 0 }}
     >
       {children}
     </AppShell>

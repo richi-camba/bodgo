@@ -1,28 +1,56 @@
 import type { ReactNode } from 'react';
 import { Icon, type IconName } from '@/components/ui/icon';
 
-/** Tarjeta de métrica: el número grande primero, la etiqueta debajo. */
+/**
+ * Tarjeta de métrica.
+ *
+ * El prototipo usa dos órdenes distintos y los dos son deliberados: en la
+ * portada de la PyME el número va primero, porque es lo que se mira de un
+ * vistazo; en el backoffice y en la app del bodeguero va la etiqueta primero,
+ * porque ahí hay cuatro cifras juntas y hace falta saber qué es cada una antes
+ * de leerlas.
+ */
 export function Stat({
   value,
   label,
   delta,
   tone = 'neutral',
+  orden = 'valor-primero',
 }: {
   value: ReactNode;
   label: string;
   delta?: string;
   tone?: 'neutral' | 'success' | 'danger';
+  orden?: 'valor-primero' | 'etiqueta-primero';
 }) {
+  const valor = (
+    <p className="text-[24px] font-extrabold leading-none tracking-tight text-navy-900 tabular-nums">
+      {value}
+    </p>
+  );
+  const etiqueta = <p className="text-[12px] text-ink-500">{label}</p>;
+
   return (
     <div className="card p-4">
-      <p className="text-[24px] font-extrabold leading-none tracking-tight text-navy-900 tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1.5 text-[12px] text-ink-500">{label}</p>
+      {orden === 'valor-primero' ? (
+        <>
+          {valor}
+          <div className="mt-1.5">{etiqueta}</div>
+        </>
+      ) : (
+        <>
+          {etiqueta}
+          <div className="mt-2">{valor}</div>
+        </>
+      )}
       {delta ? (
         <p
           className={`mt-2 text-[11.5px] font-bold ${
-            tone === 'success' ? 'text-success-600' : tone === 'danger' ? 'text-danger-700' : 'text-ink-400'
+            tone === 'success'
+              ? 'text-success-700'
+              : tone === 'danger'
+                ? 'text-danger-700'
+                : 'text-ink-500'
           }`}
         >
           {delta}

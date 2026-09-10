@@ -9,13 +9,18 @@ const NAV: NavItem[] = [
   { href: '/bodeguero/inventario', label: 'Inventario', icon: 'inventario', primary: true },
   { href: '/bodeguero/espacios', label: 'Mis espacios', icon: 'espacios' },
   { href: '/bodeguero/pagos', label: 'Pagos', icon: 'pagos', primary: true },
+  { href: '/bodeguero/notificaciones', label: 'Notificaciones', icon: 'notificaciones' },
 ];
 
 export default async function BodegueroLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser('bodeguero');
   const supabase = await createClient();
 
-  const { data: spaces } = await supabase.from('warehouses').select('total_m2');
+  const [{ data: spaces }, { count: sinLeer }] = await Promise.all([
+    supabase.from('warehouses').select('total_m2'),
+    supabase.from('notifications').select('*', { count: 'exact', head: true }).is('read_at', null),
+  ]);
+
   const totalM2 = (spaces ?? []).reduce((s, w) => s + Number(w.total_m2), 0);
 
   return (
@@ -29,6 +34,7 @@ export default async function BodegueroLayout({ children }: { children: React.Re
           : 'Sin espacios publicados'
       }
       initials={user.initials}
+      avisos={{ href: '/bodeguero/notificaciones', sinLeer: sinLeer ?? 0 }}
     >
       {children}
     </AppShell>

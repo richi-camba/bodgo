@@ -9,11 +9,13 @@ export function NavLink({
   icon,
   label,
   compact,
+  navy,
 }: {
   href: string;
   icon: IconName;
   label: string;
   compact?: boolean;
+  navy?: boolean;
 }) {
   const pathname = usePathname();
   // La raíz de cada app sólo se marca activa en coincidencia exacta; el resto,
@@ -28,11 +30,26 @@ export function NavLink({
         href={href}
         aria-current={active ? 'page' : undefined}
         className={`flex flex-col items-center gap-1 px-1 py-2.5 text-[10px] font-bold ${
-          active ? 'text-navy-800' : 'text-ink-400'
+          active ? 'text-navy-800' : 'text-ink-500'
         }`}
       >
         <Icon name={icon} size={20} />
         <span className="max-w-full truncate">{label}</span>
+      </Link>
+    );
+  }
+
+  if (navy) {
+    return (
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-3 rounded-field px-3 py-2.5 text-[13.5px] font-semibold transition-colors ${
+          active ? 'bg-white/12 text-white' : 'text-white/70 hover:bg-white/[0.07] hover:text-white'
+        }`}
+      >
+        <Icon name={icon} size={17} />
+        {label}
       </Link>
     );
   }

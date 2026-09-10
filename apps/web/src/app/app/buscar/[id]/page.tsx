@@ -1,5 +1,6 @@
-import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
@@ -15,53 +16,98 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
   await requireUser('pyme');
   const supabase = await createClient();
 
-  const [{ data: warehouse }, { data: cards }] = await Promise.all([
+  const [{ data: w }, { data: cards }] = await Promise.all([
     supabase.from('warehouse_listings').select('*').eq('id', id).maybeSingle(),
-    supabase.from('payment_methods').select('id, brand, last4, is_default').order('is_default', { ascending: false }),
+    supabase
+      .from('payment_methods')
+      .select('id, brand, last4, is_default')
+      .order('is_default', { ascending: false }),
   ]);
 
-  if (!warehouse) notFound();
+  if (!w) notFound();
 
-  const available = Number(warehouse.available_m2 ?? 0);
-  const capacity = Number(warehouse.capacity_m3 ?? 0);
-  const availableM3 = Math.round(capacity * (available / Math.max(Number(warehouse.total_m2 ?? 1), 1)) * 10) / 10;
+  const disponible = Number(w.available_m2 ?? 0);
+  const totalM3 = Number(w.capacity_m3 ?? 0);
+  const totalM2 = Number(w.total_m2 ?? 1);
+  const disponibleM3 = Math.round(totalM3 * (disponible / Math.max(totalM2, 1)) * 10) / 10;
+  const lleno = disponible < 1;
 
   return (
-    <div className="space-y-5">
-      <Link href="/app/buscar" className="inline-block text-[13px] font-bold text-brand-600 hover:underline">
-        ← Volver al buscador
-      </Link>
+    <div className="-mx-4 -mt-5 sm:-mx-6 lg:-mt-8">
+      {/* ---------------------------------------------------------- portada */}
+      <div className="relative h-56 bg-navy-800 sm:h-64">
+        {w.photo_path ? (
+          <Image src={w.photo_path} alt="" fill priority sizes="100vw" className="object-cover" />
+        ) : (
+          <span
+            aria-hidden
+            className="flex h-full w-full items-center justify-center text-[72px] font-extrabold text-white/12"
+          >
+            {w.comuna?.trim()[0]?.toUpperCase()}
+          </span>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-transparent to-navy-950/25" />
 
-      <header className="card p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[24px] font-extrabold tracking-tight text-navy-900">
-              {warehouse.comuna}
-            </h1>
-            <p className="mt-1 text-[13.5px] text-ink-500">
-              {warehouse.sector_label} · dirección exacta al contratar
+        <Link
+          href="/app/buscar"
+          className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-navy-950/70 text-white backdrop-blur-sm transition-colors hover:bg-navy-950"
+        >
+          <Icon name="volver" size={17} label="Volver al buscador" />
+        </Link>
+
+        <span className="absolute bottom-4 left-4 rounded-field bg-navy-950/80 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm">
+          {lleno ? 'Sin espacio disponible' : `${formatNumber(disponible, 1)} m² disponibles`}
+        </span>
+      </div>
+
+      {/* ------------------------------------------------------------ ficha */}
+      <div className="relative -mt-5 rounded-t-[22px] bg-surface-50 px-4 pb-32 pt-6 sm:px-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-[24px] font-extrabold tracking-tight text-navy-900">{w.comuna}</h1>
+            <p className="mt-1 text-[13px] text-ink-500">
+              {w.sector_label} · dirección exacta al contratar
             </p>
           </div>
-          <div className="flex gap-2">
-            <Badge tone="warning">★ {Number(warehouse.rating ?? 0).toFixed(1)}</Badge>
-            {warehouse.access_24_7 ? <Badge tone="success">Acceso 24/7</Badge> : null}
+          <span className="flex shrink-0 items-center gap-1 rounded-pill bg-white px-2.5 py-1.5 text-[13px] font-bold text-navy-900 shadow-card">
+            <span aria-hidden className="text-warning-600">★</span>
+            {Number(w.rating ?? 0).toFixed(1)}
+          </span>
+        </div>
+
+        {/* --------------------------------------------------- precio */}
+        <div className="mt-5 flex items-end justify-between gap-4 rounded-card bg-navy-800 p-5 text-white">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-white/70">
+              Precio por m³
+            </p>
+            <p className="mt-1 text-[26px] font-extrabold leading-none tabular-nums">
+              {formatCLP(pricePerM3(w.price_per_m2 ?? 0))}
+              <span className="text-[13px] font-bold text-white/70">/mes</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-white/70">Disponible</p>
+            <p className="mt-1 text-[20px] font-extrabold leading-none tabular-nums">
+              {formatNumber(disponibleM3, 1)} m³
+            </p>
+            <p className="text-[11.5px] text-white/70">de {formatNumber(totalM3, 1)} m³ totales</p>
           </div>
         </div>
 
-        <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Metric label="Superficie libre" value={`${formatNumber(available, 1)} m²`} />
-          <Metric label="Volumen apilable" value={`${formatNumber(availableM3, 1)} m³`} />
-          <Metric label="Precio" value={`${formatCLP(warehouse.price_per_m2 ?? 0)} /m²`} />
-          <Metric label="Por m³" value={`${formatCLP(pricePerM3(warehouse.price_per_m2 ?? 0))} /mes`} />
+        <dl className="mt-3 grid grid-cols-3 gap-2.5">
+          <Dato label="Superficie libre" value={lleno ? '—' : `${formatNumber(disponible, 1)} m²`} />
+          <Dato label="Precio" value={`${formatCLP(w.price_per_m2 ?? 0)}/m²`} />
+          <Dato label="Acceso" value={w.access_24_7 ? '24/7' : 'Con horario'} />
         </dl>
 
-        {warehouse.description ? (
-          <p className="mt-5 text-[14px] leading-relaxed text-ink-700">{warehouse.description}</p>
+        {w.description ? (
+          <p className="mt-5 text-[14.5px] leading-relaxed text-ink-700">{w.description}</p>
         ) : null}
 
-        {warehouse.services?.length ? (
+        {w.services?.length ? (
           <ul className="mt-4 flex flex-wrap gap-2">
-            {warehouse.services.map((s: string) => (
+            {w.services.map((s: string) => (
               <li key={s}>
                 <Badge>{s}</Badge>
               </li>
@@ -69,79 +115,95 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
           </ul>
         ) : null}
 
-        <div className="mt-6 flex items-center gap-3 border-t border-line-100 pt-5">
+        {/* ------------------------------------------------- ubicación */}
+        <section className="mt-6">
+          <h2 className="text-[15px] font-extrabold text-navy-900">Ubicación aproximada</h2>
+          <PrivacyMap comuna={w.comuna ?? ''} />
+          <p className="mt-3 flex gap-2 text-[12.5px] leading-relaxed text-ink-500">
+            <span className="mt-0.5 shrink-0 text-ink-400">
+              <Icon name="ubicacion" size={14} />
+            </span>
+            Mostramos sólo el sector aproximado. Verás la calle y el número una vez confirmado el
+            contrato.
+          </p>
+        </section>
+
+        {/* ------------------------------------------------- bodeguero */}
+        <div className="mt-5 flex items-center gap-3 rounded-card bg-white p-4">
           <span
             aria-hidden
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-navy-800 text-[13px] font-extrabold text-white"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy-800 text-[14px] font-extrabold text-white"
           >
-            {(warehouse.bodeguero_name ?? '?')
+            {(w.bodeguero_name ?? '?')
               .split(' ')
               .slice(0, 2)
               .map((p: string) => p[0])
               .join('')}
           </span>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-ink-400">Bodeguero</p>
-            <p className="text-[14px] font-bold text-navy-900">{warehouse.bodeguero_name}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">Bodeguero</p>
+            <p className="truncate text-[14.5px] font-bold text-navy-900">{w.bodeguero_name}</p>
           </div>
         </div>
-      </header>
 
-      <section className="card p-6">
-        <h2 className="text-[16px] font-extrabold text-navy-900">Cómo funciona tu envío</h2>
-        <ol className="mt-4 space-y-3 text-[13.5px] leading-relaxed text-ink-700">
-          <Step n={1}>
-            Envías tu mercadería con el detalle de lo que mandas: SKUs y cantidades.
-          </Step>
-          <Step n={2}>
-            El bodeguero <strong className="font-bold">confirma la recepción con foto</strong> al
-            llegar. Lo recibido debe coincidir con lo enviado.
-          </Step>
-          <Step n={3}>
-            Tu inventario se actualiza solo. Si hay diferencias, se abre un incidente de control de
-            stock y el pago sigue retenido.
-          </Step>
-        </ol>
-
-        <div className="mt-5 flex gap-3 rounded-field bg-brand-50 p-4">
-          <span className="mt-0.5 text-brand-600">
-            <Icon name="pagos" size={17} />
-          </span>
-          <p className="text-[13px] leading-relaxed text-navy-800">
-            A ti se te cobra <strong className="font-bold">por adelantado</strong> al contratar. Al
-            bodeguero le pagamos <strong className="font-bold">a fin de mes</strong> por los días
-            efectivamente usados; el dinero queda en custodia mientras tanto.
-          </p>
+        {/* ------------------------------------------------- contratar */}
+        <div className="mt-5">
+          <ContractForm
+            warehouseId={w.id!}
+            comuna={w.comuna ?? ''}
+            pricePerM2={w.price_per_m2 ?? 0}
+            availableM2={disponible}
+            cards={cards ?? []}
+          />
         </div>
-      </section>
+      </div>
+    </div>
+  );
+}
 
-      <ContractForm
-        warehouseId={warehouse.id!}
-        comuna={warehouse.comuna ?? ''}
-        pricePerM2={warehouse.price_per_m2 ?? 0}
-        availableM2={available}
-        cards={cards ?? []}
+function Dato({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-field bg-white p-3">
+      <dt className="text-[10px] font-bold uppercase tracking-wide text-ink-500">{label}</dt>
+      <dd className="mt-1 text-[14px] font-extrabold text-navy-900 tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * Sector aproximado, dibujado y no mapeado.
+ *
+ * El prototipo muestra acá un círculo difuso sobre una trama. No es un mapa
+ * recortado: es exactamente lo que la plataforma promete —el sector, no el
+ * punto— y dibujarlo evita contratar un proveedor de mapas para decir algo
+ * que a propósito es impreciso.
+ */
+function PrivacyMap({ comuna }: { comuna: string }) {
+  return (
+    <div
+      role="img"
+      aria-label={`Sector aproximado en ${comuna}. La dirección exacta se revela al contratar.`}
+      className="relative mt-3 h-40 overflow-hidden rounded-card border border-line-200 bg-surface-100"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-0 opacity-[0.5]"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(45deg, var(--color-line-200) 0 1px, transparent 1px 11px)',
+        }}
       />
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-field bg-surface-50 p-3">
-      <dt className="text-[10.5px] font-bold uppercase tracking-wide text-ink-400">{label}</dt>
-      <dd className="mt-1 text-[15px] font-extrabold text-navy-900 tabular-nums">{value}</dd>
-    </div>
-  );
-}
-
-function Step({ n, children }: { n: number; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy-800 text-[11px] font-extrabold text-white">
-        {n}
+      <span
+        aria-hidden
+        className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-brand-400/50 bg-brand-400/20"
+      />
+      <span
+        aria-hidden
+        className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600"
+      />
+      <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-pill bg-white/90 px-2.5 py-1 text-[11px] font-bold text-navy-900 backdrop-blur-sm">
+        {comuna}
       </span>
-      <span>{children}</span>
-    </li>
+    </div>
   );
 }

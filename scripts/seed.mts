@@ -204,6 +204,27 @@ for (const w of WAREHOUSES) {
   warehouseIds[w.comuna] = data.id;
 }
 
+// ----------------------------------------------------------------- fotos
+// Sólo tres espacios tienen foto, y es a propósito: en una red real no todos
+// los anfitriones suben una, y conviene que la interfaz demuestre el caso sin
+// imagen en vez de esconderlo.
+log('Asignando fotos a algunos espacios…');
+
+const FOTOS: Record<string, string> = {
+  Providencia: '/fotos/bodeguero-espacio.jpg',
+  'Las Condes': '/fotos/pyme-operacion.jpg',
+  Ñuñoa: '/fotos/pyme-despacho.jpg',
+};
+
+for (const [comuna, ruta] of Object.entries(FOTOS)) {
+  const id = warehouseIds[comuna];
+  if (!id) continue;
+  const { data: yaTiene } = await db
+    .from('warehouse_photos').select('id').eq('warehouse_id', id).maybeSingle();
+  if (yaTiene) continue;
+  await db.from('warehouse_photos').insert({ warehouse_id: id, storage_path: ruta, sort_order: 0 });
+}
+
 // ------------------------------------------------------------------ catálogo
 log('Cargando catálogo de Boutique Lúa…');
 
