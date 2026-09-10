@@ -14,7 +14,7 @@ export default async function SignInPage({
   return (
     <div>
       <h1 className="text-[26px] font-extrabold tracking-tight text-white">Hola de nuevo</h1>
-      <p className="mt-2 text-[14.5px] text-white/55">
+      <p className="mt-2 text-[14.5px] text-white/70">
         Inicia sesión para continuar en tu cuenta BodGo.
       </p>
 
@@ -22,7 +22,7 @@ export default async function SignInPage({
         <SignInForm next={next} callbackError={error} />
       </div>
 
-      <p className="mt-6 text-center text-[13.5px] text-white/55">
+      <p className="mt-6 text-center text-[13.5px] text-white/70">
         ¿No tienes cuenta?{' '}
         <Link href="/registro" className="font-bold text-brand-400 hover:underline">
           Regístrate

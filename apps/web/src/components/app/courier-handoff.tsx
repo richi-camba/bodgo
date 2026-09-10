@@ -134,7 +134,7 @@ export function CourierHandoff({ orderId, chargedToBuyer, initial }: Props) {
             </dt>
             <dd
               className={`text-[15px] font-extrabold tabular-nums ${
-                margin < 0 ? 'text-danger-600' : 'text-success-700'
+                margin < 0 ? 'text-danger-700' : 'text-success-700'
               }`}
             >
               {formatCLP(Math.abs(margin))}

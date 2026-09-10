@@ -65,7 +65,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <span className="flex shrink-0 items-center justify-center rounded-[10px] bg-white px-4 py-3">
               <Image src="/marcas/corfo.png" alt="Corfo" width={104} height={35} />
             </span>
-            <p className="max-w-md text-[12.5px] leading-relaxed text-white/50">
+            <p className="max-w-md text-[12.5px] leading-relaxed text-white/65">
               Iniciativa financiada por <strong className="font-semibold text-white/75">Corfo</strong>{' '}
               a través del instrumento Semilla Inicia (25INI2-312540), con el patrocinio de{' '}
               <strong className="font-semibold text-white/75">Innovo</strong>.
@@ -77,10 +77,10 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
             <div>
               <Logo size={22} tone="light" />
-              <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-white/60">
+              <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-white/70">
                 Red de microbodegas urbanas modulares para el e-commerce de las PyMEs.
               </p>
-              <p className="mt-5 text-[11px] font-semibold tracking-wide text-white/35">
+              <p className="mt-5 text-[11px] font-semibold tracking-wide text-white/70">
                 TAMAYAZ SpA · Santiago, Chile
               </p>
             </div>
@@ -112,7 +112,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             />
           </div>
 
-          <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-[12px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-[12px] text-white/65 sm:flex-row sm:items-center sm:justify-between">
             <p>© {new Date().getFullYear()} BodGo · Todos los derechos reservados</p>
             <p>
               <Link href="/terminos" className="hover:text-white/80">
@@ -133,7 +133,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
 function FooterColumn({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/40">{title}</h3>
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/70">{title}</h3>
       <ul className="mt-4 space-y-2.5">
         {links.map((l) => (
           <li key={l.label}>

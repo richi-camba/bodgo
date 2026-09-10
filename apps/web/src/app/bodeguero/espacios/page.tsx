@@ -95,7 +95,7 @@ export default async function SpacesPage() {
 
                 {w.status === 'pending_review' ? (
                   <div className="mt-4 rounded-field bg-warning-50 p-4">
-                    <p className="text-[13px] font-bold text-warning-600">Enviado a revisión</p>
+                    <p className="text-[13px] font-bold text-warning-700">Enviado a revisión</p>
                     <p className="mt-1 text-[12.5px] leading-relaxed text-ink-700">
                       Un evaluador de BodGo agenda la visita de habilitación en los próximos 3 a 5
                       días hábiles. Mientras tanto: despeja el espacio, deja el extintor a la vista y

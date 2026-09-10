@@ -163,6 +163,13 @@ crear su cuenta.
 
 ## Decisiones de diseño
 
+- **Los colores de texto pasan AA, y se midió.** Una auditoría sobre las
+  páginas renderizadas encontró 36 textos bajo el 4.5:1 de la WCAG. El gris
+  claro del prototipo (`#93A1B4`) quedaba en 2.6:1 — ilegible para bastante
+  gente, y no era una decisión estética sino un descuido. Ahora `ink-400` es
+  legible y el gris original sobrevive como `ink-300`, que la norma exceptúa
+  por ser sólo para controles deshabilitados. Los semánticos vienen en dos
+  tonos: el `-600` rellena, el `-700` escribe sobre el fondo teñido.
 - **Iconos, no emoji.** Los emoji se dibujan distinto en cada sistema
   operativo. `components/ui/icon.tsx` nombra cada icono por lo que significa en
   el producto (`recepciones`, `discrepancias`) y no por su forma, así cambiar el

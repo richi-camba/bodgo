@@ -99,7 +99,7 @@ export function ContractForm({
         </legend>
 
         {cards.length === 0 ? (
-          <p className="mt-3 rounded-field bg-warning-50 p-4 text-[13px] text-warning-600">
+          <p className="mt-3 rounded-field bg-warning-50 p-4 text-[13px] text-warning-700">
             Todavía no tienes una tarjeta guardada.{' '}
             <Link href="/app/perfil" className="font-bold underline">
               Agrega una

@@ -58,7 +58,7 @@ export default async function PayoutsPage() {
             Se deposita en {profile.bank_name} ····{profile.bank_account_last4}.
           </p>
         ) : (
-          <p className="mt-4 rounded-field bg-warning-50 p-3.5 text-[12.5px] font-semibold text-warning-600">
+          <p className="mt-4 rounded-field bg-warning-50 p-3.5 text-[12.5px] font-semibold text-warning-700">
             Falta tu cuenta bancaria. Sin ella no podemos depositarte a fin de mes.
           </p>
         )}

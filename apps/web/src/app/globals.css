@@ -24,16 +24,29 @@
   --color-success-700: #177a52;
   --color-success-600: #1e9e6a;
   --color-success-50: #e4f4ec;
+  /* Los semánticos vienen en dos tonos porque tienen dos trabajos distintos:
+     el -600 rellena (botón sólido, barra de progreso), donde lo que importa
+     es que el blanco encima se lea; el -700 escribe sobre el fondo teñido
+     -50, donde el -600 se quedaba en 2.8:1 y 3.9:1. Un color puede servir de
+     fondo y no servir de texto. */
+  --color-warning-700: #996113;
   --color-warning-600: #c9821f;
   --color-warning-50: #fbf0de;
+  --color-danger-700: #b0332c;
   --color-danger-600: #d6453c;
   --color-danger-50: #fdecea;
 
-  /* Neutros: la escala real del prototipo, no la de Tailwind. */
+  /* Neutros: la escala real del prototipo, no la de Tailwind.
+     Cada tono de texto llega al 4.5:1 que pide la WCAG sobre blanco y sobre
+     `surface-50`, que son los dos fondos donde se usan. El gris claro original
+     (#93A1B4) quedaba en 2.6:1 — ilegible para bastante gente, y no era una
+     decisión estética sino un descuido. Sobrevive como `ink-300`, que la norma
+     exceptúa por ser sólo para controles deshabilitados. */
   --color-ink-900: #16243a;
   --color-ink-700: #3c4a5e;
   --color-ink-500: #5c6b80;
-  --color-ink-400: #93a1b4;
+  --color-ink-400: #63707f;
+  --color-ink-300: #93a1b4;
   --color-line-300: #cdd6e0;
   --color-line-200: #e0e6ed;
   --color-line-100: #e7ecf2;
@@ -85,7 +98,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-ink-400);
+    color: var(--color-ink-500);
   }
 
   .card {

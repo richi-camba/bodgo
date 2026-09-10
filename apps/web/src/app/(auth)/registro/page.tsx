@@ -19,7 +19,7 @@ export default async function SignUpPage({
         <h1 className="text-[26px] font-extrabold leading-tight tracking-tight text-white">
           ¿Cómo quieres usar BodGo?
         </h1>
-        <p className="mt-2 text-[14.5px] text-white/55">
+        <p className="mt-2 text-[14.5px] text-white/70">
           Elige tu perfil y te configuramos la cuenta en pocos pasos.
         </p>
 
@@ -27,7 +27,7 @@ export default async function SignUpPage({
           <RoleChooser />
         </div>
 
-        <p className="mt-6 text-center text-[13.5px] text-white/55">
+        <p className="mt-6 text-center text-[13.5px] text-white/70">
           ¿Ya tienes cuenta?{' '}
           <Link href="/ingresar" className="font-bold text-brand-400 hover:underline">
             Inicia sesión
@@ -51,17 +51,17 @@ export default async function SignUpPage({
   return (
     <div>
       <h1 className="text-[26px] font-extrabold tracking-tight text-white">{COPY[role].title}</h1>
-      <p className="mt-2 text-[14.5px] text-white/55">{COPY[role].body}</p>
+      <p className="mt-2 text-[14.5px] text-white/70">{COPY[role].body}</p>
 
       <div className="mt-7 rounded-[20px] bg-white p-6 shadow-lift">
         <SignUpForm role={role} />
       </div>
 
-      <p className="mt-6 text-center text-[13.5px] text-white/55">
+      <p className="mt-6 text-center text-[13.5px] text-white/70">
         <Link href="/registro" className="font-semibold text-white/70 hover:underline">
           Cambiar perfil
         </Link>
-        <span className="px-2 text-white/25">·</span>
+        <span className="px-2 text-white/70">·</span>
         <Link href="/ingresar" className="font-bold text-brand-400 hover:underline">
           Ya tengo cuenta
         </Link>

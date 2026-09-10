@@ -66,7 +66,7 @@ export default async function DiscrepancyDetail({ params }: { params: Promise<{ 
             <Metric label="Exceso" value={`${formatNumber(Number(d.excess_m3 ?? 0), 2)} m³`} />
           </dl>
           {Number(d.excess_m3 ?? 0) > 0 ? (
-            <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-600">
+            <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-700">
               Excede en {formatNumber(Number(d.excess_m3), 2)} m³ la capacidad contratada.
               Corresponde ampliar el contrato o retirar el excedente.
             </p>
@@ -108,7 +108,7 @@ export default async function DiscrepancyDetail({ params }: { params: Promise<{ 
                     <td className="px-3 py-3 text-right font-bold tabular-nums">{received} u</td>
                     <td
                       className={`px-3 py-3 text-right font-bold tabular-nums ${
-                        delta < 0 ? 'text-danger-600' : delta > 0 ? 'text-warning-600' : 'text-ink-400'
+                        delta < 0 ? 'text-danger-700' : delta > 0 ? 'text-warning-700' : 'text-ink-400'
                       }`}
                     >
                       {delta > 0 ? '+' : ''}

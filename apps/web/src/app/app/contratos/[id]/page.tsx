@@ -46,7 +46,7 @@ export default async function ContractDetail({ params }: { params: Promise<{ id:
 
       {failed ? (
         <div className="rounded-card border border-danger-600/25 bg-danger-50 p-5">
-          <h2 className="text-[15px] font-extrabold text-danger-600">Pago rechazado</h2>
+          <h2 className="text-[15px] font-extrabold text-danger-700">Pago rechazado</h2>
           <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-700">
             {payments?.[0]?.failure_reason ?? 'Tu medio de pago fue rechazado'}. No se realizó ningún
             cargo y el espacio no quedó reservado.

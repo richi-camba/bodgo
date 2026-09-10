@@ -84,7 +84,7 @@ export function PhotoCapture({ name, label, hint, folder }: Props) {
               setPath('');
               setPreview(null);
             }}
-            className="text-[12px] font-bold text-ink-500 hover:text-danger-600 hover:underline"
+            className="text-[12px] font-bold text-ink-500 hover:text-danger-700 hover:underline"
           >
             Cambiar
           </button>
@@ -118,7 +118,7 @@ export function PhotoCapture({ name, label, hint, folder }: Props) {
       />
 
       {message ? (
-        <p role="alert" className="mt-2 text-[12.5px] font-semibold text-danger-600">
+        <p role="alert" className="mt-2 text-[12.5px] font-semibold text-danger-700">
           {message}
         </p>
       ) : null}

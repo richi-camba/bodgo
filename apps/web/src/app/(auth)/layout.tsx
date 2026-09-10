@@ -14,7 +14,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="w-full max-w-[420px]">{children}</div>
       </main>
 
-      <footer className="px-5 pb-8 text-center text-[11.5px] text-white/35">
+      <footer className="px-5 pb-8 text-center text-[11.5px] text-white/70">
         Tamayaz SpA · Corfo Semilla Inicia 25INI2-312540
       </footer>
     </div>

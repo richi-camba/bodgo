@@ -91,7 +91,7 @@ export function ReceptionForm({
         <div className="mt-4">
           <div className="flex items-center justify-between text-[12px] font-semibold">
             <span className="text-ink-500">Ocupación de la capacidad</span>
-            <span className={result.capacity.exceeds ? 'text-danger-600' : 'text-navy-900'}>
+            <span className={result.capacity.exceeds ? 'text-danger-700' : 'text-navy-900'}>
               {result.capacity.percentUsed}%
             </span>
           </div>
@@ -104,7 +104,7 @@ export function ReceptionForm({
         </div>
 
         {result.capacity.exceeds ? (
-          <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-600">
+          <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-700">
             Excede en {formatNumber(result.capacity.excessM3, 2)} m³ lo contratado. Al confirmar se
             abre una discrepancia de volumen: corresponde ampliar el contrato o retirar el excedente.
           </p>
@@ -177,7 +177,7 @@ export function ReceptionForm({
                       className="h-9 w-20 rounded-[10px] border border-line-200 text-center text-[13.5px] font-bold text-navy-900 tabular-nums"
                     />
                     {gap !== 0 ? (
-                      <span className={`text-[12px] font-bold ${gap < 0 ? 'text-danger-600' : 'text-warning-600'}`}>
+                      <span className={`text-[12px] font-bold ${gap < 0 ? 'text-danger-700' : 'text-warning-700'}`}>
                         {gap > 0 ? `+${gap} de más` : `${-gap} de menos`}
                       </span>
                     ) : (
@@ -201,7 +201,7 @@ export function ReceptionForm({
       >
         <h2
           className={`text-[15px] font-extrabold ${
-            result.hasDiscrepancy ? 'text-danger-600' : 'text-success-700'
+            result.hasDiscrepancy ? 'text-danger-700' : 'text-success-700'
           }`}
         >
           {result.hasDiscrepancy

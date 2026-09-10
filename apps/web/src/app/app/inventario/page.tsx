@@ -48,7 +48,7 @@ export default async function InventoryPage() {
       </div>
 
       {outOfStock.length > 0 && products?.length ? (
-        <p className="rounded-card border border-warning-600/25 bg-warning-50 px-4 py-3 text-[13px] font-semibold text-warning-600">
+        <p className="rounded-card border border-warning-600/25 bg-warning-50 px-4 py-3 text-[13px] font-semibold text-warning-700">
           ⚠️ {outOfStock.length} {outOfStock.length === 1 ? 'producto está' : 'productos están'} sin
           stock en bodega. Prepara un envío para reponer.
         </p>

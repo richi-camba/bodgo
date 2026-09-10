@@ -78,13 +78,13 @@ export default async function DiscrepanciesPage() {
 
                 <div className="text-right text-[12.5px]">
                   {d.units_short > 0 ? (
-                    <p className="font-bold text-danger-600">−{d.units_short} u</p>
+                    <p className="font-bold text-danger-700">−{d.units_short} u</p>
                   ) : null}
                   {d.units_over > 0 ? (
-                    <p className="font-bold text-warning-600">+{d.units_over} u</p>
+                    <p className="font-bold text-warning-700">+{d.units_over} u</p>
                   ) : null}
                   {Number(d.excess_m3 ?? 0) > 0 ? (
-                    <p className="font-bold text-danger-600">
+                    <p className="font-bold text-danger-700">
                       +{formatNumber(Number(d.excess_m3), 2)} m³
                     </p>
                   ) : null}

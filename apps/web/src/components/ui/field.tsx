@@ -25,7 +25,7 @@ export function Field({
       </label>
       {children}
       {error ? (
-        <p className="text-[12px] font-semibold text-danger-600">{error}</p>
+        <p className="text-[12px] font-semibold text-danger-700">{error}</p>
       ) : hint ? (
         <p className="text-[12px] text-ink-400">{hint}</p>
       ) : null}
@@ -56,7 +56,7 @@ export function FormError({ children }: { children?: ReactNode }) {
   return (
     <p
       role="alert"
-      className="rounded-field border border-danger-600/25 bg-danger-50 px-3.5 py-3 text-[13px] font-semibold text-danger-600"
+      className="rounded-field border border-danger-600/25 bg-danger-50 px-3.5 py-3 text-[13px] font-semibold text-danger-700"
     >
       {children}
     </p>

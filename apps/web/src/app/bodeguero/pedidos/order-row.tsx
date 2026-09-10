@@ -58,7 +58,7 @@ export function OrderRow({
           <input type="hidden" name="orderId" value={order.id} />
           <input type="hidden" name="status" value={next.status} />
           {state?.error ? (
-            <p role="alert" className="mb-2 text-[12.5px] font-semibold text-danger-600">
+            <p role="alert" className="mb-2 text-[12.5px] font-semibold text-danger-700">
               {state.error}
             </p>
           ) : null}

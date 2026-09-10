@@ -78,7 +78,7 @@ export default async function ShipmentDetail({ params }: { params: Promise<{ id:
         </dl>
 
         {capacity.exceeds ? (
-          <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-600">
+          <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-700">
             Este envío excede en {formatNumber(capacity.excessM3, 2)} m³ la capacidad contratada
             ({formatNumber(capacity.capacityM3, 1)} m³). El bodeguero puede rechazar el excedente.
           </p>
@@ -142,7 +142,7 @@ export default async function ShipmentDetail({ params }: { params: Promise<{ id:
       {discrepancy ? (
         <section className="rounded-card border border-danger-600/25 bg-danger-50 p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[15px] font-extrabold text-danger-600">
+            <h2 className="text-[15px] font-extrabold text-danger-700">
               {LABELS.discrepancyType[discrepancy.type]}
             </h2>
             <Badge tone="danger">{LABELS.discrepancyStatus[discrepancy.status]}</Badge>
@@ -195,7 +195,7 @@ export default async function ShipmentDetail({ params }: { params: Promise<{ id:
                     {item.declared_qty} u
                   </p>
                   {gap !== null && gap !== 0 ? (
-                    <p className={`text-[11.5px] font-bold ${gap < 0 ? 'text-danger-600' : 'text-warning-600'}`}>
+                    <p className={`text-[11.5px] font-bold ${gap < 0 ? 'text-danger-700' : 'text-warning-700'}`}>
                       {gap > 0 ? '+' : ''}
                       {gap}
                     </p>

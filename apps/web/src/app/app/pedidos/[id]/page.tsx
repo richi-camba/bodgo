@@ -161,7 +161,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
                   <dd
                     className={`text-[13.5px] font-extrabold tabular-nums ${
                       shippingMargin(order.shipping_cost, order.courier_cost) < 0
-                        ? 'text-danger-600'
+                        ? 'text-danger-700'
                         : 'text-success-700'
                     }`}
                   >

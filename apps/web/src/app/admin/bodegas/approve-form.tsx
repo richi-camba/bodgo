@@ -29,7 +29,7 @@ export function ApproveForm({ warehouseId }: { warehouseId: string }) {
       </div>
 
       {state?.error ? (
-        <p role="alert" className="text-[12.5px] font-semibold text-danger-600">
+        <p role="alert" className="text-[12.5px] font-semibold text-danger-700">
           {state.error}
         </p>
       ) : null}

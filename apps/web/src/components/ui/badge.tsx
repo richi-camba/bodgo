@@ -6,8 +6,8 @@ const TONES: Record<Tone, string> = {
   neutral: 'bg-surface-100 text-ink-500',
   brand: 'bg-brand-100 text-brand-700',
   success: 'bg-success-50 text-success-700',
-  warning: 'bg-warning-50 text-warning-600',
-  danger: 'bg-danger-50 text-danger-600',
+  warning: 'bg-warning-50 text-warning-700',
+  danger: 'bg-danger-50 text-danger-700',
   navy: 'bg-navy-800 text-white',
 };
 

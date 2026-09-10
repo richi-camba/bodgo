@@ -172,7 +172,7 @@ export function ShipmentBuilder({
             <span className="text-ink-500">
               Ocupa de tu capacidad ({formatNumber(contract.m2, 1)} m²)
             </span>
-            <span className={capacity.exceeds ? 'text-danger-600' : 'text-navy-900'}>
+            <span className={capacity.exceeds ? 'text-danger-700' : 'text-navy-900'}>
               {capacity.percentUsed}%
             </span>
           </div>
@@ -194,7 +194,7 @@ export function ShipmentBuilder({
         </div>
 
         {capacity.exceeds ? (
-          <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-600">
+          <p className="mt-4 rounded-field bg-danger-50 p-3.5 text-[12.5px] leading-relaxed text-danger-700">
             Excedes tu capacidad en {formatNumber(capacity.excessM3, 2)} m³. Puedes ampliar el
             contrato o dividir el envío; si llega así, el bodeguero puede rechazar el excedente y se
             abre una discrepancia.

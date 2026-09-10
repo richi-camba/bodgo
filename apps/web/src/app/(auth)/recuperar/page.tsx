@@ -10,7 +10,7 @@ export default function RecoverPage() {
       <h1 className="text-[26px] font-extrabold tracking-tight text-white">
         ¿Olvidaste tu contraseña?
       </h1>
-      <p className="mt-2 text-[14.5px] text-white/55">
+      <p className="mt-2 text-[14.5px] text-white/70">
         Escribe tu correo y te mandamos un enlace para crear una nueva.
       </p>
 
@@ -18,7 +18,7 @@ export default function RecoverPage() {
         <ResetRequestForm />
       </div>
 
-      <p className="mt-6 text-center text-[13.5px] text-white/55">
+      <p className="mt-6 text-center text-[13.5px] text-white/70">
         <Link href="/ingresar" className="font-bold text-brand-400 hover:underline">
           Volver a iniciar sesión
         </Link>

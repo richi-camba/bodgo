@@ -22,7 +22,7 @@ export function Stat({
       {delta ? (
         <p
           className={`mt-2 text-[11.5px] font-bold ${
-            tone === 'success' ? 'text-success-600' : tone === 'danger' ? 'text-danger-600' : 'text-ink-400'
+            tone === 'success' ? 'text-success-600' : tone === 'danger' ? 'text-danger-700' : 'text-ink-400'
           }`}
         >
           {delta}

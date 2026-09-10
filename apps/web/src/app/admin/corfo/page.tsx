@@ -132,7 +132,7 @@ function Headline({ value, label }: { value: string; label: string }) {
       <dt className="sr-only">{label}</dt>
       <dd>
         <span className="block text-[22px] font-extrabold leading-none tabular-nums">{value}</span>
-        <span className="mt-1.5 block text-[12px] text-white/55">{label}</span>
+        <span className="mt-1.5 block text-[12px] text-white/70">{label}</span>
       </dd>
     </div>
   );

@@ -71,7 +71,7 @@ export default async function PymeHome() {
           <h2 className="mt-3 max-w-sm text-[24px] font-extrabold leading-tight tracking-tight">
             Acerca tu stock a tus clientes
           </h2>
-          <p className="mt-3 max-w-md text-[14px] leading-relaxed text-white/60">
+          <p className="mt-3 max-w-md text-[14px] leading-relaxed text-white/70">
             Contrata una microbodega cerca de tu demanda y despacha más rápido, sin bodega propia.
           </p>
           <ButtonLink

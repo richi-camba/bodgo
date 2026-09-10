@@ -20,7 +20,7 @@ export function TerminateForm({ contractId, baseAmount }: { contractId: string; 
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-[13.5px] font-bold text-danger-600 hover:underline"
+          className="text-[13.5px] font-bold text-danger-700 hover:underline"
         >
           Terminar contrato anticipadamente
         </button>

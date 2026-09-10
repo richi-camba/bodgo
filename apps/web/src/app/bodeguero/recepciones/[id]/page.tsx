@@ -78,7 +78,7 @@ export default async function ReceptionDetail({ params }: { params: Promise<{ id
           {discrepancy ? (
             <section className="rounded-card border border-danger-600/25 bg-danger-50 p-6">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-[15px] font-extrabold text-danger-600">
+                <h2 className="text-[15px] font-extrabold text-danger-700">
                   {LABELS.discrepancyType[discrepancy.type]}
                 </h2>
                 <Badge tone="danger">{LABELS.discrepancyStatus[discrepancy.status]}</Badge>
@@ -118,7 +118,7 @@ export default async function ReceptionDetail({ params }: { params: Promise<{ id
                         {item.received_qty ?? item.declared_qty} / {item.declared_qty} u
                       </p>
                       {gap !== 0 ? (
-                        <p className={`text-[11.5px] font-bold ${gap < 0 ? 'text-danger-600' : 'text-warning-600'}`}>
+                        <p className={`text-[11.5px] font-bold ${gap < 0 ? 'text-danger-700' : 'text-warning-700'}`}>
                           {gap > 0 ? '+' : ''}
                           {gap}
                         </p>

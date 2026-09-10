@@ -273,7 +273,7 @@ export default async function HomePage() {
           <h2 className="mt-4 max-w-2xl text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-white md:text-[38px]">
             Paga sólo por el espacio que necesitas
           </h2>
-          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/60">
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/70">
             Arriendo mensual, con la comisión de plataforma ya incluida en lo que ves.
           </p>
 
@@ -364,7 +364,7 @@ function HeroStat({ value, label }: { value: string; label: string }) {
         <span className="block text-[22px] font-extrabold leading-none text-white tabular-nums sm:text-[30px]">
           {value}
         </span>
-        <span className="mt-1.5 block text-[11.5px] leading-snug text-white/55 sm:text-[12px]">
+        <span className="mt-1.5 block text-[11.5px] leading-snug text-white/70 sm:text-[12px]">
           {label}
         </span>
       </dd>
@@ -378,7 +378,7 @@ function HostStat({ value, label }: { value: string; label: string }) {
       <dt className="sr-only">{label}</dt>
       <dd>
         <span className="block text-[21px] font-extrabold leading-none">{value}</span>
-        <span className="mt-2 block text-[12px] text-white/50">{label}</span>
+        <span className="mt-2 block text-[12px] text-white/65">{label}</span>
       </dd>
     </div>
   );
@@ -425,7 +425,7 @@ function PathCard({
       >
         {title}
       </h3>
-      <p className={`mt-3 flex-1 text-[14.5px] leading-relaxed ${dark ? 'text-white/60' : 'text-ink-500'}`}>
+      <p className={`mt-3 flex-1 text-[14.5px] leading-relaxed ${dark ? 'text-white/70' : 'text-ink-500'}`}>
         {body}
       </p>
       <ButtonLink

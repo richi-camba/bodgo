@@ -20,7 +20,7 @@ export function PricingCalculator() {
         <h3 className="text-[19px] font-extrabold tracking-tight text-white">
           ¿Cuánto espacio necesitas?
         </h3>
-        <p className="mt-2 max-w-md text-[14px] leading-relaxed text-white/60">
+        <p className="mt-2 max-w-md text-[14px] leading-relaxed text-white/70">
           Indica los m³ que ocupa tu stock y calculamos el arriendo. Un pallet estándar equivale a
           unos 2 m³. Si necesitas más de 27 m³, puedes combinar varias microbodegas.
         </p>
@@ -30,7 +30,7 @@ export function PricingCalculator() {
             <span className="text-[44px] font-extrabold leading-none text-white tabular-nums">
               {m3}
             </span>
-            <span className="text-[18px] font-bold text-white/50">m³</span>
+            <span className="text-[18px] font-bold text-white/65">m³</span>
           </div>
 
           <label htmlFor={sliderId} className="sr-only">
@@ -46,14 +46,14 @@ export function PricingCalculator() {
             onChange={(e) => setM3(Number(e.target.value))}
             className="mt-5 w-full accent-brand-400"
           />
-          <div className="mt-1 flex justify-between text-[11px] font-semibold text-white/40">
+          <div className="mt-1 flex justify-between text-[11px] font-semibold text-white/70">
             <span>1 m³</span>
             <span>27 m³</span>
           </div>
         </div>
 
         <dl className="mt-8 space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/40">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/70">
             Módulos que ocupas
           </p>
           {MODULES.map((mod) => (
@@ -75,16 +75,16 @@ export function PricingCalculator() {
       </div>
 
       <div className="rounded-[20px] border border-white/12 bg-white/[0.06] p-7 backdrop-blur-sm">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/40">
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/70">
           Arriendo estimado
         </p>
         <p className="mt-3 flex items-baseline gap-1.5">
           <span className="text-[38px] font-extrabold leading-none text-white tabular-nums">
             {formatCLP(estimate.monthly)}
           </span>
-          <span className="text-[15px] font-semibold text-white/55">/mes</span>
+          <span className="text-[15px] font-semibold text-white/70">/mes</span>
         </p>
-        <p className="mt-1.5 text-[13px] text-white/50">
+        <p className="mt-1.5 text-[13px] text-white/65">
           o {formatCLP(estimate.daily)} por día
         </p>
 
@@ -93,7 +93,7 @@ export function PricingCalculator() {
           <Row label="Referencia" value={`${formatCLP(estimate.ratePerM3)} / m³ al mes`} />
         </div>
 
-        <p className="mt-6 text-[12px] leading-relaxed text-white/45">
+        <p className="mt-6 text-[12px] leading-relaxed text-white/65">
           El precio final depende de la bodega que elijas. Incluye pago en custodia y seguro de
           contenido, sin costo de instalación.
         </p>
@@ -105,7 +105,7 @@ export function PricingCalculator() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-white/55">{label}</span>
+      <span className="text-white/70">{label}</span>
       <span className="font-bold text-white">{value}</span>
     </div>
   );
