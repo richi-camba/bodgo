@@ -9,6 +9,7 @@ const NAV: NavItem[] = [
   { href: '/admin/incidentes', label: 'Incidentes', icon: 'incidentes', primary: true },
   { href: '/admin/discrepancias', label: 'Discrepancias', icon: 'discrepancias', primary: true },
   { href: '/admin/pedidos', label: 'Pedidos', icon: 'pedidos', primary: true },
+  { href: '/admin/tickets', label: 'Tickets', icon: 'tickets' },
   { href: '/admin/corfo', label: 'Reportes Corfo', icon: 'corfo' },
 ];
 

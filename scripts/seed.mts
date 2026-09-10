@@ -507,6 +507,58 @@ for (const c of COUNTS) {
   });
 }
 
+// ------------------------------------------------------- tickets de soporte
+// Uno abierto por una PyME y otro ya resuelto por un bodeguero: el backoffice
+// necesita ver los dos estados y el hilo con respuesta del equipo.
+const TICKETS = [
+  {
+    opened_by: valentinaId,
+    subject: 'Faltaron 3 unidades en la recepción de Providencia',
+    reason: 'recepcion',
+    status: 'open' as const,
+    hilo: [
+      [valentinaId, 'Marcela registró 57 botellas y yo despaché 60. ¿Pueden revisar la foto de la recepción?'],
+    ],
+  },
+  {
+    opened_by: marcelaId,
+    subject: '¿Cuándo se libera el pago del contrato de Ñuñoa?',
+    reason: 'cobro',
+    status: 'resolved' as const,
+    hilo: [
+      [marcelaId, 'Confirmé la recepción hace una semana y todavía no veo la liberación.'],
+      [adminId, 'La liberación va con el cierre de mes, el 30. Ese contrato ya está en la liquidación de septiembre.'],
+      [marcelaId, 'Perfecto, gracias.'],
+    ],
+  },
+];
+
+for (const t of TICKETS) {
+  const { data: yaExiste } = await db
+    .from('tickets')
+    .select('id')
+    .eq('subject', t.subject)
+    .maybeSingle();
+
+  if (yaExiste) continue;
+
+  const { data: ticket } = await db
+    .from('tickets')
+    .insert({
+      opened_by: t.opened_by,
+      subject: t.subject,
+      reason: t.reason,
+      status: t.status,
+      resolved_at: t.status === 'resolved' ? new Date().toISOString() : null,
+    })
+    .select('id')
+    .single();
+
+  await db.from('ticket_notes').insert(
+    t.hilo.map(([author_id, body]) => ({ ticket_id: ticket.id, author_id, body })),
+  );
+}
+
 // --------------------------------------------------------------- conversación
 const { data: convo } = await db
   .from('conversations')

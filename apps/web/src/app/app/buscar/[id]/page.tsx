@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
 import { formatCLP, formatNumber, pricePerM3 } from '@bodgo/core';
 import { ContractBar } from './contract-bar';
+import { WriteToHost } from '@/components/app/write-to-host';
 
 export const metadata: Metadata = { title: 'Microbodega' };
 
@@ -144,6 +145,10 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
             <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">Bodeguero</p>
             <p className="truncate text-[14.5px] font-bold text-navy-900">{w.bodeguero_name}</p>
           </div>
+
+          {w.bodeguero_id ? (
+            <WriteToHost warehouseId={w.id!} bodegueroId={w.bodeguero_id} />
+          ) : null}
         </div>
 
         <ContractBar

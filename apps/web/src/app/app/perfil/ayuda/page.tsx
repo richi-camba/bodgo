@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Icon } from '@/components/ui/icon';
 import { StepHeader } from '@/components/app/step-header';
 import { SectionLabel } from '@/components/app/rows';
@@ -34,6 +35,24 @@ export default function HelpPage() {
     <div className="pb-6">
       <StepHeader titulo="Ayuda y soporte" volverA="/app/perfil" tomaLaPantalla={false} />
 
+      <Link
+        href="/app/tickets/nuevo"
+        className="mb-2.5 flex items-center gap-3 rounded-[16px] border border-line-100 bg-white p-4 transition-colors hover:border-navy-800"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600">
+          <Icon name="tickets" size={20} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[14px] font-bold text-navy-900">Abrir un ticket</span>
+          <span className="block text-[12px] text-ink-500">
+            Queda registrado y lo sigues desde Mensajes
+          </span>
+        </span>
+        <span aria-hidden className="shrink-0 text-line-300">
+          <Icon name="siguiente" size={14} />
+        </span>
+      </Link>
+
       <a
         href="mailto:ayuda@bodgo.cl"
         className="flex items-center gap-3 rounded-[16px] border border-line-100 bg-white p-4 transition-colors hover:border-navy-800"
@@ -50,9 +69,9 @@ export default function HelpPage() {
         </span>
       </a>
 
-      {/* El prototipo ofrece chat con soporte «responde en ~4 min». No hay
-          equipo de soporte ni herramienta de chat todavía: prometer cuatro
-          minutos y no contestar es peor que ofrecer sólo el correo. */}
+      {/* El prototipo promete «responde en ~4 min». El ticket no promete
+          plazo: sin turnos de soporte definidos, un número inventado sólo
+          sirve para incumplirlo. */}
 
       <SectionLabel>Preguntas frecuentes</SectionLabel>
       <div className="space-y-2.5">

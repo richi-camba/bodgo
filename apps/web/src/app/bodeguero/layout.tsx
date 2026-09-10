@@ -8,6 +8,7 @@ const NAV: NavItem[] = [
   { href: '/bodeguero/espacios', label: 'Mis espacios', icon: 'espacios', primary: true },
   { href: '/bodeguero/inventario', label: 'Inventario', icon: 'inventario', primary: true },
   { href: '/bodeguero/pagos', label: 'Pagos', icon: 'pagos', primary: true },
+  { href: '/bodeguero/mensajes', label: 'Mensajes', icon: 'mensajes' },
   { href: '/bodeguero/notificaciones', label: 'Notificaciones', icon: 'notificaciones' },
 ];
 

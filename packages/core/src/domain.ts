@@ -143,6 +143,11 @@ export const LABELS = {
     woocommerce: 'WooCommerce',
     manual: 'Manual',
   },
+  ticketStatus: {
+    open: 'Abierto',
+    in_progress: 'En curso',
+    resolved: 'Resuelto',
+  },
   incidentSeverity: {
     low: 'Baja',
     medium: 'Media',

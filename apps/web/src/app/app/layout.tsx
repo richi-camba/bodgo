@@ -10,6 +10,7 @@ const NAV: NavItem[] = [
   { href: '/app/inventario', label: 'Mi inventario', icon: 'inventario', primary: true },
   { href: '/app/contratos', label: 'Mis contratos', icon: 'contratos' },
   { href: '/app/metricas', label: 'Métricas', icon: 'metricas', primary: true },
+  { href: '/app/mensajes', label: 'Mensajes', icon: 'mensajes' },
   { href: '/app/notificaciones', label: 'Notificaciones', icon: 'notificaciones' },
   { href: '/app/perfil', label: 'Mi perfil', icon: 'perfil' },
 ];

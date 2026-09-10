@@ -401,6 +401,78 @@ const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUP
   check('el bodeguero sigue sin poder leer pagos individuales', (pagos?.length ?? 0) === 0);
 }
 
+// ------------------------------------------------------- chat y tickets
+{
+  const { data: mios } = await pyme.from('conversations').select('id, bodeguero_id');
+  check('la PyME ve su conversación', (mios?.length ?? 0) >= 1);
+
+  const { data: ajenas } = await outsider.from('conversations').select('id');
+  check(
+    'una PyME no ve las conversaciones de otra',
+    !(ajenas ?? []).some((c) => (mios ?? []).some((m) => m.id === c.id)),
+  );
+
+  if (mios?.length) {
+    const hilo = mios[0].id;
+    const { data: leidos } = await outsider
+      .from('messages')
+      .select('id')
+      .eq('conversation_id', hilo);
+    check('ni los mensajes de esa conversación', (leidos?.length ?? 0) === 0);
+
+    const { error: colada } = await outsider
+      .from('messages')
+      .insert({ conversation_id: hilo, sender_id: (await outsider.auth.getUser()).data.user.id, body: 'hola' });
+    check('ni puede escribir en ella', !!colada);
+  }
+
+  // El trigger que ordena la bandeja corre como definer: sin eso el update
+  // moría contra el RLS de `conversations` y la fecha del hilo mentía.
+  if (mios?.length) {
+    const hilo = mios[0].id;
+    const { data: antes } = await admin
+      .from('conversations').select('last_message_at').eq('id', hilo).single();
+
+    await pyme.from('messages').insert({
+      conversation_id: hilo,
+      sender_id: (await pyme.auth.getUser()).data.user.id,
+      body: 'prueba de humo',
+    });
+
+    const { data: despues } = await admin
+      .from('conversations').select('last_message_at').eq('id', hilo).single();
+
+    check(
+      'mandar un mensaje mueve la conversación al tope de la bandeja',
+      despues.last_message_at !== antes.last_message_at,
+    );
+
+    await admin.from('messages').delete().eq('conversation_id', hilo).eq('body', 'prueba de humo');
+  }
+
+  const { data: tix } = await pyme.from('tickets').select('id, subject, status');
+  check('la PyME ve sus tickets', (tix?.length ?? 0) >= 1);
+
+  const { data: tixAjenos } = await outsider.from('tickets').select('id');
+  check(
+    'una PyME no ve los tickets de otra',
+    !(tixAjenos ?? []).some((t) => (tix ?? []).some((m) => m.id === t.id)),
+  );
+
+  if (tix?.length) {
+    // El estado lo mueve el equipo: quien abre no se da por atendido solo.
+    const { error } = await pyme
+      .from('tickets')
+      .update({ status: 'resolved' })
+      .eq('id', tix[0].id);
+    const { data: sigue } = await pyme.from('tickets').select('status').eq('id', tix[0].id).single();
+    check(
+      'quien abre un ticket no puede cerrarlo',
+      !!error || sigue.status === tix[0].status,
+    );
+  }
+}
+
 // -------------------------------------------------------------------- limpieza
 await admin.from('orders').delete().eq('warehouse_id', testWarehouse.id);
 await admin.from('shipments').delete().eq('warehouse_id', testWarehouse.id);

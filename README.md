@@ -50,7 +50,12 @@ diferencia entre lo cobrado y lo pagado es el margen de la PyME en el despacho.
 Sin courier registrado el pedido no se puede marcar como retirado: el comprador
 quedaría sin forma de seguirlo.
 
-**6. El comprador sigue su pedido sin cuenta.** Cada pedido lleva un token
+**6. Cada quien habla con quien le toca.** El chat es entre PyME y bodeguero,
+uno por bodega, para la coordinación del día a día. Los tickets son con el
+equipo BodGo y los mueve sólo el equipo: quien abre uno puede seguir
+respondiendo, pero no darse por atendido solo.
+
+**7. El comprador sigue su pedido sin cuenta.** Cada pedido lleva un token
 aleatorio propio, porque el código correlativo (DSP-3406) sería adivinable. El
 enlace muestra el estado, el courier y lo que compró — nunca lo que el envío le
 costó a la PyME ni la dirección de la bodega.
@@ -172,10 +177,15 @@ crear su cuenta.
 
 - **Carga masiva del catálogo por CSV.** El prototipo pone el botón junto a
   «Crear producto». Hoy los productos se crean de a uno.
-- **Chat con bodegueros y tickets.** Las tablas están y el seed las llena,
-  pero no hay pantalla todavía. Ayuda y soporte ofrece el correo, no el chat
-  que promete el prototipo: prometer «responde en ~4 min» sin equipo detrás
-  es peor que ofrecer sólo el correo.
+- **Chat en tiempo real.** Los mensajes existen y se mandan, pero llegan al
+  recargar: no hay suscripción todavía. Por eso tampoco hay indicador de «en
+  línea» — sería decorar una promesa que la app no cumple.
+- **Audio y video en el chat.** El esquema los soporta y el prototipo los
+  ofrece. Falta el grabador y la reproducción desde el bucket privado; hoy el
+  chat es sólo texto.
+- **Plazo de respuesta en los tickets.** El prototipo promete «responde en
+  ~4 min». Sin turnos de soporte definidos, un número inventado sólo sirve
+  para incumplirlo.
 - **Agregar tarjeta desde el perfil.** La captura de datos de tarjeta la hace
   el proveedor de pagos. Mientras no exista el convenio, un formulario propio
   pidiendo el número sería pedir datos que no podemos procesar.
