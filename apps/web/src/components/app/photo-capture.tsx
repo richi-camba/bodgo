@@ -6,10 +6,13 @@ import { Icon } from '@/components/ui/icon';
 type Props = {
   /** Nombre del campo oculto que lleva la ruta al servidor. */
   name: string;
-  label: string;
+  /** Rótulo sobre el recuadro. Se omite si el título de la pantalla ya lo dice. */
+  label?: string;
   hint?: string;
   /** Carpeta dentro del bucket privado, después del id del usuario. */
   folder: string;
+  /** Avisa la ruta subida, para flujos por pasos que necesitan saberlo. */
+  onSubido?: (ruta: string) => void;
 };
 
 /**
@@ -24,7 +27,7 @@ type Props = {
  * por qué viajar en la carga inicial de una pantalla que un repartidor abre
  * con datos móviles y sin saber todavía si va a sacar una foto.
  */
-export function PhotoCapture({ name, label, hint, folder }: Props) {
+export function PhotoCapture({ name, label, hint, folder, onSubido }: Props) {
   const inputId = useId();
   const [path, setPath] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -62,13 +65,14 @@ export function PhotoCapture({ name, label, hint, folder }: Props) {
     setPath(target);
     setPreview(URL.createObjectURL(file));
     setStatus('idle');
+    onSubido?.(target);
   }
 
   return (
     <div>
       <input type="hidden" name={name} value={path} />
 
-      <p className="mb-2 text-[12.5px] font-bold text-ink-700">{label}</p>
+      {label ? <p className="mb-2 text-[12.5px] font-bold text-ink-700">{label}</p> : null}
 
       {preview ? (
         <div className="flex items-center gap-3 rounded-field border border-success-600/30 bg-success-50 p-3">
@@ -83,6 +87,7 @@ export function PhotoCapture({ name, label, hint, folder }: Props) {
             onClick={() => {
               setPath('');
               setPreview(null);
+              onSubido?.('');
             }}
             className="text-[12px] font-bold text-ink-500 hover:text-danger-700 hover:underline"
           >
@@ -92,15 +97,15 @@ export function PhotoCapture({ name, label, hint, folder }: Props) {
       ) : (
         <label
           htmlFor={inputId}
-          className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-field border-2 border-dashed border-line-300 bg-surface-25 px-4 py-7 text-center transition-colors hover:border-navy-800"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-line-300 bg-white px-4 py-8 text-center transition-colors hover:border-brand-600"
         >
-          <span className="text-ink-400">
-            <Icon name="camara" size={22} />
+          <span className="text-brand-600">
+            <Icon name="camara" size={28} />
           </span>
-          <span className="text-[13.5px] font-bold text-navy-900">
+          <span className="text-[14px] font-extrabold text-navy-900">
             {status === 'uploading' ? 'Subiendo…' : 'Tomar o subir foto'}
           </span>
-          {hint ? <span className="text-[11.5px] text-ink-400">{hint}</span> : null}
+          {hint ? <span className="text-[12px] text-ink-500">{hint}</span> : null}
         </label>
       )}
 

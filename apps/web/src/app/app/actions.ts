@@ -47,8 +47,13 @@ export async function createContract(_prev: ActionState, formData: FormData): Pr
   revalidatePath('/app', 'layout');
 
   // Un contrato que vuelve sin activar es un cobro rechazado: el detalle lo
-  // explica y ofrece reintentar con otra tarjeta.
-  redirect(`/app/contratos/${data.id}`);
+  // explica y ofrece reintentar con otra tarjeta. El que sí quedó activo
+  // aterriza en la pantalla de confirmación con los datos de recepción.
+  redirect(
+    data.status === 'active'
+      ? `/app/contratos/${data.id}?nuevo=1`
+      : `/app/contratos/${data.id}`,
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -127,6 +132,7 @@ const shipmentSchema = z.object({
   method: z.enum(['own', 'external_courier']),
   /** JSON: `[{ "productId": "...", "qty": 12 }]` */
   items: z.string(),
+  photoPath: z.string().trim().optional(),
 });
 
 const itemsSchema = z
@@ -159,6 +165,7 @@ export async function createShipment(_prev: ActionState, formData: FormData): Pr
       weight_kg: parsed.data.weightKg ?? null,
       pickup_address: parsed.data.pickupAddress || null,
       method: parsed.data.method,
+      dispatch_photo_url: parsed.data.photoPath || null,
     })
     .select('id')
     .single();
@@ -197,8 +204,21 @@ export async function createShipment(_prev: ActionState, formData: FormData): Pr
     return { error: readableError(itemsError.message) };
   }
 
+  // El asistente pide la foto de los bultos etiquetados en el paso 5, que es
+  // justo lo que exige el despacho: si ya está, el envío sale ahora y el
+  // bodeguero queda avisado. Si el despacho falla, el envío queda en borrador
+  // y la ficha ofrece el botón para reintentarlo.
+  if (parsed.data.photoPath) {
+    await supabase.rpc('dispatch_shipment', {
+      p_shipment_id: shipment.id,
+      p_photo_url: parsed.data.photoPath,
+    });
+  }
+
   revalidatePath('/app/despachos');
-  redirect(`/app/despachos/${shipment.id}`);
+  // `nuevo=1` hace que la ficha se muestre como el último paso del asistente:
+  // el seguimiento recién creado, con la acción de cerrar el flujo.
+  redirect(`/app/despachos/${shipment.id}?nuevo=1`);
 }
 
 /** Marca el envío como despachado: a partir de acá lo espera el bodeguero. */

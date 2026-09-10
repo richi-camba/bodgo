@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
+import { ButtonLink } from '@/components/ui/button';
+import { StepHeader, StickyBar } from '@/components/app/step-header';
 import { createClient } from '@/lib/supabase/server';
 import { checkCapacityM3, formatNumber, LABELS, usableCapacityM3 } from '@bodgo/core';
 import { DispatchButton } from './dispatch-button';
@@ -14,8 +16,18 @@ const STEPS = [
   { key: 'received', label: 'Recibido por el bodeguero' },
 ] as const;
 
-export default async function ShipmentDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function ShipmentDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ nuevo?: string }>;
+}) {
   const { id } = await params;
+  // Se llega acá desde el último paso del asistente: la ficha hace de paso 6,
+  // el seguimiento, en vez de repetir la información en una pantalla aparte.
+  const { nuevo } = await searchParams;
+  const enFlujo = nuevo === '1';
   const supabase = await createClient();
 
   const { data: shipment } = await supabase
@@ -52,10 +64,26 @@ export default async function ShipmentDetail({ params }: { params: Promise<{ id:
         : 0;
 
   return (
-    <div className="space-y-5">
-      <Link href="/app/despachos" className="inline-block text-[13px] font-bold text-brand-600 hover:underline">
-        ← Volver a mis envíos
-      </Link>
+    <div className={`space-y-5 ${enFlujo ? 'pb-24' : ''}`}>
+      {enFlujo ? (
+        <StepHeader titulo="Envío a bodega" paso={6} total={6} volverA="/app/despachos" />
+      ) : (
+        <Link href="/app/despachos" className="inline-block text-[13px] font-bold text-brand-600 hover:underline">
+          ← Volver a mis envíos
+        </Link>
+      )}
+
+      {enFlujo ? (
+        <div>
+          <h2 className="text-[19px] font-extrabold tracking-tight text-navy-900">
+            Seguimiento del envío
+          </h2>
+          <p className="mt-1 text-[13px] text-ink-500">
+            Tu mercadería va camino a {shipment.warehouses?.comuna}. Te avisamos cuando el
+            bodeguero confirme la recepción.
+          </p>
+        </div>
+      ) : null}
 
       <header className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -206,6 +234,14 @@ export default async function ShipmentDetail({ params }: { params: Promise<{ id:
           })}
         </ul>
       </section>
+
+      {enFlujo ? (
+        <StickyBar>
+          <ButtonLink href="/app/despachos" size="lg" full>
+            Finalizar envío
+          </ButtonLink>
+        </StickyBar>
+      ) : null}
     </div>
   );
 }

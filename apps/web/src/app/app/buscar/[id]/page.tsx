@@ -7,7 +7,7 @@ import { Icon } from '@/components/ui/icon';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
 import { formatCLP, formatNumber, pricePerM3 } from '@bodgo/core';
-import { ContractForm } from './contract-form';
+import { ContractBar } from './contract-bar';
 
 export const metadata: Metadata = { title: 'Microbodega' };
 
@@ -146,16 +146,12 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* ------------------------------------------------- contratar */}
-        <div className="mt-5">
-          <ContractForm
-            warehouseId={w.id!}
-            comuna={w.comuna ?? ''}
-            pricePerM2={w.price_per_m2 ?? 0}
-            availableM2={disponible}
-            cards={cards ?? []}
-          />
-        </div>
+        <ContractBar
+          warehouseId={w.id!}
+          pricePerM2={w.price_per_m2 ?? 0}
+          availableM2={disponible}
+          tieneTarjeta={(cards ?? []).length > 0}
+        />
       </div>
     </div>
   );

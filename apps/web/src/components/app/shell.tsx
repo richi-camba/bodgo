@@ -123,7 +123,9 @@ export function AppShell({
       </div>
 
       {/* ----------------------------------------------- barra inferior móvil */}
+      {/* `data-tabbar` la esconde durante un flujo por pasos: ver globals.css. */}
       <nav
+        data-tabbar
         aria-label="Navegación principal"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-line-100 bg-white/95 backdrop-blur-lg lg:hidden"
       >

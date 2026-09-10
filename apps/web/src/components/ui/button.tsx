@@ -6,7 +6,7 @@ type Size = 'sm' | 'md' | 'lg' | 'tarjeta';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-navy-800 text-white hover:bg-navy-950 active:bg-navy-950 disabled:bg-line-300 disabled:text-ink-400',
+    'bg-navy-800 text-white hover:bg-navy-950 active:bg-navy-950 disabled:bg-line-300 disabled:text-ink-700',
   secondary:
     'bg-white text-navy-800 border border-line-200 hover:border-navy-800 hover:bg-surface-25 disabled:text-ink-400 disabled:border-line-100',
   ghost: 'bg-transparent text-navy-800 hover:bg-brand-50 disabled:text-ink-400',

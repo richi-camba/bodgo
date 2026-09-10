@@ -179,8 +179,16 @@ crear su cuenta.
   claro del prototipo (`#93A1B4`) quedaba en 2.6:1 — ilegible para bastante
   gente, y no era una decisión estética sino un descuido. Ahora `ink-400` es
   legible y el gris original sobrevive como `ink-300`, que la norma exceptúa
-  por ser sólo para controles deshabilitados. Los semánticos vienen en dos
-  tonos: el `-600` rellena, el `-700` escribe sobre el fondo teñido.
+  por ser sólo para controles deshabilitados. Aun así, un botón apagado se
+  puede leer: dice justo lo que falta hacer para habilitarlo. Los semánticos
+  vienen en dos tonos: el `-600` rellena, el `-700` escribe sobre el fondo
+  teñido.
+- **Un flujo por pasos toma la pantalla completa.** Contratar una bodega y
+  armar un envío esconden la barra de pestañas y ponen la acción del paso en
+  su lugar, como en el prototipo: saltar a otra sección a mitad de un
+  formulario largo sólo pierde lo cargado. El envío son seis pasos y el sexto
+  es el seguimiento, que ya vive en la ficha del envío — no hay una pantalla
+  aparte que repita lo mismo.
 - **Iconos, no emoji.** Los emoji se dibujan distinto en cada sistema
   operativo. `components/ui/icon.tsx` nombra cada icono por lo que significa en
   el producto (`recepciones`, `discrepancias`) y no por su forma, así cambiar el

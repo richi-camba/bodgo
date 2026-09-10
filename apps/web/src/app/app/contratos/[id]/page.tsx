@@ -5,12 +5,20 @@ import { Badge } from '@/components/ui/badge';
 import { ButtonLink } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import { formatCLP, formatNumber, LABELS } from '@bodgo/core';
+import { ContractSuccess } from '@/components/app/contract-success';
 import { TerminateForm } from './terminate-form';
 
 export const metadata: Metadata = { title: 'Contrato' };
 
-export default async function ContractDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function ContractDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ nuevo?: string }>;
+}) {
   const { id } = await params;
+  const { nuevo } = await searchParams;
   const supabase = await createClient();
 
   const { data: contract } = await supabase
@@ -37,6 +45,28 @@ export default async function ContractDetail({ params }: { params: Promise<{ id:
 
   const failed = payments?.[0]?.status === 'failed';
   const isActive = contract.status === 'active';
+
+  // Recién contratada: en vez del detalle de siempre se muestra la
+  // confirmación, con los datos que hacen falta para despachar.
+  if (nuevo === '1' && isActive) {
+    const { data: contacto } = await supabase
+      .from('bodeguero_profiles')
+      .select('phone')
+      .eq('profile_id', contract.warehouses?.bodeguero_id ?? '')
+      .maybeSingle();
+
+    return (
+      <ContractSuccess
+        contractNo={contract.contract_no}
+        comuna={contract.warehouses?.comuna ?? ''}
+        m2={Number(contract.m2)}
+        total={contract.total_amount}
+        bodeguero={host?.full_name ?? 'tu bodeguero'}
+        telefono={contacto?.phone ?? null}
+        direccion={contract.warehouses?.address ?? null}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">

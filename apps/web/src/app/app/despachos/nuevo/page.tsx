@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { EmptyState, PageHeader } from '@/components/ui/stat';
 import { ButtonLink } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
@@ -18,6 +17,12 @@ export default async function NewShipmentPage() {
     supabase.from('products').select('id, name, sku, category, unit_volume_m3').eq('active', true).order('name'),
     supabase.from('pyme_profiles').select('address').single(),
   ]);
+
+  const hostIds = [...new Set((contracts ?? []).map((c) => c.warehouses?.bodeguero_id).filter(Boolean))] as string[];
+  const { data: hosts } = hostIds.length
+    ? await supabase.from('public_profiles').select('id, full_name').in('id', hostIds)
+    : { data: [] };
+  const hostById = new Map((hosts ?? []).map((h) => [h.id, h.full_name ?? '']));
 
   if (!contracts?.length) {
     return (
@@ -48,15 +53,6 @@ export default async function NewShipmentPage() {
 
   return (
     <div>
-      <Link href="/app/despachos" className="mb-4 inline-block text-[13px] font-bold text-brand-600 hover:underline">
-        ← Volver a mis envíos
-      </Link>
-
-      <PageHeader
-        title="Nuevo envío a bodega"
-        subtitle="Declara qué mandas y cuánto. El bodeguero verifica contra esta lista al recibir."
-      />
-
       <ShipmentBuilder
         contracts={contracts.map((c) => ({
           id: c.id,
@@ -65,6 +61,7 @@ export default async function NewShipmentPage() {
           sector: c.warehouses?.sector_label ?? '',
           m2: Number(c.m2),
           capacityM3: Number(c.capacity_m3 ?? 0),
+          bodeguero: hostById.get(c.warehouses?.bodeguero_id ?? '') ?? 'tu bodeguero',
         }))}
         products={products.map((p) => ({
           id: p.id,

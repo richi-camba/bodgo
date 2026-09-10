@@ -101,6 +101,19 @@
     color: var(--color-ink-500);
   }
 
+  /* Marcador diagonal del prototipo, para el hueco donde va una foto que
+     todavía no existe. Es un patrón y no un gris plano para que se lea como
+     «acá falta una imagen» y no como un error de carga. */
+  .bg-rayado {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--color-brand-100),
+      var(--color-brand-100) 6px,
+      var(--color-brand-50) 6px,
+      var(--color-brand-50) 12px
+    );
+  }
+
   .card {
     background: #fff;
     border: 1px solid var(--color-line-100);
@@ -118,4 +131,11 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Un flujo por pasos toma la pantalla completa, como en el prototipo: la
+   barra de pestañas desaparece y su lugar lo ocupa la acción del paso. Saltar
+   a otra sección a mitad de un formulario largo sólo perdería lo cargado. */
+body:has([data-flujo-pasos]) [data-tabbar] {
+  display: none;
 }
