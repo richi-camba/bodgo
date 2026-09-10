@@ -94,13 +94,24 @@ contratos vigentes, envíos en distintos estados —incluido uno con
 discrepancia—, pedidos, una liquidación e incidentes de red. Las cuentas
 comparten la contraseña de `BODGO_DEMO_PASSWORD`:
 
-| Rol | Cuenta |
-|---|---|
-| PyME | `valentina@boutiquelua.cl` — Boutique Lúa |
-| PyME | `diego@casanorte.cl` — Casa Norte Deco |
-| Bodeguero | `marcela.rios@gmail.com` — Providencia y Ñuñoa |
-| Bodeguero | `rodrigo.pena@gmail.com` — Las Condes y Vitacura |
-| Admin | `admin@bodgo.cl` — backoffice |
+| Rol | Cuenta | Qué se ve al entrar |
+|---|---|---|
+| PyME | `valentina@boutiquelua.cl` | Contrato en Providencia, 5 pedidos en distintos estados, un envío en camino |
+| PyME | `diego@casanorte.cl` | Un envío recibido **con discrepancia** — el caso interesante |
+| Bodeguero | `marcela.rios@gmail.com` | Dos espacios, una recepción por verificar, 4 pedidos por preparar |
+| Bodeguero | `rodrigo.pena@gmail.com` | Las Condes y Vitacura, sin operación todavía |
+| Admin | `admin@bodgo.cl` | La red completa, la discrepancia abierta y los contactos de la web |
+
+También existen `carolina.soto@`, `ignacio.vera@`, `paula.mendez@` y
+`tomas.reyes@gmail.com`: bodegueros con un espacio publicado cada uno, para
+que el buscador tenga variedad.
+
+El seguimiento del comprador no pide cuenta. Los enlaces salen de
+`orders.tracking_token`:
+
+```bash
+pnpm db:seed   # los imprime al final si necesitas los actuales
+```
 
 ### Tests
 
