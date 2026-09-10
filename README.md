@@ -135,6 +135,16 @@ al terminar, así que es segura de correr sobre la base sembrada.
   sitio desplegado usa la misma base, así que una constante en el código sería
   la llave del backoffice publicada en GitHub.
 
+## Pendiente de revisión legal
+
+`/terminos` y `/privacidad` describen con precisión cómo funciona la
+plataforma —la custodia, las discrepancias, qué datos se guardan y con quién
+se comparten— pero **no los revisó un abogado**. Antes de abrir el registro a
+usuarios reales tienen que pasar por revisión legal en Chile: la Ley 19.628
+(y la 21.719, que la sustituye) imponen obligaciones concretas sobre
+tratamiento de datos, y el registro hace que el usuario acepte los Términos al
+crear su cuenta.
+
 ## Lo que falta
 
 - **Enviar el enlace de seguimiento solo.** El prototipo prometía mandarlo por
@@ -144,6 +154,10 @@ al terminar, así que es segura de correr sobre la base sembrada.
 - **Courier integrado por API.** `delivery_method` reserva el valor
   `integrated_courier` para el día que se integre una flota tipo Cabify. Hoy no
   se puede elegir al crear un pedido.
+- **Envío real de correos.** El enlace de recuperación de contraseña sale por
+  el proveedor por defecto de Supabase, que tiene cuota baja y no sirve para
+  producción. Hay que conectar un SMTP propio (Resend, Postmark) en el panel
+  de Supabase.
 - **Variables de entorno de *preview* en Vercel.** Producción está completa;
   los despliegues de rama necesitan que se carguen desde el panel.
 

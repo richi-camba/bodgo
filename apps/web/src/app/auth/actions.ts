@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { HOME_BY_ROLE } from '@/lib/supabase/middleware';
 
-export type AuthState = { error?: string } | null;
+export type AuthState = { error?: string; sent?: boolean } | null;
 
 const email = z.string().trim().toLowerCase().email('Revisa el correo, no parece válido.');
 const password = z.string().min(8, 'La contraseña debe tener al menos 8 caracteres.');
@@ -89,4 +89,60 @@ export async function signOut() {
   await supabase.auth.signOut();
   revalidatePath('/', 'layout');
   redirect('/');
+}
+
+// -----------------------------------------------------------------------------
+// Recuperación de contraseña
+// -----------------------------------------------------------------------------
+const site = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+
+/**
+ * Manda el correo con el enlace de recuperación.
+ *
+ * Responde lo mismo exista o no la cuenta: decir «ese correo no está
+ * registrado» convierte el formulario en una forma de averiguar quién tiene
+ * cuenta en BodGo.
+ */
+export async function requestPasswordReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const parsed = z.object({ email }).safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Revisa el correo.' };
+  }
+
+  const supabase = await createClient();
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${site()}/auth/callback?next=/recuperar/nueva`,
+  });
+
+  return { sent: true };
+}
+
+/** Fija la contraseña nueva. Requiere la sesión que abre el enlace del correo. */
+export async function setNewPassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const parsed = z
+    .object({ password, confirm: z.string() })
+    .refine((v) => v.password === v.confirm, {
+      message: 'Las contraseñas no coinciden.',
+      path: ['confirm'],
+    })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'El enlace venció o ya se usó. Pide uno nuevo.' };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+
+  if (error) return { error: 'No pudimos cambiar la contraseña. Inténtalo de nuevo.' };
+
+  revalidatePath('/', 'layout');
+  redirect(await homeForCurrentUser());
 }

@@ -3,6 +3,8 @@ import { ButtonLink } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Faq } from '@/components/marketing/faq';
 import { PricingCalculator } from '@/components/marketing/pricing-calculator';
+import { ContactForm } from '@/components/marketing/contact-form';
+import { StructuredData } from '@/components/marketing/structured-data';
 import { Trust } from '@/components/marketing/trust';
 import { createClient } from '@/lib/supabase/server';
 import { formatCompactCLP, formatNumber, HOST_COMMISSION_RATE } from '@bodgo/core';
@@ -35,6 +37,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <StructuredData />
+
       {/* ---------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden bg-navy-950">
         <div className="absolute inset-0">
@@ -298,27 +302,57 @@ export default async function HomePage() {
         </p>
       </section>
 
-      {/* ----------------------------------------------------- cta final */}
-      <section className="border-t border-line-100 bg-surface-50 py-20">
-        <div className="mx-auto max-w-3xl px-5 text-center">
-          <h2 className="text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[38px]">
-            Lleva tu e-commerce más cerca de tus clientes
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-[15.5px] text-ink-500">
-            Encuentra tu primera microbodega en minutos. Crear la cuenta es gratis y sin
-            compromiso.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <ButtonLink href="/registro" size="lg">
-              Empieza gratis
-            </ButtonLink>
-            <ButtonLink href="/registro?rol=bodeguero" size="lg" variant="secondary">
-              Publicar mi espacio
-            </ButtonLink>
+      {/* ------------------------------------------------------- contacto */}
+      <section id="contacto" className="scroll-mt-16 border-t border-line-100 bg-surface-50 py-20 md:py-24">
+        <div className="mx-auto grid max-w-6xl items-start gap-12 px-5 lg:grid-cols-[1fr_1.1fr]">
+          <div>
+            <p className="text-eyebrow">Hablemos</p>
+            <h2 className="mt-3 text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[38px]">
+              ¿Todavía no llegamos a tu comuna?
+            </h2>
+            <p className="mt-4 max-w-md text-[15.5px] leading-relaxed text-ink-500">
+              La red crece donde hay demanda. Déjanos tu contacto y te avisamos apenas abramos
+              cerca tuyo — o si tienes un espacio, cuándo pasa el evaluador.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              <ContactPoint
+                title="¿Prefieres escribir?"
+                value="hola@bodgo.cl"
+                href="mailto:hola@bodgo.cl"
+              />
+              <ContactPoint
+                title="¿Ya eres cliente y necesitas ayuda?"
+                value="ayuda@bodgo.cl"
+                href="mailto:ayuda@bodgo.cl"
+              />
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <ButtonLink href="/registro" size="lg">
+                Crear cuenta gratis
+              </ButtonLink>
+              <ButtonLink href="/bodegas" size="lg" variant="secondary">
+                Ver microbodegas
+              </ButtonLink>
+            </div>
           </div>
+
+          <ContactForm />
         </div>
       </section>
     </>
+  );
+}
+
+function ContactPoint({ title, value, href }: { title: string; value: string; href: string }) {
+  return (
+    <div>
+      <p className="text-[12.5px] text-ink-400">{title}</p>
+      <a href={href} className="text-[15px] font-bold text-brand-600 hover:underline">
+        {value}
+      </a>
+    </div>
   );
 }
 

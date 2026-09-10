@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Icon, type IconName } from '@/components/ui/icon';
+import type { IconName } from '@/components/ui/icon';
 import { Logo } from '@/components/ui/logo';
 import { NavLink } from './nav-link';
 import { SignOutButton } from './sign-out-button';

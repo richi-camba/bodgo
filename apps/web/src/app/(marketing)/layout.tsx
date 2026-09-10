@@ -5,10 +5,10 @@ import { ButtonLink } from '@/components/ui/button';
 import { MobileMenu } from '@/components/marketing/mobile-menu';
 
 const NAV = [
-  { href: '#como-funciona', label: 'Cómo funciona' },
-  { href: '#para-pymes', label: 'Para PyMEs' },
-  { href: '#para-bodegueros', label: 'Para bodegueros' },
-  { href: '#precios', label: 'Precios' },
+  { href: '/bodegas', label: 'Microbodegas' },
+  { href: '/#como-funciona', label: 'Cómo funciona' },
+  { href: '/#para-bodegueros', label: 'Para bodegueros' },
+  { href: '/#precios', label: 'Precios' },
 ];
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
@@ -88,7 +88,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <FooterColumn
               title="Plataforma"
               links={[
-                { href: '/registro', label: 'Buscar bodega' },
+                { href: '/bodegas', label: 'Ver microbodegas' },
+                { href: '/registro', label: 'Crear cuenta' },
                 { href: '/registro?rol=bodeguero', label: 'Ser bodeguero' },
                 { href: '/ingresar', label: 'Ingresar' },
               ]}
@@ -96,9 +97,10 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <FooterColumn
               title="Producto"
               links={[
-                { href: '#como-funciona', label: 'Cómo funciona' },
-                { href: '#precios', label: 'Precios' },
-                { href: '#preguntas', label: 'Preguntas frecuentes' },
+                { href: '/#como-funciona', label: 'Cómo funciona' },
+                { href: '/#precios', label: 'Precios' },
+                { href: '/#preguntas', label: 'Preguntas frecuentes' },
+                { href: '/#contacto', label: 'Contacto' },
               ]}
             />
             <FooterColumn
