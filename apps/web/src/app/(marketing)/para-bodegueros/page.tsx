@@ -2,6 +2,9 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { ButtonLink } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
+import { Faq } from '@/components/marketing/faq';
+import { preguntasDe } from '@/components/marketing/faq-content';
+import { FaqSchema } from '@/components/marketing/structured-data';
 import { HostEarnings } from '@/components/marketing/host-earnings';
 import { createClient } from '@/lib/supabase/server';
 import { formatCLP, HOST_COMMISSION_RATE, INSURANCE_COVERAGE_CLP } from '@bodgo/core';
@@ -68,8 +71,12 @@ export default async function ForHostsPage() {
     ? Math.round(precios.reduce((a, b) => a + b, 0) / precios.length / 1000) * 1000
     : 42_000;
 
+  const preguntas = preguntasDe('bodegueros', 'general');
+
   return (
     <>
+      <FaqSchema preguntas={preguntas} />
+
       {/* ---------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden bg-navy-950">
         <div className="absolute inset-0">
@@ -222,6 +229,19 @@ export default async function ForHostsPage() {
               garantía para los dos lados: ella sabe que no paga por un espacio que no existe, y tú
               sabes que el mes ya está pagado antes de guardar nada.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------- preguntas */}
+      <section className="border-t border-line-100 bg-surface-50 py-20 md:py-24">
+        <div className="mx-auto max-w-6xl px-5">
+          <p className="text-eyebrow text-center">Preguntas frecuentes</p>
+          <h2 className="mt-3 text-center text-[28px] font-extrabold tracking-[-0.02em] text-navy-900 md:text-[34px]">
+            Lo que preguntan los anfitriones
+          </h2>
+          <div className="mt-12">
+            <Faq preguntas={preguntas} />
           </div>
         </div>
       </section>

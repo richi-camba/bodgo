@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { FAQ } from './faq-content';
+import type { Pregunta } from './faq-content';
 
-export function Faq() {
+export function Faq({ preguntas }: { preguntas: Pregunta[] }) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
     <div className="mx-auto max-w-3xl">
       <ul className="divide-y divide-line-100 border-y border-line-100">
-        {FAQ.map((item, i) => {
+        {preguntas.map((item, i) => {
           const isOpen = open === i;
           return (
             <li key={item.q}>

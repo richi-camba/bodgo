@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { ButtonLink } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
+import { Faq } from '@/components/marketing/faq';
+import { preguntasDe } from '@/components/marketing/faq-content';
+import { FaqSchema } from '@/components/marketing/structured-data';
 import { PricingCalculator } from '@/components/marketing/pricing-calculator';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -51,8 +54,12 @@ export default async function PricingPage() {
     ? Math.round(precios.reduce((a, b) => a + b, 0) / precios.length)
     : null;
 
+  const preguntas = preguntasDe('precios', 'general');
+
   return (
     <>
+      <FaqSchema preguntas={preguntas} />
+
       <section className="border-b border-line-100 bg-navy-950 py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-400">Precios</p>
@@ -225,7 +232,20 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="border-t border-line-100 bg-surface-50 py-20">
+      {/* -------------------------------------------------------- preguntas */}
+      <section className="border-t border-line-100 bg-surface-50 py-20 md:py-24">
+        <div className="mx-auto max-w-6xl px-5">
+          <p className="text-eyebrow text-center">Preguntas sobre el precio</p>
+          <h2 className="mt-3 text-center text-[28px] font-extrabold tracking-[-0.02em] text-navy-900 md:text-[34px]">
+            Lo que conviene saber antes de contratar
+          </h2>
+          <div className="mt-12">
+            <Faq preguntas={preguntas} />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-line-100 py-20">
         <div className="mx-auto max-w-3xl px-5 text-center">
           <h2 className="text-[28px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[34px]">
             Mira los precios reales de cada bodega
