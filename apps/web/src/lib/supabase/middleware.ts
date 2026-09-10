@@ -17,6 +17,13 @@ export const HOME_BY_ROLE: Record<string, string> = {
 };
 
 /**
+ * La puesta en marcha de la cuenta. El admin no la tiene: esas cuentas las
+ * crea el equipo, no salen de un registro.
+ */
+const WELCOME = '/bienvenida';
+const WELCOME_ROLES = ['pyme', 'bodeguero'];
+
+/**
  * Refresca la sesión en cada request y bloquea el acceso cruzado entre roles.
  *
  * Esto es conveniencia de navegación, no seguridad: quien manda es RLS en la
@@ -55,7 +62,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, onboarded_at')
     .eq('id', user.id)
     .single();
 
@@ -65,6 +72,16 @@ export async function updateSession(request: NextRequest) {
     const home = request.nextUrl.clone();
     home.pathname = role ? (HOME_BY_ROLE[role] ?? '/') : '/';
     return NextResponse.redirect(home);
+  }
+
+  // Cuenta recién creada: primero la bienvenida. Se puede saltar, y saltarla
+  // también marca `onboarded_at` — la idea es no volver a preguntar, no
+  // obligar a completarla.
+  if (WELCOME_ROLES.includes(role) && !profile.onboarded_at) {
+    const ir = request.nextUrl.clone();
+    ir.pathname = WELCOME;
+    ir.search = '';
+    return NextResponse.redirect(ir);
   }
 
   return response;

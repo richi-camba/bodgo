@@ -74,6 +74,8 @@ const warehouseSchema = z.object({
   pricePerM2: z.coerce.number().int().min(1000, 'Define un precio por m² al mes.'),
   description: z.string().trim().optional(),
   access247: z.string().optional(),
+  receptionHours: z.string().trim().optional(),
+  weekendHours: z.string().trim().optional(),
 });
 
 export async function createWarehouse(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -96,6 +98,8 @@ export async function createWarehouse(_prev: ActionState, formData: FormData): P
       price_per_m2: parsed.data.pricePerM2,
       description: parsed.data.description || null,
       access_24_7: parsed.data.access247 === 'on',
+      reception_hours: parsed.data.receptionHours || null,
+      weekend_hours: parsed.data.weekendHours || null,
       // No se publica sola: un evaluador de BodGo hace la visita de
       // habilitación y recién ahí pasa a 'active'.
       status: 'pending_review',
@@ -149,6 +153,8 @@ export async function updateWarehouse(_prev: ActionState, formData: FormData): P
       price_per_m2: parsed.data.pricePerM2,
       description: parsed.data.description || null,
       access_24_7: parsed.data.access247 === 'on',
+      reception_hours: parsed.data.receptionHours || null,
+      weekend_hours: parsed.data.weekendHours || null,
     })
     .eq('id', parsed.data.warehouseId);
 

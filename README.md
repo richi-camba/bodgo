@@ -175,6 +175,12 @@ crear su cuenta.
 
 ## Lo que falta
 
+- **Registro público bloqueado por la cuota de correo.** Supabase confirma el
+  correo con su proveedor por defecto y la cuota es baja: al superarla, el
+  alta devuelve «email rate limit exceeded» y nadie puede crear cuenta. Es el
+  mismo SMTP pendiente de más abajo, pero acá no degrada una función, la
+  corta. Hay que conectar un proveedor propio antes de abrir el registro.
+
 - **Chat en tiempo real.** Los mensajes existen y se mandan, pero llegan al
   recargar: no hay suscripción todavía. Por eso tampoco hay indicador de «en
   línea» — sería decorar una promesa que la app no cumple.
@@ -215,6 +221,14 @@ crear su cuenta.
   puede leer: dice justo lo que falta hacer para habilitarlo. Los semánticos
   vienen en dos tonos: el `-600` rellena, el `-700` escribe sobre el fondo
   teñido.
+- **Los triggers que hacen contabilidad corren como definer.** Dos daban
+  error sólo con usuarios reales: el que mantiene `last_message_at` y el que
+  arma el checklist al publicar un espacio. Los dos escriben en tablas que
+  por RLS nadie puede tocar a mano —y está bien que así sea, porque no son
+  datos del usuario sino del sistema—, así que corrían como el usuario y
+  fallaban en silencio o directamente cortaban la operación. El seed no los
+  mostraba nunca porque escribe con la clave de servicio. Ahora son
+  `security definer` con `search_path` fijo, y la prueba de humo los cubre.
 - **Un flujo por pasos toma la pantalla completa.** Contratar una bodega y
   armar un envío esconden la barra de pestañas y ponen la acción del paso en
   su lugar, como en el prototipo: saltar a otra sección a mitad de un

@@ -24,7 +24,7 @@ export default async function ContractDetail({
   const { data: contract } = await supabase
     .from('contracts')
     .select(
-      'id, contract_no, m2, capacity_m3, price_per_m2, base_amount, commission_amount, total_amount, status, start_date, next_charge_date, refund_amount, termination_days_used, warehouse_id, warehouses(comuna, sector_label, address, bodeguero_id)',
+      'id, contract_no, m2, capacity_m3, price_per_m2, base_amount, commission_amount, total_amount, status, start_date, next_charge_date, refund_amount, termination_days_used, warehouse_id, warehouses(comuna, sector_label, address, bodeguero_id, reception_hours, weekend_hours)',
     )
     .eq('id', id)
     .maybeSingle();
@@ -64,6 +64,7 @@ export default async function ContractDetail({
         bodeguero={host?.full_name ?? 'tu bodeguero'}
         telefono={contacto?.phone ?? null}
         direccion={contract.warehouses?.address ?? null}
+        horario={[contract.warehouses?.reception_hours, contract.warehouses?.weekend_hours].filter(Boolean).join(' · ') || null}
       />
     );
   }

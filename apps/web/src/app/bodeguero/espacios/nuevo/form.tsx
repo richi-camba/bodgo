@@ -57,7 +57,21 @@ export function NewWarehouseForm() {
           />
         </Field>
 
-        <label className="flex items-center gap-2.5 text-[13px] text-ink-700">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Horario de recepción"
+            htmlFor="receptionHours"
+            hint="Es la primera pregunta de quien va a dejar los bultos."
+          >
+            <Input id="receptionHours" name="receptionHours" placeholder="Lun a Vie 9:00–19:00" />
+          </Field>
+
+          <Field label="Fin de semana (opcional)" htmlFor="weekendHours">
+            <Input id="weekendHours" name="weekendHours" placeholder="Sáb 10:00–14:00" />
+          </Field>
+        </div>
+
+        <label className="mt-4 flex items-center gap-2.5 text-[13px] text-ink-700">
           <input type="checkbox" name="access247" className="h-4 w-4 accent-navy-800" />
           Acceso 24/7 para la PyME
         </label>

@@ -10,6 +10,8 @@ type Props = {
   bodeguero: string;
   telefono: string | null;
   direccion: string | null;
+  /** Horario que declaró el bodeguero. Nulo si todavía no lo cargó. */
+  horario: string | null;
 };
 
 /**
@@ -27,13 +29,16 @@ export function ContractSuccess({
   bodeguero,
   telefono,
   direccion,
+  horario,
 }: Props) {
   const datos: { icon: IconName; label: string; valor: string }[] = [
     { icon: 'ubicacion', label: 'Dirección de la bodega', valor: direccion ?? `Zona ${comuna}` },
     {
       icon: 'reloj',
       label: 'Horario de recepción',
-      valor: 'Lun a Vie 9:00–19:00 · Sáb 10:00–14:00',
+      // Lo dice el bodeguero. Si todavía no lo cargó, se pregunta: mejor eso
+      // que inventarle un horario a alguien que va a ir hasta allá.
+      valor: horario ?? 'Coordínalo con el bodeguero antes de ir',
     },
     {
       icon: 'bodegueros',

@@ -87,6 +87,8 @@ export default async function SpaceDetail({ params }: { params: Promise<{ id: st
         pricePerM2={space.price_per_m2}
         description={space.description}
         access247={space.access_24_7}
+        receptionHours={space.reception_hours}
+        weekendHours={space.weekend_hours}
         arrendados={arrendados}
         status={space.status}
       />

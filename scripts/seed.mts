@@ -174,6 +174,16 @@ for (const w of WAREHOUSES) {
 
   if (existing) {
     warehouseIds[w.comuna] = existing.id;
+    // Los horarios se agregaron después: se completan también en las bodegas
+    // que ya estaban sembradas.
+    await db
+      .from('warehouses')
+      .update({
+        reception_hours: w.access ? 'Todos los días, 24 horas' : 'Lun a Vie 9:00–19:00',
+        weekend_hours: w.access ? null : 'Sáb 10:00–14:00',
+      })
+      .eq('id', existing.id)
+      .is('reception_hours', null);
     continue;
   }
 
@@ -191,6 +201,8 @@ for (const w of WAREHOUSES) {
       price_per_m2: w.price,
       status: 'active',
       access_24_7: w.access,
+      reception_hours: w.access ? 'Todos los días, 24 horas' : 'Lun a Vie 9:00–19:00',
+      weekend_hours: w.access ? null : 'Sáb 10:00–14:00',
       services: w.services,
       rating: w.rating,
       ratings_count: Math.round(w.rating * 8),

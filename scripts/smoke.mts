@@ -401,6 +401,41 @@ const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUP
   check('el bodeguero sigue sin poder leer pagos individuales', (pagos?.length ?? 0) === 0);
 }
 
+// ------------------------------------------- publicar un espacio de verdad
+{
+  // El trigger que arma el checklist corre como definer: sin eso el insert
+  // moría contra el RLS de `warehouse_checklist` y no se podía publicar una
+  // microbodega desde la aplicación. El seed no lo mostraba porque escribe
+  // con la clave de servicio.
+  const { data: creada, error } = await host
+    .from('warehouses')
+    .insert({
+      bodeguero_id: (await host.auth.getUser()).data.user.id,
+      comuna: 'Prueba de humo',
+      address: 'Calle Falsa 123',
+      sector_label: 'Zona de prueba',
+      total_m2: 6,
+      price_per_m2: 30000,
+      reception_hours: 'Lun a Vie 9:00–18:00',
+      status: 'pending_review',
+    })
+    .select('id')
+    .single();
+
+  check('el bodeguero puede publicar un espacio', !error, error?.message ?? '');
+
+  if (creada) {
+    const { data: items } = await host
+      .from('warehouse_checklist')
+      .select('item')
+      .eq('warehouse_id', creada.id);
+    check('y le queda armado el checklist de habilitación', (items?.length ?? 0) === 5);
+
+    await admin.from('warehouse_checklist').delete().eq('warehouse_id', creada.id);
+    await admin.from('warehouses').delete().eq('id', creada.id);
+  }
+}
+
 // ------------------------------------------------------- chat y tickets
 {
   const { data: mios } = await pyme.from('conversations').select('id, bodeguero_id');

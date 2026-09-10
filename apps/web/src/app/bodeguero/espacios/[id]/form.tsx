@@ -18,6 +18,8 @@ export function EditSpaceForm({
   pricePerM2,
   description,
   access247,
+  receptionHours,
+  weekendHours,
   arrendados,
   status,
 }: {
@@ -29,6 +31,8 @@ export function EditSpaceForm({
   pricePerM2: number;
   description: string | null;
   access247: boolean;
+  receptionHours: string | null;
+  weekendHours: string | null;
   arrendados: number;
   status: string;
 }) {
@@ -91,6 +95,30 @@ export function EditSpaceForm({
                 min="1000"
                 required
                 defaultValue={pricePerM2}
+              />
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Horario de recepción"
+              htmlFor="receptionHours"
+              hint="Es la primera pregunta de quien va a dejar los bultos."
+            >
+              <Input
+                id="receptionHours"
+                name="receptionHours"
+                defaultValue={receptionHours ?? ''}
+                placeholder="Lun a Vie 9:00–19:00"
+              />
+            </Field>
+
+            <Field label="Fin de semana (opcional)" htmlFor="weekendHours">
+              <Input
+                id="weekendHours"
+                name="weekendHours"
+                defaultValue={weekendHours ?? ''}
+                placeholder="Sáb 10:00–14:00"
               />
             </Field>
           </div>

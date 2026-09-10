@@ -1286,6 +1286,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          onboarded_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           verified: boolean
@@ -1295,6 +1296,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id: string
+          onboarded_at?: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           verified?: boolean
@@ -1304,6 +1306,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          onboarded_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           verified?: boolean
@@ -1889,12 +1892,14 @@ export type Database = {
           published_at: string | null
           rating: number
           ratings_count: number
+          reception_hours: string | null
           region: string
           sector_label: string | null
           services: string[]
           status: Database["public"]["Enums"]["warehouse_status"]
           total_m2: number
           updated_at: string
+          weekend_hours: string | null
         }
         Insert: {
           access_24_7?: boolean
@@ -1913,12 +1918,14 @@ export type Database = {
           published_at?: string | null
           rating?: number
           ratings_count?: number
+          reception_hours?: string | null
           region?: string
           sector_label?: string | null
           services?: string[]
           status?: Database["public"]["Enums"]["warehouse_status"]
           total_m2: number
           updated_at?: string
+          weekend_hours?: string | null
         }
         Update: {
           access_24_7?: boolean
@@ -1937,12 +1944,14 @@ export type Database = {
           published_at?: string | null
           rating?: number
           ratings_count?: number
+          reception_hours?: string | null
           region?: string
           sector_label?: string | null
           services?: string[]
           status?: Database["public"]["Enums"]["warehouse_status"]
           total_m2?: number
           updated_at?: string
+          weekend_hours?: string | null
         }
         Relationships: [
           {
@@ -2035,10 +2044,12 @@ export type Database = {
           published_at: string | null
           rating: number | null
           ratings_count: number | null
+          reception_hours: string | null
           region: string | null
           sector_label: string | null
           services: string[] | null
           total_m2: number | null
+          weekend_hours: string | null
         }
         Relationships: [
           {

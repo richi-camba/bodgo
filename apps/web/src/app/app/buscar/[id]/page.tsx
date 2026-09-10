@@ -99,7 +99,10 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
         <dl className="mt-3 grid grid-cols-3 gap-2.5">
           <Dato label="Superficie libre" value={lleno ? '—' : `${formatNumber(disponible, 1)} m²`} />
           <Dato label="Precio" value={`${formatCLP(w.price_per_m2 ?? 0)}/m²`} />
-          <Dato label="Acceso" value={w.access_24_7 ? '24/7' : 'Con horario'} />
+          <Dato
+            label="Recepción"
+            value={w.reception_hours ?? (w.access_24_7 ? '24/7' : 'Consultar')}
+          />
         </dl>
 
         {w.description ? (
