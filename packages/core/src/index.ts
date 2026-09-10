@@ -5,4 +5,5 @@ export * from './geo';
 export * from './money';
 export * from './pricing';
 export * from './reconciliation';
+export * from './stock';
 export * from './volume';

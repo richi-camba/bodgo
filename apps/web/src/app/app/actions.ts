@@ -91,6 +91,11 @@ const productSchema = z.object({
     .number()
     .min(0, 'El volumen no puede ser negativo.')
     .max(5, 'Un producto de más de 5 m³ no cabe en una microbodega.'),
+  // Opcional a propósito: sin objetivo el inventario muestra el número solo,
+  // sin barra ni aviso de reposición.
+  targetStock: z
+    .union([z.literal(''), z.coerce.number().int().positive('El stock objetivo debe ser mayor que cero.')])
+    .optional(),
 });
 
 export async function createProduct(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -107,6 +112,7 @@ export async function createProduct(_prev: ActionState, formData: FormData): Pro
     sku: parsed.data.sku,
     category: parsed.data.category || null,
     unit_volume_m3: parsed.data.unitVolumeM3,
+    target_stock: parsed.data.targetStock || null,
   });
 
   if (error) {
@@ -117,6 +123,37 @@ export async function createProduct(_prev: ActionState, formData: FormData): Pro
 
   revalidatePath('/app/inventario');
   return { ok: 'Producto creado.' };
+}
+
+/** Editar un producto del catálogo. El stock no se toca acá: lo mueven las
+ *  recepciones y los pedidos, nunca una edición a mano. */
+export async function updateProduct(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = productSchema
+    .extend({ productId: z.string().uuid() })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('products')
+    .update({
+      name: parsed.data.name,
+      sku: parsed.data.sku,
+      category: parsed.data.category || null,
+      unit_volume_m3: parsed.data.unitVolumeM3,
+      target_stock: parsed.data.targetStock || null,
+    })
+    .eq('id', parsed.data.productId);
+
+  if (error) {
+    return {
+      error: error.code === '23505' ? 'Ya tienes otro producto con ese SKU.' : readableError(error.message),
+    };
+  }
+
+  revalidatePath('/app/inventario');
+  redirect(`/app/inventario/${parsed.data.productId}`);
 }
 
 // -----------------------------------------------------------------------------

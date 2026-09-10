@@ -1233,6 +1233,7 @@ export type Database = {
           photo_url: string | null
           pyme_id: string
           sku: string
+          target_stock: number | null
           unit_volume_m3: number
           updated_at: string
         }
@@ -1245,6 +1246,7 @@ export type Database = {
           photo_url?: string | null
           pyme_id: string
           sku: string
+          target_stock?: number | null
           unit_volume_m3?: number
           updated_at?: string
         }
@@ -1257,6 +1259,7 @@ export type Database = {
           photo_url?: string | null
           pyme_id?: string
           sku?: string
+          target_stock?: number | null
           unit_volume_m3?: number
           updated_at?: string
         }

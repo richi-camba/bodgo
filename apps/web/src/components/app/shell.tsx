@@ -154,7 +154,7 @@ function BellLink({ href, sinLeer, navy }: { href: string; sinLeer: number; navy
       {sinLeer > 0 ? (
         <span
           className={`absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white ${
-            navy ? 'bg-brand-600 ring-2 ring-navy-950' : 'bg-danger-600 ring-2 ring-white'
+            navy ? 'bg-brand-600 ring-2 ring-navy-950' : 'bg-danger-700 ring-2 ring-white'
           }`}
         >
           {sinLeer > 9 ? '9+' : sinLeer}

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { formatCLP } from '@bodgo/core';
 
@@ -148,28 +149,5 @@ export function SearchControls({
 
       {pendiente ? <p className="sr-only" role="status">Actualizando resultados…</p> : null}
     </div>
-  );
-}
-
-function Chip({
-  activo,
-  onClick,
-  children,
-}: {
-  activo: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={activo}
-      onClick={onClick}
-      className={`shrink-0 rounded-pill px-3.5 py-2 text-[12.5px] font-bold transition-colors ${
-        activo ? 'bg-navy-800 text-white' : 'bg-surface-100 text-ink-700 hover:bg-line-100'
-      }`}
-    >
-      {children}
-    </button>
   );
 }

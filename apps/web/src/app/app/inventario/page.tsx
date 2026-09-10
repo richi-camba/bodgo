@@ -1,111 +1,176 @@
 import type { Metadata } from 'next';
-import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 import { ButtonLink } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, PageHeader, Stat } from '@/components/ui/stat';
+import { ProductCard, type ProductRow } from '@/components/app/product-row';
 import { createClient } from '@/lib/supabase/server';
-import { formatNumber } from '@bodgo/core';
+import { formatNumber, stockStatus } from '@bodgo/core';
+import { InventoryControls } from './controls';
 import { NewProductForm } from './new-product-form';
 
 export const metadata: Metadata = { title: 'Mi inventario' };
 
-export default async function InventoryPage() {
+type Search = { q?: string; bodega?: string; cat?: string };
+
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
 
   const [{ data: products }, { data: inventory }] = await Promise.all([
-    supabase.from('products').select('id, name, sku, category, unit_volume_m3').eq('active', true).order('name'),
-    supabase.from('inventory').select('product_id, quantity, position_label, warehouse_id, warehouses(comuna)'),
+    supabase
+      .from('products')
+      .select('id, name, sku, category, unit_volume_m3, target_stock')
+      .eq('active', true)
+      .order('name'),
+    supabase
+      .from('inventory')
+      .select('product_id, quantity, position_label, warehouses(comuna)'),
   ]);
 
-  const stockByProduct = new Map<string, { total: number; places: { comuna: string; qty: number; position: string | null }[] }>();
+  type Lugar = { comuna: string; qty: number; position: string | null };
+  const porProducto = new Map<string, Lugar[]>();
 
-  for (const row of inventory ?? []) {
-    const entry = stockByProduct.get(row.product_id) ?? { total: 0, places: [] };
-    entry.total += row.quantity;
-    entry.places.push({
-      comuna: row.warehouses?.comuna ?? 'Bodega',
-      qty: row.quantity,
-      position: row.position_label,
+  for (const fila of inventory ?? []) {
+    const lugares = porProducto.get(fila.product_id) ?? [];
+    lugares.push({
+      comuna: fila.warehouses?.comuna ?? 'Bodega',
+      qty: fila.quantity,
+      position: fila.position_label,
     });
-    stockByProduct.set(row.product_id, entry);
+    porProducto.set(fila.product_id, lugares);
   }
 
-  const totalUnits = [...stockByProduct.values()].reduce((s, e) => s + e.total, 0);
-  const withStock = [...stockByProduct.values()].filter((e) => e.total > 0).length;
-  const outOfStock = (products ?? []).filter((p) => (stockByProduct.get(p.id)?.total ?? 0) === 0);
+  const comunas = [...new Set((inventory ?? []).map((f) => f.warehouses?.comuna).filter(Boolean))]
+    .sort() as string[];
+  const categorias = [...new Set((products ?? []).map((p) => p.category).filter(Boolean))]
+    .sort() as string[];
+
+  const texto = params.q?.trim().toLowerCase();
+
+  // Filtrar por bodega cambia lo que significa la cifra: pasa a ser el stock
+  // en ese espacio, y bajo el SKU se lee la posición en vez de la categoría.
+  const filas: ProductRow[] = (products ?? [])
+    .filter((p) => !params.cat || p.category === params.cat)
+    .filter(
+      (p) =>
+        !texto ||
+        p.name.toLowerCase().includes(texto) ||
+        p.sku.toLowerCase().includes(texto),
+    )
+    .map((p) => {
+      const lugares = porProducto.get(p.id) ?? [];
+      const enBodega = params.bodega ? lugares.filter((l) => l.comuna === params.bodega) : lugares;
+      const stock = enBodega.reduce((s, l) => s + l.qty, 0);
+
+      return {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        category: p.category,
+        targetStock: p.target_stock,
+        stock,
+        detalle: params.bodega
+          ? enBodega[0]?.position
+            ? `Posición ${enBodega[0].position}`
+            : params.bodega
+          : (p.category ?? 'Sin categoría'),
+        bodegas: lugares.length,
+      };
+    })
+    .filter((f) => !params.bodega || f.stock > 0 || (porProducto.get(f.id) ?? []).some((l) => l.comuna === params.bodega));
+
+  const unidades = filas.reduce((s, f) => s + f.stock, 0);
+  const reponer = filas.filter((f) => ['agotado', 'bajo'].includes(stockStatus(f.stock, f.targetStock)));
+  const hayFiltros = Boolean(texto || params.bodega || params.cat);
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Mi inventario"
-        subtitle="Stock en tiempo real, repartido entre tus microbodegas."
-        action={<ButtonLink href="/app/despachos/nuevo" size="sm">Enviar mercancía</ButtonLink>}
-      />
+    <div className="space-y-4">
+      <PageHeader title="Mi inventario" subtitle="Stock en tiempo real · multibodega" />
 
-      <div className="grid grid-cols-3 gap-3">
-        <Stat value={products?.length ?? 0} label="SKUs en el catálogo" />
-        <Stat value={withStock} label="Con stock" />
-        <Stat value={formatNumber(totalUnits)} label="Unidades guardadas" />
-      </div>
+      <InventoryControls comunas={comunas} categorias={categorias} />
 
-      {outOfStock.length > 0 && products?.length ? (
-        <p className="rounded-card border border-warning-600/25 bg-warning-50 px-4 py-3 text-[13px] font-semibold text-warning-700">
-          ⚠️ {outOfStock.length} {outOfStock.length === 1 ? 'producto está' : 'productos están'} sin
-          stock en bodega. Prepara un envío para reponer.
-        </p>
+      {products?.length ? (
+        <>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Stat
+              orden="etiqueta-primero"
+              value={formatNumber(filas.length)}
+              label="SKUs activos"
+            />
+            <Stat
+              orden="etiqueta-primero"
+              value={formatNumber(unidades)}
+              label={params.bodega ? `Unidades en ${params.bodega}` : 'Unidades guardadas'}
+            />
+          </div>
+
+          {reponer.length ? (
+            <p className="flex items-center gap-2.5 rounded-[12px] bg-warning-50 px-3.5 py-3 text-[12px] font-semibold text-warning-700">
+              <span className="shrink-0">
+                <Icon name="discrepancias" size={16} />
+              </span>
+              {reponer.length === 1
+                ? '1 producto necesita reposición'
+                : `${reponer.length} productos necesitan reposición`}
+            </p>
+          ) : null}
+        </>
       ) : null}
 
       {!products?.length ? (
         <EmptyState
+          icon="inventario"
           title="Tu catálogo está vacío"
           body="Crea tus productos con su SKU y su volumen unitario. El volumen es lo que nos permite avisarte si un envío no cabe en el espacio que contrataste."
         />
+      ) : filas.length === 0 ? (
+        <EmptyState
+          icon="sinResultados"
+          title="Sin resultados"
+          body="Prueba con otro nombre o SKU, o cambia los filtros de bodega y categoría."
+          action={
+            hayFiltros ? (
+              <ButtonLink href="/app/inventario" variant="secondary" size="sm">
+                Limpiar filtros
+              </ButtonLink>
+            ) : undefined
+          }
+        />
       ) : (
         <ul className="space-y-2.5">
-          {products.map((p) => {
-            const stock = stockByProduct.get(p.id);
-            return (
-              <li key={p.id} className="card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-[15px] font-extrabold text-navy-900">{p.name}</h2>
-                    <p className="mt-0.5 text-[12.5px] text-ink-400">
-                      {p.sku}
-                      {p.category ? ` · ${p.category}` : ''} ·{' '}
-                      {formatNumber(Number(p.unit_volume_m3) * 1000, 1)} L por unidad
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-[19px] font-extrabold leading-none text-navy-900 tabular-nums">
-                      {formatNumber(stock?.total ?? 0)}
-                    </p>
-                    <p className="text-[11px] text-ink-400">unidades</p>
-                  </div>
-                </div>
-
-                {stock?.places.length ? (
-                  <ul className="mt-3 flex flex-wrap gap-2 border-t border-line-100 pt-3">
-                    {stock.places.map((place) => (
-                      <li key={`${place.comuna}-${place.position}`}>
-                        <Badge tone="brand">
-                          {place.comuna}
-                          {place.position ? ` · ${place.position}` : ''} — {formatNumber(place.qty)} u
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-3 border-t border-line-100 pt-3 text-[12.5px] text-ink-400">
-                    Sin stock en bodega. El stock se suma cuando el bodeguero confirma la recepción.
-                  </p>
-                )}
-              </li>
-            );
-          })}
+          {filas.map((f) => (
+            <li key={f.id}>
+              <ProductCard producto={f} />
+            </li>
+          ))}
         </ul>
       )}
 
+      {/* ------------------------------------------------------- acciones */}
       <NewProductForm />
+
+      <Link
+        href="/app/despachos/nuevo"
+        className="flex items-center gap-3 rounded-[14px] bg-navy-800 p-3.5 text-white transition-colors hover:bg-navy-950"
+      >
+        <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-white/15">
+          <Icon name="envios" size={20} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[15px] font-bold">Enviar mercancía a bodega</span>
+          <span className="mt-px block text-[12px] text-white/70">
+            Declara el manifiesto y avisa al bodeguero
+          </span>
+        </span>
+        <span aria-hidden className="text-white/70">
+          <Icon name="siguiente" size={16} />
+        </span>
+      </Link>
     </div>
   );
 }

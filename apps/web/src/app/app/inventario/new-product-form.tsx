@@ -5,6 +5,7 @@ import { useFormStatus } from 'react-dom';
 import { createProduct, type ActionState } from '@/app/app/actions';
 import { Button } from '@/components/ui/button';
 import { Field, FormError, Input, Select } from '@/components/ui/field';
+import { Icon } from '@/components/ui/icon';
 import { PRODUCT_CATEGORIES } from '@bodgo/core';
 
 export function NewProductForm() {
@@ -13,8 +14,9 @@ export function NewProductForm() {
 
   if (!open) {
     return (
-      <Button variant="secondary" full onClick={() => setOpen(true)}>
-        + Crear producto
+      <Button variant="brand" size="lg" full onClick={() => setOpen(true)}>
+        <Icon name="agregar" size={18} />
+        Crear producto
       </Button>
     );
   }
@@ -50,6 +52,14 @@ export function NewProductForm() {
           </Select>
         </Field>
       </div>
+
+      <Field
+        label="Stock objetivo (opcional)"
+        htmlFor="targetStock"
+        hint="Cuántas unidades quieres tener en bodega. Es el techo de la barra del inventario y lo que dispara el aviso de reposición."
+      >
+        <Input id="targetStock" name="targetStock" type="number" min="1" step="1" placeholder="200" />
+      </Field>
 
       <Field
         label="Volumen unitario (m³)"

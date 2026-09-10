@@ -32,11 +32,17 @@ cantidades. El bodeguero cuenta línea a línea y mide el volumen real. Si algo 
 calza, se abre una discrepancia, se avisa a la PyME y la plata sigue retenida.
 El inventario suma lo *recibido*, nunca lo declarado.
 
-**3. Capacidad en m³, no sólo en m².** Los metros cuadrados contratados se
+**3. El stock que se ve es el que llegó, y se puede auditar.** Cada producto
+lleva un objetivo de stock opcional: sin él la ficha muestra el número solo,
+con él aparece la barra y el aviso de reposición. La conciliación contra el
+conteo físico del bodeguero se muestra tal cual está — si nadie contó a mano,
+lo dice, en vez de inventar un número que cuadre.
+
+**4. Capacidad en m³, no sólo en m².** Los metros cuadrados contratados se
 traducen a volumen apilable a 1,8 m de altura — 12 m² son 21,6 m³ útiles. Cada
 envío se contrasta contra esa capacidad antes de salir.
 
-**4. El último tramo va por courier externo.** BodGo no tiene flota. Al
+**5. El último tramo va por courier externo.** BodGo no tiene flota. Al
 comprador se le cobra el envío por zona —la distancia se calcula de verdad,
 bodega a centro de comuna con factor de rodeo urbano— y después se registra con
 qué courier se despachó, cuánto costó realmente y con qué comprobante. La
@@ -44,7 +50,7 @@ diferencia entre lo cobrado y lo pagado es el margen de la PyME en el despacho.
 Sin courier registrado el pedido no se puede marcar como retirado: el comprador
 quedaría sin forma de seguirlo.
 
-**5. El comprador sigue su pedido sin cuenta.** Cada pedido lleva un token
+**6. El comprador sigue su pedido sin cuenta.** Cada pedido lleva un token
 aleatorio propio, porque el código correlativo (DSP-3406) sería adivinable. El
 enlace muestra el estado, el courier y lo que compró — nunca lo que el envío le
 costó a la PyME ni la dirección de la bodega.
@@ -89,9 +95,10 @@ esquema y `database.types.ts` no coinciden.
 pnpm db:seed      # crea la red de prueba (idempotente)
 ```
 
-Siembra 8 microbodegas en 8 comunas de Santiago, dos PyMEs con catálogo,
-contratos vigentes, envíos en distintos estados —incluido uno con
-discrepancia—, pedidos, una liquidación e incidentes de red. Las cuentas
+Siembra 8 microbodegas en 8 comunas de Santiago, dos PyMEs con catálogo y
+stock objetivo, contratos vigentes, envíos en distintos estados —incluido uno
+con discrepancia—, conteos físicos (uno cuadrado y otro con diferencia),
+pedidos, una liquidación e incidentes de red. Las cuentas
 comparten la contraseña de `BODGO_DEMO_PASSWORD`:
 
 | Rol | Cuenta | Qué se ve al entrar |
@@ -158,6 +165,8 @@ crear su cuenta.
 
 ## Lo que falta
 
+- **Carga masiva del catálogo por CSV.** El prototipo pone el botón junto a
+  «Crear producto». Hoy los productos se crean de a uno.
 - **Enviar el enlace de seguimiento solo.** El prototipo prometía mandarlo por
   correo y WhatsApp al guardarlo. Sin proveedor de correo contratado, decir que
   se envía sería mentira: hoy se copia o se abre WhatsApp con el mensaje ya

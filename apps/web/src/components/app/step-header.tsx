@@ -1,31 +1,42 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Icon } from '@/components/ui/icon';
 
 /**
- * Cabecera de un flujo por pasos.
+ * Cabecera de pantalla con vuelta atrás.
  *
- * Del prototipo: flecha de volver en un círculo blanco y título en 800. Si el
- * flujo lleva la cuenta de pasos aparece «Paso N de M» y una barra segmentada
- * —segmentos y no una barra continua, porque a mitad de un formulario largo la
- * pregunta real es cuántos pasos faltan, no qué porcentaje va—. La
- * contratación no la lleva: son tres pantallas cortas y el prototipo la deja
- * sin contador.
+ * Del prototipo: flecha en un círculo blanco y título en 800. Si el flujo
+ * lleva la cuenta de pasos aparece «Paso N de M» y una barra segmentada
+ * —segmentos y no una barra continua, porque a mitad de un formulario largo
+ * la pregunta real es cuántos pasos faltan, no qué porcentaje va—.
+ *
+ * `tomaLaPantalla` decide si esconde la barra de pestañas. Va en true cuando
+ * la pantalla es un flujo que hay que terminar (contratar, enviar, verificar
+ * una recepción) y en false cuando es sólo una ficha que se mira, como el
+ * detalle de un producto: ahí saltar a otra sección no pierde nada.
  */
 export function StepHeader({
   titulo,
+  subtitulo,
   paso,
   total,
   volverA,
+  accion,
+  tomaLaPantalla = true,
 }: {
   titulo: string;
+  subtitulo?: ReactNode;
   paso?: number;
   total?: number;
   volverA: string;
+  accion?: ReactNode;
+  tomaLaPantalla?: boolean;
 }) {
   const conPasos = paso != null && total != null;
+  const tamano = conPasos ? 'text-[18px]' : subtitulo ? 'text-[17px]' : 'text-[19px]';
 
   return (
-    <header className="mb-5" data-flujo-pasos>
+    <header className="mb-5" {...(tomaLaPantalla ? { 'data-flujo-pasos': '' } : {})}>
       <div className="flex items-center gap-3.5">
         <Link
           href={volverA}
@@ -33,20 +44,21 @@ export function StepHeader({
         >
           <Icon name="volver" size={17} label="Volver" />
         </Link>
-        <div>
-          <h1
-            className={`font-extrabold tracking-tight text-navy-900 ${
-              conPasos ? 'text-[18px]' : 'text-[19px]'
-            }`}
-          >
+
+        <div className="min-w-0 flex-1">
+          <h1 className={`truncate font-extrabold tracking-tight text-navy-900 ${tamano}`}>
             {titulo}
           </h1>
           {conPasos ? (
             <p className="mt-px text-[12px] text-ink-500">
               Paso {paso} de {total}
             </p>
+          ) : subtitulo ? (
+            <div className="mt-px text-[12px] text-ink-500">{subtitulo}</div>
           ) : null}
         </div>
+
+        {accion ? <div className="shrink-0">{accion}</div> : null}
       </div>
 
       {conPasos ? (
@@ -79,7 +91,7 @@ export function StickyBar({
 }: {
   etiqueta?: string;
   valor?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line-100 bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-3.5 shadow-[0_-4px_18px_rgba(16,36,58,.06)] lg:sticky lg:bottom-4 lg:mt-6 lg:rounded-card lg:border lg:pb-3.5">

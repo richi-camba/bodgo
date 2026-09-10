@@ -228,18 +228,27 @@ for (const [comuna, ruta] of Object.entries(FOTOS)) {
 // ------------------------------------------------------------------ catálogo
 log('Cargando catálogo de Boutique Lúa…');
 
+// `target` es el stock que la PyME quiere tener: da techo a la barra del
+// inventario y dispara el aviso de reposición.
 const PRODUCTS = [
-  { name: 'Polera algodón talla M', sku: 'SKU-0876', category: 'Moda y accesorios', vol: 0.0035 },
-  { name: 'Botella térmica 750 ml', sku: 'SKU-0099', category: 'Hogar y decoración', vol: 0.0042 },
-  { name: 'Mochila urbana 20 L', sku: 'SKU-0451', category: 'Deportes', vol: 0.0180 },
-  { name: 'Chaleco polar unisex', sku: 'SKU-1204', category: 'Moda y accesorios', vol: 0.0065 },
-  { name: 'Set de velas aromáticas', sku: 'SKU-0733', category: 'Hogar y decoración', vol: 0.0028 },
-  { name: 'Gorro de lana merino', sku: 'SKU-0512', category: 'Moda y accesorios', vol: 0.0012 },
+  { name: 'Polera algodón talla M', sku: 'SKU-0876', category: 'Moda y accesorios', vol: 0.0035, target: 200 },
+  { name: 'Botella térmica 750 ml', sku: 'SKU-0099', category: 'Hogar y decoración', vol: 0.0042, target: 120 },
+  { name: 'Mochila urbana 20 L', sku: 'SKU-0451', category: 'Deportes', vol: 0.0180, target: 80 },
+  { name: 'Chaleco polar unisex', sku: 'SKU-1204', category: 'Moda y accesorios', vol: 0.0065, target: 90 },
+  { name: 'Set de velas aromáticas', sku: 'SKU-0733', category: 'Hogar y decoración', vol: 0.0028, target: 100 },
+  { name: 'Gorro de lana merino', sku: 'SKU-0512', category: 'Moda y accesorios', vol: 0.0012, target: 150 },
 ];
 
 for (const p of PRODUCTS) {
   await db.from('products').upsert(
-    { pyme_id: valentinaId, name: p.name, sku: p.sku, category: p.category, unit_volume_m3: p.vol },
+    {
+      pyme_id: valentinaId,
+      name: p.name,
+      sku: p.sku,
+      category: p.category,
+      unit_volume_m3: p.vol,
+      target_stock: p.target,
+    },
     { onConflict: 'pyme_id,sku' },
   );
 }
@@ -458,6 +467,43 @@ if (!order) {
     order_id: created.id,
     status: 'pending',
     note: 'Venta recibida desde Mercado Libre',
+  });
+}
+
+// --------------------------------------------------- conteo físico (auditoría)
+// Dos SKUs contados a mano contra el stock digital: uno cuadra y el otro no,
+// que es el caso que la ficha del producto tiene que saber mostrar.
+const COUNTS = [
+  { sku: 'SKU-0876', delta: 0 },
+  { sku: 'SKU-0099', delta: -3 },
+];
+
+for (const c of COUNTS) {
+  const product = bySku[c.sku];
+  const { data: yaContado } = await db
+    .from('stock_counts')
+    .select('id')
+    .eq('product_id', product.id)
+    .eq('warehouse_id', providencia)
+    .maybeSingle();
+
+  if (yaContado) continue;
+
+  const { data: stock } = await db
+    .from('inventory')
+    .select('quantity')
+    .eq('product_id', product.id)
+    .eq('warehouse_id', providencia)
+    .maybeSingle();
+
+  const digital = stock?.quantity ?? 0;
+
+  await db.from('stock_counts').insert({
+    product_id: product.id,
+    warehouse_id: providencia,
+    digital_qty: digital,
+    physical_qty: Math.max(0, digital + c.delta),
+    counted_by: marcelaId,
   });
 }
 

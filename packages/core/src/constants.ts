@@ -40,3 +40,11 @@ export const CSV_MAX_BYTES = 2 * 1024 * 1024;
 /** Reintentos de cobro ante un pago rechazado. */
 export const PAYMENT_MAX_ATTEMPTS = 3;
 export const PAYMENT_RETRY_HOURS = 24;
+
+/**
+ * Bajo qué fracción del stock objetivo hay que reponer.
+ *
+ * Un tercio deja margen para que un envío llegue antes de quedarse en cero:
+ * con reposiciones que tardan días, avisar recién al agotarse llega tarde.
+ */
+export const LOW_STOCK_RATIO = 0.3;
