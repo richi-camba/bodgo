@@ -3,7 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { NOTIFICATION_TOPICS, quoteDeliveryToComuna } from '@bodgo/core';
+import {
+  CSV_MAX_BYTES,
+  csvSummary,
+  NOTIFICATION_TOPICS,
+  parseProductCsv,
+  quoteDeliveryToComuna,
+} from '@bodgo/core';
 import { createClient } from '@/lib/supabase/server';
 
 export type ActionState = { error?: string; ok?: string } | null;
@@ -548,4 +554,76 @@ export async function toggleNotificationPreference(
 
   revalidatePath('/app/perfil/notificaciones');
   return { ok: 'Preferencia guardada.' };
+}
+
+// -----------------------------------------------------------------------------
+// Carga masiva del catálogo
+// -----------------------------------------------------------------------------
+
+/**
+ * Importa productos desde un CSV.
+ *
+ * El servidor vuelve a leer el archivo con el mismo parser que usó la
+ * previsualización —vive en `packages/core` justamente para eso— y con los
+ * SKUs que hay ahora en la base, no con los que había cuando se revisó. Si
+ * entre la revisión y el «Importar» alguien creó un producto, la fila pasa a
+ * actualizarlo en vez de chocar contra el índice único.
+ *
+ * No se importa stock. Las unidades las mueven las recepciones y los pedidos:
+ * dejar que un CSV las escriba rompería la trazabilidad y la conciliación
+ * contra el conteo físico.
+ */
+export async function importProducts(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const texto = String(formData.get('csv') ?? '');
+
+  if (!texto.trim()) return { error: 'Elige un archivo antes de importar.' };
+  if (new Blob([texto]).size > CSV_MAX_BYTES) {
+    return { error: 'El archivo pesa más de 2 MB. Pártelo en varios.' };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  const { data: actuales } = await supabase.from('products').select('sku');
+
+  const { filas, error } = parseProductCsv(texto, {
+    skusExistentes: (actuales ?? []).map((p) => p.sku),
+  });
+
+  if (error) return { error };
+
+  const buenas = filas.filter((f) => f.estado !== 'error');
+  if (!buenas.length) return { error: 'Ninguna fila del archivo se puede importar.' };
+
+  const { error: fallo } = await supabase.from('products').upsert(
+    buenas.map((f) => ({
+      pyme_id: user.id,
+      name: f.name,
+      sku: f.sku,
+      category: f.category,
+      unit_volume_m3: f.unitVolumeM3,
+      target_stock: f.targetStock,
+      active: true,
+    })),
+    { onConflict: 'pyme_id,sku' },
+  );
+
+  if (fallo) return { error: readableError(fallo.message) };
+
+  const resumen = csvSummary(filas);
+  revalidatePath('/app/inventario');
+
+  const partes = [
+    resumen.nuevas ? `${resumen.nuevas} ${resumen.nuevas === 1 ? 'producto nuevo' : 'productos nuevos'}` : null,
+    resumen.actualiza ? `${resumen.actualiza} ${resumen.actualiza === 1 ? 'actualizado' : 'actualizados'}` : null,
+  ].filter(Boolean);
+
+  return {
+    ok: `${partes.join(' y ')}.${
+      resumen.errores
+        ? ` ${resumen.errores === 1 ? 'Una fila quedó' : `${resumen.errores} filas quedaron`} fuera.`
+        : ''
+    }`,
+  };
 }

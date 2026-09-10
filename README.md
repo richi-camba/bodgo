@@ -175,8 +175,6 @@ crear su cuenta.
 
 ## Lo que falta
 
-- **Carga masiva del catálogo por CSV.** El prototipo pone el botón junto a
-  «Crear producto». Hoy los productos se crean de a uno.
 - **Chat en tiempo real.** Los mensajes existen y se mandan, pero llegan al
   recargar: no hay suscripción todavía. Por eso tampoco hay indicador de «en
   línea» — sería decorar una promesa que la app no cumple.
@@ -227,6 +225,16 @@ crear su cuenta.
   operativo. `components/ui/icon.tsx` nombra cada icono por lo que significa en
   el producto (`recepciones`, `discrepancias`) y no por su forma, así cambiar el
   trazo se hace en un solo lugar.
+- **El CSV se lee una sola vez, en un solo lugar.** El parser de la carga
+  masiva vive en `packages/core` porque lo corren los dos lados: el navegador
+  para la revisión previa y el servidor para importar. Con un parser por lado,
+  lo que se revisa y lo que se guarda podrían no coincidir. Lee el punto y
+  coma y la coma decimal que exporta Excel en español, se traga el BOM y no
+  parte los nombres que llevan coma adentro.
+- **La carga masiva no importa stock.** El prototipo pide las columnas `stock`
+  y `bodega`; acá se ignoran y la pantalla dice por qué. Las unidades las
+  mueven las recepciones y los pedidos: dejar que un archivo las escriba
+  rompería la trazabilidad y la conciliación contra el conteo físico.
 - **Fotos directo al bucket.** Las fotos de respaldo suben desde el navegador al
   bucket privado y al servidor viaja sólo la ruta: una foto de varios megas no
   pasa por la función. El SDK de Supabase se carga recién al sacar la foto.

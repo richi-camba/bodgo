@@ -152,7 +152,17 @@ export default async function InventoryPage({
       )}
 
       {/* ------------------------------------------------------- acciones */}
-      <NewProductForm />
+      <NewProductForm
+        secundario={
+          <Link
+            href="/app/inventario/importar"
+            className="flex items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-brand-600 bg-white p-3.5 text-[14px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
+          >
+            <Icon name="exportar" size={18} className="rotate-180" />
+            Carga masiva
+          </Link>
+        }
+      />
 
       <Link
         href="/app/despachos/nuevo"

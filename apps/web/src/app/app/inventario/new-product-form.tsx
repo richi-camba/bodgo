@@ -8,16 +8,26 @@ import { Field, FormError, Input, Select } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { PRODUCT_CATEGORIES } from '@bodgo/core';
 
-export function NewProductForm() {
+/**
+ * Alta de un producto.
+ *
+ * Cerrado comparte fila con la carga masiva, como en el prototipo; abierto se
+ * queda con el ancho completo, porque un formulario a media columna se lee
+ * mal en el teléfono.
+ */
+export function NewProductForm({ secundario }: { secundario?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [state, action] = useActionState<ActionState, FormData>(createProduct, null);
 
   if (!open) {
     return (
-      <Button variant="brand" size="lg" full onClick={() => setOpen(true)}>
-        <Icon name="agregar" size={18} />
-        Crear producto
-      </Button>
+      <div className={secundario ? 'grid grid-cols-2 gap-2.5' : ''}>
+        <Button variant="brand" size="lg" full onClick={() => setOpen(true)}>
+          <Icon name="agregar" size={18} />
+          Crear producto
+        </Button>
+        {secundario}
+      </div>
     );
   }
 
