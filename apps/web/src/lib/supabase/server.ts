@@ -31,6 +31,22 @@ export async function createClient() {
 }
 
 /**
+ * Cliente anónimo y sin cookies, para comprobar credenciales.
+ *
+ * Comprobar una contraseña es entrar de nuevo, y hacerlo con el cliente de
+ * la sesión le escribiría cookies encima: reemplazaría los tokens vivos por
+ * los de una sesión recién abierta. Este cliente vive y muere dentro de la
+ * comprobación, así que la sesión del usuario queda intacta pase lo que pase.
+ */
+export function createThrowawayClient() {
+  return createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
+
+/**
  * Cliente administrativo. Salta RLS por completo.
  *
  * Sólo para trabajos del servidor que no tienen un usuario detrás —

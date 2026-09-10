@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { quoteDeliveryToComuna } from '@bodgo/core';
+import { NOTIFICATION_TOPICS, quoteDeliveryToComuna } from '@bodgo/core';
 import { createClient } from '@/lib/supabase/server';
 
 export type ActionState = { error?: string; ok?: string } | null;
@@ -492,4 +492,60 @@ export async function registerCourier(_prev: ActionState, formData: FormData): P
   revalidatePath('/app/pedidos');
   revalidatePath('/bodeguero/pedidos');
   return { ok: 'Despacho registrado. Ya puedes compartir el seguimiento con el comprador.' };
+}
+
+// -----------------------------------------------------------------------------
+// Preferencias de notificación
+// -----------------------------------------------------------------------------
+
+/**
+ * Enciende o apaga una preferencia de aviso.
+ *
+ * Los avisos de pago y de recepción no se pueden apagar y no aparecen en la
+ * lista: son plata retenida y mercadería que llegó, y enterarse tarde de eso
+ * le cuesta al usuario. Decir que se pueden apagar y después mandarlos igual
+ * sería peor que no ofrecerlo.
+ */
+export async function toggleNotificationPreference(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = z
+    .object({
+      campo: z.enum(['push', 'email', ...NOTIFICATION_TOPICS.map((t) => t.key)] as [string, ...string[]]),
+      valor: z.enum(['on', 'off']),
+    })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) return { error: 'No se pudo cambiar la preferencia.' };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  const activo = parsed.data.valor === 'on';
+  const esCanal = parsed.data.campo === 'push' || parsed.data.campo === 'email';
+
+  const { data: actual } = await supabase
+    .from('notification_preferences')
+    .select('push, email, topics')
+    .eq('profile_id', user.id)
+    .maybeSingle();
+
+  const topics = (actual?.topics ?? {}) as Record<string, boolean>;
+
+  const { error } = await supabase.from('notification_preferences').upsert(
+    {
+      profile_id: user.id,
+      push: esCanal && parsed.data.campo === 'push' ? activo : (actual?.push ?? true),
+      email: esCanal && parsed.data.campo === 'email' ? activo : (actual?.email ?? true),
+      topics: esCanal ? topics : { ...topics, [parsed.data.campo]: activo },
+    },
+    { onConflict: 'profile_id' },
+  );
+
+  if (error) return { error: readableError(error.message) };
+
+  revalidatePath('/app/perfil/notificaciones');
+  return { ok: 'Preferencia guardada.' };
 }

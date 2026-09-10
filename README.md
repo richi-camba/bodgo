@@ -172,6 +172,16 @@ crear su cuenta.
 
 - **Carga masiva del catálogo por CSV.** El prototipo pone el botón junto a
   «Crear producto». Hoy los productos se crean de a uno.
+- **Chat con bodegueros y tickets.** Las tablas están y el seed las llena,
+  pero no hay pantalla todavía. Ayuda y soporte ofrece el correo, no el chat
+  que promete el prototipo: prometer «responde en ~4 min» sin equipo detrás
+  es peor que ofrecer sólo el correo.
+- **Agregar tarjeta desde el perfil.** La captura de datos de tarjeta la hace
+  el proveedor de pagos. Mientras no exista el convenio, un formulario propio
+  pidiendo el número sería pedir datos que no podemos procesar.
+- **Verificación en dos pasos.** El prototipo la ofrece por SMS y no hay
+  proveedor de mensajería contratado. Un interruptor que no protege nada da
+  por segura una cuenta que no lo está.
 - **Enviar el enlace de seguimiento solo.** El prototipo prometía mandarlo por
   correo y WhatsApp al guardarlo. Sin proveedor de correo contratado, decir que
   se envía sería mentira: hoy se copia o se abre WhatsApp con el mensaje ya
@@ -220,6 +230,10 @@ crear su cuenta.
   cuando cambia un precio. Las preguntas frecuentes están repartidas por
   audiencia con el mismo criterio: cada página abre con la que le importa a
   quien la está leyendo.
+- **Lo que no se puede apagar, no se ofrece apagar.** Las preferencias de
+  aviso dejan fuera los de pago y recepción: son plata retenida y mercadería
+  que llegó. Mostrar el interruptor y mandar el aviso igual sería peor que no
+  mostrarlo.
 - **Sin testimonios inventados.** El prototipo tenía un carrusel de citas de
   PyMEs. Con cero clientes reales, publicarlas en un sitio en línea sería
   fabricar prueba social: en su lugar la portada muestra respaldos

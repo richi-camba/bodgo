@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createThrowawayClient } from '@/lib/supabase/server';
 import { HOME_BY_ROLE } from '@/lib/supabase/middleware';
 
 export type AuthState = { error?: string; sent?: boolean } | null;
@@ -145,4 +145,47 @@ export async function setNewPassword(_prev: AuthState, formData: FormData): Prom
 
   revalidatePath('/', 'layout');
   redirect(await homeForCurrentUser());
+}
+
+/**
+ * Cambia la contraseña desde el perfil, con la sesión ya abierta.
+ *
+ * Pide la actual y la revalida contra el proveedor antes de tocar nada: una
+ * sesión abierta en un equipo prestado no debería alcanzar para dejar a su
+ * dueño afuera.
+ */
+export async function changePassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const parsed = z
+    .object({ current: z.string().min(1, 'Escribe tu contraseña actual.'), password, confirm: z.string() })
+    .refine((v) => v.password === v.confirm, {
+      message: 'Las contraseñas nuevas no coinciden.',
+      path: ['confirm'],
+    })
+    .refine((v) => v.password !== v.current, {
+      message: 'La contraseña nueva tiene que ser distinta de la actual.',
+      path: ['password'],
+    })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  // La comprobación va por un cliente aparte para no escribirle cookies
+  // encima a la sesión que ya está abierta.
+  const { error: malaClave } = await createThrowawayClient().auth.signInWithPassword({
+    email: user.email,
+    password: parsed.data.current,
+  });
+
+  if (malaClave) return { error: 'La contraseña actual no coincide.' };
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { error: 'No pudimos cambiar la contraseña. Inténtalo de nuevo.' };
+
+  return { sent: true };
 }

@@ -3,6 +3,7 @@ export * from './delivery';
 export * from './domain';
 export * from './geo';
 export * from './money';
+export * from './notifications';
 export * from './pricing';
 export * from './reconciliation';
 export * from './stock';
