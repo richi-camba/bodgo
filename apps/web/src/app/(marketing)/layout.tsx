@@ -1,6 +1,8 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/logo';
 import { ButtonLink } from '@/components/ui/button';
+import { MobileMenu } from '@/components/marketing/mobile-menu';
 
 const NAV = [
   { href: '#como-funciona', label: 'Cómo funciona' },
@@ -12,6 +14,14 @@ const NAV = [
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white">
+      {/* Salto directo al contenido para quien navega con teclado. */}
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-field focus:bg-navy-800 focus:px-4 focus:py-2.5 focus:text-[13px] focus:font-bold focus:text-white"
+      >
+        Saltar al contenido
+      </a>
+
       <header className="sticky top-0 z-50 border-b border-line-100/70 bg-white/85 backdrop-blur-lg">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5">
           <Link href="/" aria-label="BodGo, ir al inicio">
@@ -31,19 +41,38 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           </nav>
 
           <div className="flex items-center gap-2">
-            <ButtonLink href="/ingresar" variant="ghost" size="sm">
-              Ingresar
-            </ButtonLink>
-            <ButtonLink href="/registro" size="sm">
-              Empieza gratis
-            </ButtonLink>
+            <div className="hidden items-center gap-2 sm:flex">
+              <ButtonLink href="/ingresar" variant="ghost" size="sm">
+                Ingresar
+              </ButtonLink>
+              <ButtonLink href="/registro" size="sm">
+                Empieza gratis
+              </ButtonLink>
+            </div>
+            <MobileMenu links={NAV} />
           </div>
         </div>
       </header>
 
-      <main>{children}</main>
+      <main id="contenido">{children}</main>
 
-      <footer className="border-t border-line-100 bg-navy-950 text-white">
+      <footer className="bg-navy-950 text-white">
+        {/* ----------------------------------------------------- patrocinio */}
+        <div className="border-b border-white/10">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-5 py-10 text-center sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
+            {/* Sobre chip blanco y en sus colores: el logo de un organismo
+                público no se recolorea para que combine con el sitio. */}
+            <span className="flex shrink-0 items-center justify-center rounded-[10px] bg-white px-4 py-3">
+              <Image src="/marcas/corfo.png" alt="Corfo" width={104} height={35} />
+            </span>
+            <p className="max-w-md text-[12.5px] leading-relaxed text-white/50">
+              Iniciativa financiada por <strong className="font-semibold text-white/75">Corfo</strong>{' '}
+              a través del instrumento Semilla Inicia (25INI2-312540), con el patrocinio de{' '}
+              <strong className="font-semibold text-white/75">Innovo</strong>.
+            </p>
+          </div>
+        </div>
+
         <div className="mx-auto max-w-6xl px-5 py-14">
           <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
             <div>
@@ -52,14 +81,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                 Red de microbodegas urbanas modulares para el e-commerce de las PyMEs.
               </p>
               <p className="mt-5 text-[11px] font-semibold tracking-wide text-white/35">
-                TAMAYAZ SpA · Corfo Semilla Inicia 25INI2-312540
+                TAMAYAZ SpA · Santiago, Chile
               </p>
             </div>
 
             <FooterColumn
               title="Plataforma"
               links={[
-                { href: '/buscar', label: 'Buscar bodega' },
+                { href: '/registro', label: 'Buscar bodega' },
                 { href: '/registro?rol=bodeguero', label: 'Ser bodeguero' },
                 { href: '/ingresar', label: 'Ingresar' },
               ]}
@@ -76,7 +105,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               title="Contacto"
               links={[
                 { href: 'mailto:hola@bodgo.cl', label: 'hola@bodgo.cl' },
-                { href: '#', label: 'Santiago, Chile' },
+                { href: 'mailto:ayuda@bodgo.cl', label: 'ayuda@bodgo.cl' },
               ]}
             />
           </div>

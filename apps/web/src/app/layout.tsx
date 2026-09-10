@@ -24,8 +24,15 @@ export const metadata: Metadata = {
     locale: 'es_CL',
     siteName: 'BodGo',
     title: 'BodGo · Red de microbodegas urbanas',
+    description:
+      'Guarda tu stock en microbodegas urbanas cerca de tu demanda y despacha más rápido, sin bodega propia.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BodGo · Red de microbodegas urbanas',
     description: 'Tu inventario, más cerca de tus clientes.',
   },
+  alternates: { canonical: '/' },
   robots: { index: true, follow: true },
 };
 
