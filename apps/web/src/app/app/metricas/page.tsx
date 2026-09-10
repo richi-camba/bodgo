@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
 import { formatCLP, formatNumber, LABELS, usableCapacityM3 } from '@bodgo/core';
-import { ExportButton, type Fila } from './export-button';
+import { ExportButton, type Fila } from '@/components/app/export-button';
 
 export const metadata: Metadata = { title: 'Métricas' };
 

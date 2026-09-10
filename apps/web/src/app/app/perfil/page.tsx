@@ -5,16 +5,9 @@ import { SignOutButton } from '@/components/app/sign-out-button';
 import { DataRow, LinkRow, RowCard, SectionLabel } from '@/components/app/rows';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
-import { CLAIM_WINDOW_HOURS, formatCompactCLP, INSURANCE_COVERAGE_CLP } from '@bodgo/core';
+import { CLAIM_WINDOW_HOURS, formatCompactCLP, INSURANCE_COVERAGE_CLP, LABELS } from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Mi perfil' };
-
-const CANAL: Record<string, string> = {
-  mercadolibre: 'Mercado Libre',
-  shopify: 'Shopify',
-  woocommerce: 'WooCommerce',
-  manual: 'Manual',
-};
 
 export default async function ProfilePage() {
   const user = await requireUser('pyme');
@@ -65,7 +58,7 @@ export default async function ProfilePage() {
           label="Canal de venta"
           value={
             pyme?.sales_channels?.length
-              ? pyme.sales_channels.map((c) => CANAL[c] ?? c).join(' · ')
+              ? pyme.sales_channels.map((c) => LABELS.salesChannel[c] ?? c).join(' · ')
               : '—'
           }
         />

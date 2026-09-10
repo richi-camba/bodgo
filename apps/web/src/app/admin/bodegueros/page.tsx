@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { EmptyState, PageHeader } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
 import { calculateHostPayout, formatCLP, formatNumber } from '@bodgo/core';
@@ -50,7 +51,7 @@ export default async function AdminHostsPage() {
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[680px] text-[13px]">
             <thead>
-              <tr className="border-b border-line-100 bg-surface-25 text-left text-[11px] uppercase tracking-wide text-ink-400">
+              <tr className="border-b border-line-100 bg-surface-25 text-left text-[11px] uppercase tracking-wide text-ink-500">
                 <th className="px-5 py-3 font-bold">Bodeguero</th>
                 <th className="px-3 py-3 text-right font-bold">★</th>
                 <th className="px-3 py-3 text-right font-bold">Espacios</th>
@@ -62,7 +63,14 @@ export default async function AdminHostsPage() {
             <tbody className="divide-y divide-line-100">
               {rows.map((h) => (
                 <tr key={h.id}>
-                  <td className="px-5 py-3 font-bold text-navy-900">{h.name}</td>
+                  <td className="px-5 py-3">
+                    <Link
+                      href={`/admin/bodegueros/${h.id}`}
+                      className="font-bold text-navy-900 hover:text-brand-600 hover:underline"
+                    >
+                      {h.name}
+                    </Link>
+                  </td>
                   <td className="px-3 py-3 text-right tabular-nums">{h.rating.toFixed(1)}</td>
                   <td className="px-3 py-3 text-right tabular-nums">
                     {h.published} / {h.spaces}

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState, PageHeader } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
@@ -40,7 +41,7 @@ export default async function AdminPymesPage() {
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[720px] text-[13px]">
             <thead>
-              <tr className="border-b border-line-100 bg-surface-25 text-left text-[11px] uppercase tracking-wide text-ink-400">
+              <tr className="border-b border-line-100 bg-surface-25 text-left text-[11px] uppercase tracking-wide text-ink-500">
                 <th className="px-5 py-3 font-bold">Negocio</th>
                 <th className="px-3 py-3 font-bold">Comuna</th>
                 <th className="px-3 py-3 text-right font-bold">Bodegas</th>
@@ -54,8 +55,13 @@ export default async function AdminPymesPage() {
               {rows.map((p) => (
                 <tr key={p.profile_id}>
                   <td className="px-5 py-3">
-                    <p className="font-bold text-navy-900">{p.business_name}</p>
-                    <p className="text-[11.5px] text-ink-400">{p.email ?? p.rut ?? '—'}</p>
+                    <Link
+                      href={`/admin/pymes/${p.profile_id}`}
+                      className="font-bold text-navy-900 hover:text-brand-600 hover:underline"
+                    >
+                      {p.business_name}
+                    </Link>
+                    <p className="text-[11.5px] text-ink-500">{p.email ?? p.rut ?? '—'}</p>
                   </td>
                   <td className="px-3 py-3 text-ink-700">{p.comuna ?? '—'}</td>
                   <td className="px-3 py-3 text-right tabular-nums">{p.warehouses}</td>

@@ -132,4 +132,20 @@ export const LABELS = {
     adjustment: 'Ajuste',
     transfer: 'Traslado',
   },
+  incidentStatus: {
+    open: 'Abierto',
+    in_progress: 'En curso',
+    resolved: 'Resuelto',
+  },
+  salesChannel: {
+    mercadolibre: 'Mercado Libre',
+    shopify: 'Shopify',
+    woocommerce: 'WooCommerce',
+    manual: 'Manual',
+  },
+  incidentSeverity: {
+    low: 'Baja',
+    medium: 'Media',
+    high: 'Alta',
+  },
 } as const;

@@ -123,3 +123,65 @@ export async function approveWarehouse(_prev: ActionState, formData: FormData): 
   revalidatePath('/admin/bodegas');
   return { ok: parsed.data.decision === 'active' ? 'Espacio habilitado.' : 'Espacio rechazado.' };
 }
+
+// -----------------------------------------------------------------------------
+// Incidentes
+// -----------------------------------------------------------------------------
+
+/** Anota en la bitácora del incidente. Queda firmada y no se puede editar. */
+export async function addIncidentNote(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = z
+    .object({
+      incidentId: z.string().uuid(),
+      body: z.string().trim().min(3, 'Escribe la nota antes de guardarla.'),
+    })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Revisa la nota.' };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
+
+  const { error } = await supabase.from('incident_notes').insert({
+    incident_id: parsed.data.incidentId,
+    author_id: user.id,
+    body: parsed.data.body,
+  });
+
+  if (error) return { error: 'No se pudo guardar la nota.' };
+
+  revalidatePath(`/admin/incidentes/${parsed.data.incidentId}`);
+  return { ok: 'Nota guardada.' };
+}
+
+/**
+ * Mueve el estado del incidente.
+ *
+ * Cerrar deja la marca de tiempo: sin `resolved_at` no hay forma de medir
+ * cuánto tardó el equipo, que es lo que después se reporta.
+ */
+export async function setIncidentStatus(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = z
+    .object({
+      incidentId: z.string().uuid(),
+      status: z.enum(['open', 'in_progress', 'resolved']),
+    })
+    .safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) return { error: 'Estado no válido.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('incidents')
+    .update({
+      status: parsed.data.status,
+      resolved_at: parsed.data.status === 'resolved' ? new Date().toISOString() : null,
+    })
+    .eq('id', parsed.data.incidentId);
+
+  if (error) return { error: 'No se pudo cambiar el estado.' };
+
+  revalidatePath('/admin/incidentes', 'layout');
+  return { ok: 'Estado actualizado.' };
+}

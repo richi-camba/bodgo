@@ -18,9 +18,14 @@ export type Fila = Record<string, string | number>;
 export function ExportButton({
   filas,
   nombre,
+  unidad = 'pedido',
+  unidadPlural = 'pedidos',
 }: {
   filas: Fila[];
   nombre: string;
+  /** Qué es cada fila, para la nota bajo el botón. */
+  unidad?: string;
+  unidadPlural?: string;
 }) {
   const [listo, setListo] = useState(false);
 
@@ -68,8 +73,8 @@ export function ExportButton({
         {listo
           ? 'Descargado. Se abre en Excel o Google Sheets.'
           : filas.length
-            ? `${filas.length} ${filas.length === 1 ? 'pedido' : 'pedidos'} del periodo, en CSV.`
-            : 'Sin pedidos en el periodo para exportar.'}
+            ? `${filas.length} ${filas.length === 1 ? unidad : unidadPlural} en CSV.`
+            : 'Nada que exportar todavía.'}
       </p>
     </div>
   );

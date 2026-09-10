@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
 import { formatCLP, formatNumber } from '@bodgo/core';
+import { ExportButton, type Fila } from '@/components/app/export-button';
 
 export const metadata: Metadata = { title: 'Indicadores Corfo' };
 
@@ -58,6 +59,21 @@ export default async function CorfoPage() {
 
   const gmv = (orders ?? []).reduce((s, o) => s + (o.total_amount ?? 0), 0);
   const recurring = activeContracts.reduce((s, c) => s + c.total_amount, 0);
+
+  // El reporte que se le manda a Corfo: una fila por indicador, con la meta
+  // y el avance. Sale de la misma cuenta que está en pantalla.
+  const filas: Fila[] = [
+    ...TARGETS.map((t) => ({
+      Indicador: t.label,
+      Valor: `${actual[t.key] ?? 0}${t.unit}`,
+      Meta: `${t.target}${t.unit}`,
+      'Avance %': Math.min(100, Math.round(((actual[t.key] ?? 0) / t.target) * 100)),
+    })),
+    { Indicador: 'GMV acumulado', Valor: gmv, Meta: '', 'Avance %': '' },
+    { Indicador: 'Ingreso recurrente mensual', Valor: recurring, Meta: '', 'Avance %': '' },
+    { Indicador: 'Cuentas creadas', Valor: (profiles ?? []).length, Meta: '', 'Avance %': '' },
+    { Indicador: 'Recepciones verificadas', Valor: closedReceptions, Meta: '', 'Avance %': '' },
+  ];
 
   return (
     <div className="space-y-5">
@@ -118,7 +134,14 @@ export default async function CorfoPage() {
         </ul>
       </section>
 
-      <p className="text-center text-[12px] leading-relaxed text-ink-400">
+      <ExportButton
+        filas={filas}
+        nombre="bodgo-corfo-25INI2-312540"
+        unidad="indicador"
+        unidadPlural="indicadores"
+      />
+
+      <p className="text-center text-[12px] leading-relaxed text-ink-500">
         Iniciativa financiada por Corfo a través del instrumento Semilla Inicia (25INI2-312540), con
         el patrocinio de Innovo. Tamayaz SpA.
       </p>
