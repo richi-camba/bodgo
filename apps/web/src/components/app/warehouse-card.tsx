@@ -42,7 +42,7 @@ export function WarehouseCard({ listing, href }: { listing: Listing; href: strin
             {listing.comuna}
           </h3>
           <span className="flex shrink-0 items-center gap-0.5 text-[12.5px] font-bold text-navy-900">
-            <span aria-hidden className="text-warning-600">
+            <span aria-hidden className="text-warning-700">
               ★
             </span>
             {listing.rating.toFixed(1)}
@@ -106,7 +106,7 @@ function Thumb({ listing }: { listing: Listing }) {
   const libres = listing.availableM2 < 1 ? 'Completa' : `${formatNumber(listing.availableM2, 0)} m²`;
 
   return (
-    <span className="relative block h-[86px] w-[86px] shrink-0 overflow-hidden rounded-field bg-navy-800">
+    <span className="relative block h-[86px] w-[86px] shrink-0 overflow-hidden rounded-field bg-rayado">
       {listing.photo ? (
         <Image
           src={listing.photo}
@@ -115,17 +115,7 @@ function Thumb({ listing }: { listing: Listing }) {
           sizes="86px"
           className="object-cover"
         />
-      ) : (
-        /* La inicial es decoración: la comuna ya está escrita al lado, así que
-           repetirla para un lector de pantalla sería ruido — y por lo mismo no
-           le corresponde el mínimo de contraste de un texto. */
-        <span
-          aria-hidden
-          className="flex h-full w-full items-center justify-center text-[26px] font-extrabold text-white/25"
-        >
-          {listing.comuna.trim()[0]?.toUpperCase()}
-        </span>
-      )}
+      ) : null}
 
       <span className="absolute left-1 top-1 rounded-[6px] bg-navy-950/85 px-1.5 py-0.5 text-[9.5px] font-bold text-white backdrop-blur-sm">
         {libres}

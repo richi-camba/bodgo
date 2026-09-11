@@ -9,6 +9,7 @@ import { requireUser } from '@/lib/session';
 import { formatCLP, formatNumber, pricePerM3 } from '@bodgo/core';
 import { ContractBar } from './contract-bar';
 import { WriteToHost } from '@/components/app/write-to-host';
+import { SectorMap } from '@/components/app/sector-map';
 
 export const metadata: Metadata = { title: 'Microbodega' };
 
@@ -122,13 +123,19 @@ export default async function WarehouseDetail({ params }: { params: Promise<{ id
         {/* ------------------------------------------------- ubicación */}
         <section className="mt-6">
           <h2 className="text-[15px] font-extrabold text-navy-900">Ubicación aproximada</h2>
-          <PrivacyMap comuna={w.comuna ?? ''} />
+          {w.lat != null && w.lng != null ? (
+            <SectorMap lat={Number(w.lat)} lng={Number(w.lng)} comuna={w.comuna ?? ''} />
+          ) : (
+            <p className="mt-3 rounded-card border border-line-200 bg-surface-25 p-4 text-[12.5px] text-ink-500">
+              Este espacio todavía no tiene su ubicación cargada en el mapa.
+            </p>
+          )}
           <p className="mt-3 flex gap-2 text-[12.5px] leading-relaxed text-ink-500">
             <span className="mt-0.5 shrink-0 text-ink-400">
               <Icon name="ubicacion" size={14} />
             </span>
-            Mostramos sólo el sector aproximado. Verás la calle y el número una vez confirmado el
-            contrato.
+            Mostramos el sector con un margen de unos cien metros. Verás la calle y el número una
+            vez confirmado el contrato.
           </p>
         </section>
 
@@ -170,44 +177,6 @@ function Dato({ label, value }: { label: string; value: string }) {
     <div className="rounded-field bg-white p-3">
       <dt className="text-[10px] font-bold uppercase tracking-wide text-ink-500">{label}</dt>
       <dd className="mt-1 text-[14px] font-extrabold text-navy-900 tabular-nums">{value}</dd>
-    </div>
-  );
-}
-
-/**
- * Sector aproximado, dibujado y no mapeado.
- *
- * El prototipo muestra acá un círculo difuso sobre una trama. No es un mapa
- * recortado: es exactamente lo que la plataforma promete —el sector, no el
- * punto— y dibujarlo evita contratar un proveedor de mapas para decir algo
- * que a propósito es impreciso.
- */
-function PrivacyMap({ comuna }: { comuna: string }) {
-  return (
-    <div
-      role="img"
-      aria-label={`Sector aproximado en ${comuna}. La dirección exacta se revela al contratar.`}
-      className="relative mt-3 h-40 overflow-hidden rounded-card border border-line-200 bg-surface-100"
-    >
-      <span
-        aria-hidden
-        className="absolute inset-0 opacity-[0.5]"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(45deg, var(--color-line-200) 0 1px, transparent 1px 11px)',
-        }}
-      />
-      <span
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-brand-400/50 bg-brand-400/20"
-      />
-      <span
-        aria-hidden
-        className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600"
-      />
-      <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-pill bg-white/90 px-2.5 py-1 text-[11px] font-bold text-navy-900 backdrop-blur-sm">
-        {comuna}
-      </span>
     </div>
   );
 }

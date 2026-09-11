@@ -401,6 +401,27 @@ const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUP
   check('el bodeguero sigue sin poder leer pagos individuales', (pagos?.length ?? 0) === 0);
 }
 
+// ---------------------------------------------- privacidad de la ubicación
+{
+  const { data: publicada } = await anonymous
+    .from('warehouse_listings')
+    .select('lat, lng')
+    .not('lat', 'is', null)
+    .limit(1)
+    .single();
+
+  const decimales = (n) => (String(n).split('.')[1] ?? '').length;
+
+  check(
+    'el buscador redondea las coordenadas a unos cien metros',
+    decimales(publicada.lat) <= 3 && decimales(publicada.lng) <= 3,
+    `${publicada.lat}, ${publicada.lng}`,
+  );
+
+  const { data: exacta } = await anonymous.from('warehouses').select('lat, address').limit(1);
+  check('y la tabla con la dirección exacta sigue cerrada', (exacta?.length ?? 0) === 0);
+}
+
 // ------------------------------------------- publicar un espacio de verdad
 {
   // El trigger que arma el checklist corre como definer: sin eso el insert

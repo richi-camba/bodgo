@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
 
 /* =============================================================================
    BodGo · sistema de diseño.
@@ -138,4 +139,41 @@
    a otra sección a mitad de un formulario largo sólo perdería lo cargado. */
 body:has([data-flujo-pasos]) [data-tabbar] {
   display: none;
+}
+
+/* Pin del mapa: el precio, que es el dato por el que se comparan dos
+   espacios de un vistazo. Va acá y no en el componente porque Leaflet lo
+   inyecta como HTML suelto, fuera del árbol de React. */
+.pin-bodega {
+  display: block;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  border-radius: 14px;
+  background: var(--color-navy-800);
+  padding: 6px 11px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 3px 10px rgb(16 54 90 / 0.35);
+}
+
+.pin-bodega b {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pin-bodega i {
+  display: block;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+/* Leaflet pinta su propio marco: que respete el del resto de la interfaz. */
+.leaflet-container {
+  font-family: inherit;
+  background: var(--color-surface-100);
 }

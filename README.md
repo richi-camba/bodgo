@@ -145,8 +145,10 @@ al terminar, así que es segura de correr sobre la base sembrada.
 - **Toda tabla tiene RLS activo.** Lo que no tiene política, no se lee. La clave
   publicable que viaja al navegador no da acceso a nada por sí sola.
 - **Lo público sale por vistas**, no por políticas permisivas: `warehouse_listings`
-  omite la dirección exacta a propósito (se revela con el contrato firmado), y
-  `public_profiles` expone sólo nombre, rol y avatar. El contacto y los datos
+  omite la dirección exacta a propósito (se revela con el contrato firmado) y
+  redondea las coordenadas a tres decimales —unos 110 metros—, porque con el
+  par exacto la promesa no se sostenía: basta un geocodificador inverso para
+  sacar la calle igual. `public_profiles` expone sólo nombre, rol y avatar. El contacto y los datos
   tributarios viven en tablas cerradas.
 - **`host_escrow` es la excepción medida.** El bodeguero no puede leer
   `payments` —ahí están el medio de pago de la PyME, los intentos fallidos y
@@ -249,6 +251,14 @@ crear su cuenta.
   y `bodega`; acá se ignoran y la pantalla dice por qué. Las unidades las
   mueven las recepciones y los pedidos: dejar que un archivo las escriba
   rompería la trazabilidad y la conciliación contra el conteo físico.
+- **El mapa es un mapa, no un dibujo.** El prototipo pinta los precios en
+  posiciones fijas sobre una trama. Acá van sobre teselas de OpenStreetMap en
+  las coordenadas reales, porque la pregunta que lleva a alguien al mapa
+  —«¿me queda cerca?»— no se contesta con una ilustración. Leaflet se carga
+  recién al abrir la pestaña: la lista es la vista por defecto y no tiene por
+  qué pagar esos 40 kB. En la ficha, el sector se dibuja como un círculo y no
+  como un punto: hace visible el margen de cien metros en vez de fingir una
+  precisión que la fila no tiene.
 - **Fotos directo al bucket.** Las fotos de respaldo suben desde el navegador al
   bucket privado y al servidor viaja sólo la ruta: una foto de varios megas no
   pasa por la función. El SDK de Supabase se carga recién al sacar la foto.

@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
 import { EmptyState, PageHeader } from '@/components/ui/stat';
 import { WarehouseCard, type Listing } from '@/components/app/warehouse-card';
+import { WarehouseMap, type MapPin } from '@/components/app/warehouse-map';
+import { ViewToggle } from './view-toggle';
 import { createClient } from '@/lib/supabase/server';
-import { drivingDistanceKm } from '@bodgo/core';
+import { COMUNA_CENTROIDS, drivingDistanceKm } from '@bodgo/core';
 import { SearchControls } from './controls';
 
 export const metadata: Metadata = { title: 'Buscar microbodega' };
 
-type Search = { q?: string; comuna?: string; max?: string; orden?: string };
+type Search = { q?: string; comuna?: string; max?: string; orden?: string; vista?: string };
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Search> }) {
   const params = await searchParams;
@@ -56,6 +58,24 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     }
   });
 
+  const enMapa = params.vista === 'mapa';
+
+  const pins: MapPin[] = listings
+    .filter((l) => l.fila.lat != null && l.fila.lng != null)
+    .map((l) => ({
+      id: l.fila.id!,
+      comuna: l.fila.comuna ?? '',
+      lat: Number(l.fila.lat),
+      lng: Number(l.fila.lng),
+      pricePerM2: l.fila.price_per_m2 ?? 0,
+      availableM2: Number(l.fila.available_m2 ?? 0),
+    }));
+
+  // El punto de referencia es la comuna de la PyME: «cerca» significa cerca
+  // de su demanda, no del centro de Santiago.
+  const centroide = origen ? COMUNA_CENTROIDS[origen] : undefined;
+  const centro = centroide ? { ...centroide, label: origen! } : null;
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -65,13 +85,20 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
       <SearchControls comunas={comunas} tieneOrigen={origen != null} />
 
-      <p className="text-[13px] font-semibold text-ink-500">
-        {listings.length === 0
-          ? 'Sin resultados'
-          : `${listings.length} ${listings.length === 1 ? 'microbodega disponible' : 'microbodegas disponibles'}`}
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] font-semibold text-ink-500">
+          {listings.length === 0
+            ? 'Sin resultados'
+            : `${listings.length} ${listings.length === 1 ? 'microbodega disponible' : 'microbodegas disponibles'}`}
+        </p>
+        <ViewToggle mapa={enMapa} />
+      </div>
 
-      {listings.length === 0 ? (
+      {enMapa ? (
+        <WarehouseMap pins={pins} sinUbicacion={listings.length - pins.length} origen={centro} />
+      ) : null}
+
+      {enMapa ? null : listings.length === 0 ? (
         <EmptyState
           icon="buscar"
           title="No encontramos microbodegas con esos filtros"
