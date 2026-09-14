@@ -15,6 +15,25 @@ export type Fila = Record<string, string | number>;
  * Va con BOM y con punto y coma: Excel en español abre así el archivo en
  * columnas. Con coma mete todo en la primera celda.
  */
+/**
+ * Atajo de «Exportar» en la cabecera, como en el prototipo.
+ *
+ * No duplica la lógica del CSV: lleva al botón de abajo, que es el que la
+ * tiene. Dos botones que arman el archivo por su cuenta se desincronizan a
+ * la primera.
+ */
+export function ExportLink({ hacia = '#exportar' }: { hacia?: string }) {
+  return (
+    <a
+      href={hacia}
+      className="flex items-center gap-1.5 rounded-[11px] bg-navy-800 px-3 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-navy-950"
+    >
+      <Icon name="exportar" size={15} />
+      Exportar
+    </a>
+  );
+}
+
 export function ExportButton({
   filas,
   nombre,
@@ -58,7 +77,7 @@ export function ExportButton({
   }
 
   return (
-    <div>
+    <div id="exportar" className="scroll-mt-20">
       <button
         type="button"
         onClick={exportar}

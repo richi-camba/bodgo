@@ -114,7 +114,19 @@ export default async function AdminHome() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Dashboard" subtitle="Estado operativo de BodGo en tiempo real." />
+      <PageHeader
+        title="Dashboard"
+        subtitle="Estado operativo de BodGo en tiempo real."
+        action={
+          <Link
+            href="/admin/corfo"
+            className="flex items-center gap-2 rounded-[11px] bg-navy-800 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-navy-950"
+          >
+            <Icon name="exportar" size={16} />
+            Reporte Corfo
+          </Link>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {KPIS.map((k) => (

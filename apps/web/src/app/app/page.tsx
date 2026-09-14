@@ -169,7 +169,7 @@ export default async function PymeHome() {
 /** Cifra de la portada: número arriba, etiqueta debajo. */
 function Cifra({ valor, etiqueta }: { valor: string; etiqueta: string }) {
   return (
-    <div className="rounded-[16px] bg-white p-3.5">
+    <div className="rounded-[16px] border border-line-100 bg-white p-3.5 shadow-[0_2px_8px_rgba(16,36,58,.05)]">
       <dt className="sr-only">{etiqueta}</dt>
       <dd>
         <span className="block text-[22px] font-extrabold leading-none text-navy-800 tabular-nums">

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/stat';
 import { createClient } from '@/lib/supabase/server';
 import { formatCLP, formatNumber, LABELS, usableCapacityM3 } from '@bodgo/core';
-import { ExportButton, type Fila } from '@/components/app/export-button';
+import { ExportButton, ExportLink, type Fila } from '@/components/app/export-button';
 
 export const metadata: Metadata = { title: 'Métricas' };
 
@@ -133,7 +133,11 @@ export default async function MetricsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Métricas" subtitle={`Tablero operativo · últimos ${WINDOW_DAYS} días`} />
+      <PageHeader
+        title="Métricas"
+        subtitle={`Tablero operativo · últimos ${WINDOW_DAYS} días`}
+        action={<ExportLink />}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         {KPIS.map((k) => (
