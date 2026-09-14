@@ -2,13 +2,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ButtonLink } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
+import { Logo } from '@/components/ui/logo';
+import { HeroCount } from '@/components/marketing/hero-count';
 import { ContactForm } from '@/components/marketing/contact-form';
 import { Faq } from '@/components/marketing/faq';
 import { preguntasDe } from '@/components/marketing/faq-content';
 import { FaqSchema, OrganizationSchema } from '@/components/marketing/structured-data';
 import { Trust } from '@/components/marketing/trust';
 import { createClient } from '@/lib/supabase/server';
-import { calculateHostPayout, formatCLP, formatNumber, quoteContract } from '@bodgo/core';
+import { calculateHostPayout, formatCLP, quoteContract } from '@bodgo/core';
 
 // La red cambia poco de un minuto a otro; una revalidación por hora alcanza.
 export const revalidate = 3600;
@@ -44,6 +46,25 @@ async function loadNetworkStats() {
   };
 }
 
+/** Las tres razones del prototipo, en su mismo orden. */
+const VALORES: { icon: IconName; titulo: string; texto: string }[] = [
+  {
+    icon: 'ubicacion',
+    titulo: 'Entrega más rápido',
+    texto: 'Acerca tu inventario a tus clientes mediante una red de microbodegas urbanas.',
+  },
+  {
+    icon: 'inventario',
+    titulo: 'Simplifica tu operación',
+    texto: 'Gestiona inventario, preparación y despachos desde una sola plataforma.',
+  },
+  {
+    icon: 'metricas',
+    titulo: 'Escala a tu ritmo',
+    texto: 'Pagas sólo por el espacio y el tiempo que necesitas, sin infraestructura propia.',
+  },
+];
+
 export default async function HomePage() {
   const stats = await loadNetworkStats();
   const preguntas = preguntasDe('general', 'pymes');
@@ -54,7 +75,10 @@ export default async function HomePage() {
       <FaqSchema preguntas={preguntas} />
 
       {/* ---------------------------------------------------------------- hero */}
-      <section className="relative overflow-hidden bg-navy-950">
+      {/* A sangre y con la foto respirando a la derecha, como en el prototipo:
+          el degradado oscurece donde va el texto y se despeja sobre la
+          bodega. Un bloque navy plano tapaba la foto entera. */}
+      <section className="relative flex min-h-[min(88vh,760px)] items-center overflow-hidden bg-navy-950">
         <div className="absolute inset-0">
           <Image
             src="/fotos/pyme-despacho.jpg"
@@ -62,54 +86,96 @@ export default async function HomePage() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[68%_22%] md:object-[70%_center]"
+            className="object-cover object-[68%_22%] md:object-[center_right]"
           />
-          {/* En escritorio el degradado corre en horizontal: el texto ocupa la
-              izquierda y la foto respira a la derecha. En el teléfono la
-              columna es todo el ancho, así que va en vertical — oscuro arriba
-              donde está el titular, y clareando abajo para que se vea la foto
-              en vez de un bloque navy plano. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-navy-950 via-navy-950/92 to-navy-950/45 md:bg-gradient-to-r md:from-navy-950 md:via-navy-950/94 md:to-transparent" />
+          <div className="hero-velo absolute inset-0" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-5 pb-28 pt-16 md:pb-28 md:pt-28">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-400">
-            Chile · Red de microbodegas urbanas
-          </p>
-          <h1 className="mt-5 max-w-2xl text-[42px] font-extrabold leading-[1.04] tracking-[-0.025em] text-white md:text-[64px]">
-            Tu inventario, más cerca de tus clientes
-          </h1>
-          <p className="mt-6 max-w-lg text-[16px] leading-relaxed text-white/70 md:text-[17.5px]">
-            Guarda tu stock en microbodegas urbanas cerca de tu demanda y despacha desde ahí. Pagas
-            sólo por los metros y el tiempo que necesitas.
+        {/* Isotipos flotando sobre la foto. Decoración pura: fuera del orden
+            de lectura y sin texto alternativo. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] hidden md:block">
+          <Marca className="bodgo-flota absolute right-[8%] top-[14%] opacity-[0.14]" size={90} />
+          <Marca
+            className="bodgo-flota absolute right-[20%] top-[58%] opacity-[0.10]"
+            size={60}
+            delay="1.2s"
+            duracion="8.5s"
+          />
+          <Marca
+            className="bodgo-flota absolute -right-[2%] bottom-[6%] opacity-[0.09]"
+            size={140}
+            delay=".5s"
+            duracion="9s"
+          />
+          <Marca
+            className="bodgo-flota absolute right-[32%] top-[32%] opacity-[0.12]"
+            size={44}
+            delay="2s"
+            duracion="6.5s"
+          />
+        </div>
+
+        <div className="relative z-[2] w-full max-w-[640px] px-5 py-12 sm:px-8 md:px-16 md:py-[88px]">
+          {/* Pastilla partida: el país en azul y la categoría al lado. */}
+          <p className="inline-flex overflow-hidden rounded-[10px] border border-white/20 text-[11.5px] font-bold tracking-[0.04em]">
+            <span className="flex items-center gap-1.5 bg-brand-600 px-3 py-2 text-white">
+              <Logo size={14} markOnly tone="light" />
+              CHILE
+            </span>
+            <span className="bg-white/[0.08] px-3.5 py-2 text-[#BBD2E8]">
+              RED DE MICROBODEGAS URBANAS
+            </span>
           </p>
 
-          <div className="mt-9 flex flex-wrap gap-3">
-            <ButtonLink href="/registro" size="lg">
-              Empieza gratis
-            </ButtonLink>
-            <ButtonLink
-              href="/bodegas"
-              size="lg"
-              variant="secondary"
-              className="border-white/20 bg-white/10 text-white backdrop-blur-sm hover:border-white/35 hover:bg-white/15"
+          <h1 className="mt-[22px] text-[clamp(36px,5.5vw,60px)] font-extrabold leading-[1.03] tracking-[-0.033em] text-white">
+            Tu inventario,
+            <br />
+            más cerca de
+            <br />
+            tus clientes
+          </h1>
+
+          <p className="mt-5 max-w-[500px] text-[clamp(16px,2vw,19px)] leading-[1.6] text-white/80">
+            Acerca tu inventario a tus clientes con una red de microbodegas urbanas. Gestiona stock,
+            preparación y despachos desde una sola plataforma, y paga sólo por el espacio y el
+            tiempo que necesitas.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3.5">
+            <Link
+              href="/registro"
+              className="rounded-[13px] bg-brand-600 px-7 py-4 text-[15px] font-bold text-white shadow-[0_10px_30px_rgba(44,114,183,.4)] transition-colors hover:bg-brand-700"
             >
-              Ver microbodegas
-            </ButtonLink>
+              Empieza gratis
+            </Link>
+            <Link
+              href="#como-funciona"
+              className="rounded-[13px] border-[1.5px] border-white/35 bg-white/[0.12] px-7 py-4 text-[15px] font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            >
+              Cómo funciona
+            </Link>
           </div>
 
-          <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-4 border-t border-white/15 pt-7 sm:mt-16 sm:gap-8 sm:pt-8">
+          <dl className="mt-11 flex flex-wrap gap-x-[clamp(28px,5vw,52px)] gap-y-6">
             <HeroStat
-              value={stats.warehouses > 0 ? String(stats.warehouses) : '—'}
+              valor={<HeroCount to={stats.warehouses} />}
               label={stats.warehouses === 1 ? 'bodega activa' : 'bodegas activas'}
             />
             <HeroStat
-              value={stats.comunas > 0 ? String(stats.comunas) : '—'}
+              valor={<HeroCount to={stats.comunas} />}
               label={stats.comunas === 1 ? 'comuna cubierta' : 'comunas cubiertas'}
             />
             <HeroStat
-              value={stats.capacityM3 > 0 ? `${formatNumber(stats.capacityM3)} m³` : '24/7'}
-              label={stats.capacityM3 > 0 ? 'de capacidad en la red' : 'acceso a tu espacio'}
+              valor={
+                stats.capacityM3 > 0 ? (
+                  <>
+                    <HeroCount to={stats.capacityM3} /> m³
+                  </>
+                ) : (
+                  '24/7'
+                )
+              }
+              label={stats.capacityM3 > 0 ? 'de capacidad publicada' : 'acceso a tu espacio'}
             />
           </dl>
         </div>
@@ -140,6 +206,58 @@ export default async function HomePage() {
             href="/para-bodegueros"
             dark
           />
+        </div>
+      </section>
+
+      {/* -------------------------------------------------- por qué BodGo */}
+      {/* Banda navy con tres tarjetas blancas numeradas, como en el
+          prototipo: la franja oscura corta la portada y hace que las
+          tarjetas floten en vez de seguir apiladas sobre blanco. */}
+      <section className="bg-gradient-to-b from-navy-800 to-navy-950 px-5 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-[600px] text-center">
+            <span className="inline-block rounded-pill bg-white/[0.12] px-3 py-1.5 text-[12px] font-bold tracking-[0.03em] text-[#BBD2E8]">
+              Por qué BodGo
+            </span>
+            <h2 className="mt-3.5 text-[clamp(26px,4vw,34px)] font-extrabold leading-tight tracking-[-0.025em] text-white">
+              Entrega más rápido, simplifica tu operación y crece sin infraestructura propia.
+            </h2>
+            <p className="mt-3 text-[16px] leading-relaxed text-white/70">
+              Administra tu inventario desde una red de microbodegas urbanas y escala tu operación
+              sin invertir en infraestructura propia. Pagas sólo por el espacio y el tiempo que
+              realmente necesitas.
+            </p>
+          </div>
+
+          <ul className="mt-9 grid gap-5 md:grid-cols-3">
+            {VALORES.map((v, i) => (
+              <li
+                key={v.titulo}
+                className="relative overflow-hidden rounded-[20px] bg-white px-[26px] pb-7 pt-[30px] shadow-[0_12px_30px_rgba(8,22,40,.22)]"
+              >
+                <span
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand-600 to-brand-400"
+                />
+                <span
+                  aria-hidden
+                  className="absolute right-[26px] top-[22px] text-[34px] font-extrabold leading-none tracking-[-1px] text-surface-50"
+                >
+                  0{i + 1}
+                </span>
+
+                <span className="relative mb-5 flex h-[54px] w-[54px] items-center justify-center rounded-[16px] bg-navy-800 text-white shadow-[0_6px_16px_rgba(22,54,90,.18)]">
+                  <Icon name={v.icon} size={26} />
+                </span>
+
+                <h3 className="relative text-[18px] font-extrabold tracking-[-0.02em] text-navy-900">
+                  {v.titulo}
+                </h3>
+                <span aria-hidden className="my-3 block h-0.5 w-7 bg-line-200" />
+                <p className="relative text-[14.5px] leading-[1.65] text-ink-500">{v.texto}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -302,19 +420,39 @@ export default async function HomePage() {
   );
 }
 
-function HeroStat({ value, label }: { value: string; label: string }) {
+function HeroStat({ valor, label }: { valor: React.ReactNode; label: string }) {
   return (
     <div>
       <dt className="sr-only">{label}</dt>
       <dd>
-        <span className="block text-[22px] font-extrabold leading-none text-white tabular-nums sm:text-[30px]">
-          {value}
+        <span className="block text-[30px] font-extrabold leading-none tracking-[-0.5px] text-white">
+          {valor}
         </span>
-        <span className="mt-1.5 block text-[11.5px] leading-snug text-white/70 sm:text-[12px]">
-          {label}
-        </span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-white/60">{label}</span>
       </dd>
     </div>
+  );
+}
+
+/** Isotipo suelto, para la decoración flotante del hero. */
+function Marca({
+  className,
+  size,
+  delay,
+  duracion,
+}: {
+  className: string;
+  size: number;
+  delay?: string;
+  duracion?: string;
+}) {
+  return (
+    <span
+      className={className}
+      style={{ animationDelay: delay, animationDuration: duracion }}
+    >
+      <Logo size={size} markOnly tone="light" />
+    </span>
   );
 }
 
