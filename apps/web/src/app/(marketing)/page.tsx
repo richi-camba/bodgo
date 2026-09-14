@@ -86,7 +86,7 @@ export default async function HomePage() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[68%_22%] md:object-[center_right]"
+            className="object-cover object-[68%_22%] md:object-[right_10%]"
           />
           <div className="hero-velo absolute inset-0" />
         </div>

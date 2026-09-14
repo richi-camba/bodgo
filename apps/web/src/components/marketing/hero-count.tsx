@@ -6,11 +6,14 @@ import { useEffect, useRef, useState } from 'react';
  * Cifra del hero que sube desde cero al entrar en pantalla.
  *
  * El prototipo las anima; el movimiento es lo que hace que se lean como una
- * red viva y no como una placa. Respeta `prefers-reduced-motion`: a quien
- * pidió menos movimiento le aparece el número final y listo.
+ * red viva y no como una placa. Pero el valor de partida es el final, no
+ * cero: así el número es correcto en el HTML del servidor, sin JavaScript y
+ * cuando la cifra queda bajo el pliegue y nadie llega a hacerla entrar en
+ * pantalla. La animación sólo baja a cero al montar, y únicamente si el
+ * sistema no pidió menos movimiento.
  */
 export function HeroCount({ to, suffix = '' }: { to: number; suffix?: string }) {
-  const [n, setN] = useState(0);
+  const [n, setN] = useState(to);
   const marca = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -18,10 +21,9 @@ export function HeroCount({ to, suffix = '' }: { to: number; suffix?: string }) 
     if (!nodo) return;
 
     const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (quieto || to === 0) {
-      setN(to);
-      return;
-    }
+    if (quieto || to === 0) return;
+
+    setN(0);
 
     let animacion = 0;
     const observador = new IntersectionObserver(
@@ -49,6 +51,9 @@ export function HeroCount({ to, suffix = '' }: { to: number; suffix?: string }) 
     return () => {
       observador.disconnect();
       cancelAnimationFrame(animacion);
+      // Si el componente se va a mitad de la animación, el número queda en
+      // su valor real y no en el que iba subiendo.
+      setN(to);
     };
   }, [to]);
 
