@@ -17,8 +17,11 @@ export const metadata: Metadata = {
     default: 'BodGo · Red de microbodegas urbanas',
     template: '%s · BodGo',
   },
+  // La portada absorbió precios y «para bodegueros», así que cubre las tres
+  // intenciones de búsqueda: guardar stock, cuánto cuesta y arrendar un
+  // espacio propio.
   description:
-    'Acerca tu inventario a tus clientes con una red de microbodegas urbanas. Gestiona inventario, picking y despachos desde una sola plataforma y paga sólo por el espacio y el tiempo que necesitas.',
+    'Guarda tu stock en microbodegas urbanas cerca de tus clientes y despacha más rápido. Arriendo mensual por m², con comisión del 8% incluida, pago en custodia y seguro de contenido. ¿Tienes una bodega vacía? Arriéndala y genera ingresos.',
   openGraph: {
     type: 'website',
     locale: 'es_CL',

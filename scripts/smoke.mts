@@ -89,11 +89,22 @@ console.log('\nRLS');
   const { data: contact } = await pyme.from('bodeguero_profiles').select('phone').eq('profile_id', hostUser.id);
   check('la PyME ve el contacto de su bodeguero', contact?.[0]?.phone != null);
 
-  const { data: foreign } = await pyme
-    .from('bodeguero_profiles')
-    .select('phone')
-    .neq('profile_id', hostUser.id);
-  check('la PyME no ve el contacto de bodegueros sin contrato', (foreign?.length ?? 0) === 0);
+  // La regla es «sólo los bodegueros con los que tengo contrato», no «sólo
+  // uno»: la PyME de demostración puede contratar en varias bodegas y la
+  // prueba tiene que seguir midiendo la regla, no el estado de la siembra.
+  const { data: propios } = await admin
+    .from('contracts')
+    .select('warehouses!inner(bodeguero_id)')
+    .eq('pyme_id', pymeUser.id);
+  const conContrato = new Set((propios ?? []).map((c) => c.warehouses.bodeguero_id));
+
+  const { data: visibles } = await pyme.from('bodeguero_profiles').select('profile_id');
+  const deMas = (visibles ?? []).filter((b) => !conContrato.has(b.profile_id));
+  check(
+    'la PyME no ve el contacto de bodegueros sin contrato',
+    deMas.length === 0,
+    `${conContrato.size} con contrato, ${visibles?.length ?? 0} visibles`,
+  );
 }
 
 // ------------------------------------------------------------------ custodia

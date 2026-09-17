@@ -14,8 +14,8 @@ import { MobileMenu } from '@/components/marketing/mobile-menu';
 export const SITE_NAV = [
   { href: '/#como-funciona', label: 'Cómo funciona' },
   { href: '/bodegas', label: 'Para PyMEs' },
-  { href: '/para-bodegueros', label: 'Para bodegueros' },
-  { href: '/precios', label: 'Precios' },
+  { href: '/#bodegueros', label: 'Para bodegueros' },
+  { href: '/#precios', label: 'Precios' },
 ];
 
 export function SiteHeader() {
@@ -91,7 +91,7 @@ export function SiteFooter() {
             title="Plataforma"
             links={[
               { href: '/bodegas', label: 'Ver microbodegas' },
-              { href: '/precios', label: 'Precios' },
+              { href: '/#precios', label: 'Precios' },
               { href: '/registro', label: 'Crear cuenta' },
               { href: '/ingresar', label: 'Ingresar' },
             ]}
@@ -100,7 +100,7 @@ export function SiteFooter() {
             title="Producto"
             links={[
               { href: '/#como-funciona', label: 'Cómo funciona' },
-              { href: '/para-bodegueros', label: 'Para bodegueros' },
+              { href: '/#bodegueros', label: 'Para bodegueros' },
               { href: '/#preguntas', label: 'Preguntas frecuentes' },
               { href: '/#contacto', label: 'Contacto' },
             ]}

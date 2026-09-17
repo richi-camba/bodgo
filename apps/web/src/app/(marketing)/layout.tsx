@@ -1,4 +1,5 @@
 import { SiteFooter, SiteHeader } from '@/components/marketing/site-chrome';
+import { ScrollToHash } from '@/components/marketing/scroll-to-hash';
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         Saltar al contenido
       </a>
 
+      <ScrollToHash />
       <SiteHeader />
       <main id="contenido">{children}</main>
       <SiteFooter />

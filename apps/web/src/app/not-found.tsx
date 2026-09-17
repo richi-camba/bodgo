@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 const SALIDAS = [
   { href: '/bodegas', label: 'Ver microbodegas', detalle: 'Espacios disponibles hoy en Santiago' },
-  { href: '/precios', label: 'Precios', detalle: 'Cuánto cuesta y qué incluye' },
-  { href: '/para-bodegueros', label: 'Arrendar mi espacio', detalle: 'Si tienes una bodega vacía' },
+  { href: '/#precios', label: 'Precios', detalle: 'Cuánto cuesta y qué incluye' },
+  { href: '/#bodegueros', label: 'Arrendar mi espacio', detalle: 'Si tienes una bodega vacía' },
 ];
 
 /**

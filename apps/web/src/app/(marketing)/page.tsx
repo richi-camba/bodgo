@@ -8,10 +8,20 @@ import { ContactForm } from '@/components/marketing/contact-form';
 import { Faq } from '@/components/marketing/faq';
 import { preguntasDe } from '@/components/marketing/faq-content';
 import { PricingCalculator } from '@/components/marketing/pricing-calculator';
+import { HostEarnings } from '@/components/marketing/host-earnings';
 import { FaqSchema, OrganizationSchema } from '@/components/marketing/structured-data';
 import { Trust } from '@/components/marketing/trust';
 import { createClient } from '@/lib/supabase/server';
-import { calculateHostPayout, formatCLP } from '@bodgo/core';
+import {
+  calculateHostPayout,
+  formatCLP,
+  formatNumber,
+  HOST_COMMISSION_RATE,
+  INSURANCE_COVERAGE_CLP,
+  PLATFORM_COMMISSION_RATE,
+  quoteContract,
+  usableCapacityM3,
+} from '@bodgo/core';
 
 // La red cambia poco de un minuto a otro; una revalidación por hora alcanza.
 export const revalidate = 3600;
@@ -28,7 +38,14 @@ async function loadNetworkStats() {
     .select('comuna, capacity_m3, price_per_m2, total_m2');
 
   if (error || !data?.length) {
-    return { warehouses: 0, comunas: 0, capacityM3: 0, desde: null, mejorNeto: null };
+    return {
+      warehouses: 0,
+      comunas: 0,
+      capacityM3: 0,
+      desde: null,
+      promedio: null,
+      mejorNeto: null,
+    };
   }
 
   const precios = data.map((w) => w.price_per_m2 ?? 0).filter(Boolean);
@@ -43,6 +60,9 @@ async function loadNetworkStats() {
     comunas: new Set(data.map((w) => w.comuna)).size,
     capacityM3: Math.round(data.reduce((sum, w) => sum + Number(w.capacity_m3 ?? 0), 0)),
     desde: precios.length ? Math.min(...precios) : null,
+    promedio: precios.length
+      ? Math.round(precios.reduce((a, b) => a + b, 0) / precios.length)
+      : null,
     mejorNeto: netos.length ? Math.max(...netos) : null,
   };
 }
@@ -84,9 +104,70 @@ const PASOS = [
   },
 ];
 
+/** Qué incluye el precio y qué no. Sin letra chica escondida. */
+const INCLUIDO: { icon: IconName; label: string }[] = [
+  { icon: 'pagos', label: 'Pago en custodia hasta confirmar la recepción' },
+  { icon: 'seguro', label: 'Seguro de contenido por robo e incendio' },
+  { icon: 'recepciones', label: 'Recepción contada y fotografiada contra tu manifiesto' },
+  { icon: 'inventario', label: 'Inventario multibodega en tiempo real' },
+  { icon: 'pedidos', label: 'Picking y packing del bodeguero' },
+  { icon: 'envios', label: 'Seguimiento del pedido para tu comprador' },
+];
+
+const NO_INCLUIDO = [
+  'El despacho al comprador final: lo cobras tú y lo paga el courier que elijas.',
+  'El traslado de tu mercadería hasta la bodega.',
+  'Embalaje y etiquetas.',
+];
+
+/** Lo que recorre un bodeguero desde que publica hasta que cobra. */
+const PASOS_BODEGUERO: { icon: IconName; t: string; d: string }[] = [
+  {
+    icon: 'espacios',
+    t: 'Publicas tu espacio',
+    d: 'Cargas la dirección, los metros y el precio que quieres cobrar. Toma unos cinco minutos y no cuesta nada.',
+  },
+  {
+    icon: 'listo',
+    t: 'Un evaluador lo visita',
+    d: 'En 3 a 5 días hábiles pasa alguien de BodGo a revisar el checklist: acceso, piso, cierre, extintor y documentación. Recién ahí aparece en el buscador.',
+  },
+  {
+    icon: 'recepciones',
+    t: 'Recibes mercadería',
+    d: 'Cuando una PyME contrata, te llega el aviso con el manifiesto. Cuentas lo que llega contra esa lista y lo confirmas con foto desde el teléfono.',
+  },
+  {
+    icon: 'pedidos',
+    t: 'Preparas los pedidos',
+    d: 'Cuando la PyME vende, armas el paquete y se lo entregas al courier. La app te dice qué sacar y de dónde.',
+  },
+  {
+    icon: 'pagos',
+    t: 'Cobras a fin de mes',
+    d: 'Depositamos a tu cuenta bancaria el arriendo del mes, neto de comisión. No tienes que perseguir a nadie para que te pague.',
+  },
+];
+
+const REQUISITOS = [
+  'Entre 8 y 15 m² libres: una bodega, una pieza, un local o parte de una.',
+  'Acceso independiente, sin pasar por espacios privados de tu casa.',
+  'Piso despejado y seco, sin humedad ni filtraciones.',
+  'Puerta con cierre seguro, con llave o candado propio.',
+  'Extintor con carga al día.',
+  'Certificado de dominio o contrato de arriendo del espacio.',
+];
+
+const NO_HACES = [
+  'No pones plata: no hay costo de inscripción ni de instalación.',
+  'No buscas clientes: las PyMEs llegan por el buscador.',
+  'No cobras tú: BodGo te deposita a fin de mes.',
+  'No respondes por robo o incendio: para eso está el seguro de la red.',
+];
+
 export default async function HomePage() {
   const stats = await loadNetworkStats();
-  const preguntas = preguntasDe('general', 'pymes');
+  const preguntas = preguntasDe('general', 'pymes', 'precios', 'bodegueros');
 
   return (
     <>
@@ -230,7 +311,7 @@ export default async function HomePage() {
               title="Tengo espacio y quiero rentabilizarlo"
               body="Convierte tu bodega o local en una microbodega BodGo: recibe mercancía, prepara pedidos y genera ingresos."
               cta="Empezar a ganar"
-              href="/para-bodegueros"
+              href="/registro?rol=bodeguero"
             />
           </div>
         </div>
@@ -322,7 +403,10 @@ export default async function HomePage() {
       {/* ------------------------------------------------------ bodegueros */}
       {/* Banda con foto de fondo y las cuatro cifras en vidrio, como en el
           prototipo. Las cifras son de la red real cuando hay red. */}
-      <section className="relative overflow-hidden px-5 py-[clamp(48px,6vw,72px)]">
+      <section
+        id="bodegueros"
+        className="relative scroll-mt-16 overflow-hidden px-5 py-[clamp(48px,6vw,72px)]"
+      >
         <Image
           src="/fotos/banda-bodegueros.jpg"
           alt=""
@@ -348,7 +432,7 @@ export default async function HomePage() {
               cerca de sus clientes.
             </p>
             <Link
-              href="/para-bodegueros"
+              href="/registro?rol=bodeguero"
               className="mt-[26px] inline-block rounded-[13px] bg-white px-[26px] py-[15px] text-[15px] font-bold text-navy-800 transition-colors hover:bg-white/90"
             >
               Quiero ser bodeguero
@@ -364,6 +448,125 @@ export default async function HomePage() {
             <VidrioStat valor="0%" label="costo de inscripción" />
             <VidrioStat valor="Fin de mes" label="pago garantizado" />
           </dl>
+        </div>
+      </section>
+
+      {/* ------------------------------------------ bodegueros: el detalle */}
+      <section className="border-b border-line-100 bg-white px-5 py-20 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-12 lg:grid-cols-[1fr_420px] lg:items-start">
+            <div>
+              <p className="text-eyebrow">De publicar a cobrar</p>
+              <h3 className="mt-3 max-w-xl text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[32px]">
+                Cómo es arrendar tu espacio
+              </h3>
+
+              <ol className="mt-10 space-y-8">
+                {PASOS_BODEGUERO.map((paso, i) => (
+                  <li key={paso.t} className="flex gap-5">
+                    <div className="flex flex-col items-center">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-field bg-brand-50 text-brand-600">
+                        <Icon name={paso.icon} size={19} />
+                      </span>
+                      {i < PASOS_BODEGUERO.length - 1 ? (
+                        <span className="my-2 w-px flex-1 bg-line-200" aria-hidden />
+                      ) : null}
+                    </div>
+                    <div className={i < PASOS_BODEGUERO.length - 1 ? 'pb-2' : ''}>
+                      <h4 className="text-[18px] font-extrabold tracking-tight text-navy-900">
+                        {paso.t}
+                      </h4>
+                      <p className="mt-1.5 max-w-xl text-[14.5px] leading-relaxed text-ink-500">
+                        {paso.d}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Lo que rinde su espacio, con el precio promedio real de la red. */}
+            <HostEarnings defaultPricePerM2={stats.promedio ?? 42_000} />
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------- bodegueros: requisitos */}
+      <section
+        id="requisitos"
+        className="scroll-mt-16 border-b border-line-100 bg-surface-50 px-5 py-20 md:py-24"
+      >
+        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
+          <div>
+            <p className="text-eyebrow">Qué necesitas</p>
+            <h3 className="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[32px]">
+              Los requisitos son estos, y nada más
+            </h3>
+            <ul className="mt-8 space-y-3.5">
+              {REQUISITOS.map((r) => (
+                <li key={r} className="flex gap-3">
+                  <span className="mt-0.5 shrink-0 text-success-700">
+                    <Icon name="listo" size={17} />
+                  </span>
+                  <span className="text-[14.5px] leading-relaxed text-ink-700">{r}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-eyebrow">Qué no tienes que hacer</p>
+            <h3 className="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[32px]">
+              De esto nos ocupamos nosotros
+            </h3>
+            <ul className="mt-8 space-y-3.5">
+              {NO_HACES.map((r) => (
+                <li key={r} className="flex gap-3">
+                  <span className="mt-0.5 shrink-0 text-ink-400">
+                    <Icon name="cerrar" size={16} />
+                  </span>
+                  <span className="text-[14.5px] leading-relaxed text-ink-700">{r}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-8 rounded-card border border-line-200 bg-white p-5 text-[13.5px] leading-relaxed text-ink-700">
+              El seguro de la red responde por robo e incendio hasta{' '}
+              <strong className="font-bold text-navy-900">
+                {formatCLP(INSURANCE_COVERAGE_CLP)}
+              </strong>{' '}
+              por PyME. Tú guardas la mercadería; no la respaldas con tu patrimonio.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------- bodegueros: comisión */}
+      <section className="border-b border-line-100 px-5 py-20 md:py-24">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-eyebrow">Sin letra chica</p>
+          <h3 className="mt-3 text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[38px]">
+            Cuánto se queda BodGo
+          </h3>
+          <p className="mt-5 text-[15.5px] leading-relaxed text-ink-700">
+            El {Math.round(HOST_COMMISSION_RATE * 100)}% del arriendo. Eso cubre traerte las PyMEs,
+            cobrarles, mantener el dinero en custodia hasta que confirmes la recepción, el seguro
+            de la red y la aplicación con la que llevas todo desde el teléfono.
+          </p>
+          <p className="mt-4 text-[15.5px] leading-relaxed text-ink-700">
+            No hay costo de inscripción, ni mensualidad, ni comisión por pedido preparado. Si un
+            mes tu espacio está vacío, no pagas nada.
+          </p>
+
+          <div className="mt-8 rounded-card bg-surface-50 p-6">
+            <p className="text-[13.5px] leading-relaxed text-ink-700">
+              <strong className="font-bold text-navy-900">Sobre el pago:</strong> a la PyME se le
+              cobra por adelantado, pero ese dinero queda retenido —no es tuyo todavía— hasta que
+              confirmas que recibiste su mercadería y que coincide con lo declarado. Es la misma
+              garantía para los dos lados: ella sabe que no paga por un espacio que no existe, y tú
+              sabes que el mes ya está pagado antes de guardar nada.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -400,6 +603,162 @@ export default async function HomePage() {
               Empieza hoy
             </Link>
           </p>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ precios: ejemplos */}
+      <section className="border-y border-line-100 px-5 py-20 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-eyebrow">Tres casos concretos</p>
+          <h3 className="mt-3 max-w-2xl text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[38px]">
+            Cuánto paga una PyME de verdad
+          </h3>
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-ink-500">
+            Calculado sobre {formatCLP(stats.promedio ?? 42_000)} por m² al mes, el promedio real
+            de la red hoy.
+          </p>
+
+          <ul className="mt-10 grid gap-4 md:grid-cols-3">
+            {[
+              { m2: 2, quien: 'Vendes accesorios o ropa', detalle: 'Unos 400 productos chicos' },
+              { m2: 6, quien: 'Vendes calzado o decoración', detalle: 'Cerca de 5 pallets' },
+              {
+                m2: 12,
+                quien: 'Despachas más de 100 pedidos al mes',
+                detalle: 'Una microbodega completa',
+              },
+            ].map((caso) => {
+              const q = quoteContract(caso.m2, stats.promedio ?? 42_000);
+              return (
+                <li key={caso.m2} className="card flex flex-col p-6">
+                  <p className="text-[12px] font-bold uppercase tracking-wide text-brand-600">
+                    {caso.m2} m²
+                  </p>
+                  <h4 className="mt-2 text-[17px] font-extrabold tracking-tight text-navy-900">
+                    {caso.quien}
+                  </h4>
+                  <p className="mt-1.5 text-[13px] text-ink-500">
+                    {caso.detalle} · {formatNumber(usableCapacityM3(caso.m2), 1)} m³ apilables
+                  </p>
+
+                  <dl className="mt-5 space-y-2 border-t border-line-100 pt-4 text-[13px]">
+                    <FilaPrecio label="Arriendo" value={formatCLP(q.base)} />
+                    <FilaPrecio
+                      label={`Comisión (${Math.round(PLATFORM_COMMISSION_RATE * 100)}%)`}
+                      value={formatCLP(q.commission)}
+                    />
+                  </dl>
+
+                  <p className="mt-auto pt-5">
+                    <span className="block text-[24px] font-extrabold leading-none text-navy-900 tabular-nums">
+                      {formatCLP(q.total)}
+                    </span>
+                    <span className="mt-1 block text-[12px] text-ink-500">
+                      al mes, todo incluido
+                    </span>
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
+      {/* -------------------------------------------- precios: qué incluye */}
+      <section className="border-b border-line-100 bg-surface-50 px-5 py-20 md:py-24">
+        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
+          <div>
+            <p className="text-eyebrow">Qué incluye</p>
+            <h3 className="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[32px]">
+              Todo esto va en el precio
+            </h3>
+
+            <ul className="mt-8 space-y-4">
+              {INCLUIDO.map((item) => (
+                <li key={item.label} className="flex gap-3.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field bg-success-50 text-success-700">
+                    <Icon name={item.icon} size={16} />
+                  </span>
+                  <span className="pt-1 text-[14.5px] leading-relaxed text-ink-700">
+                    {item.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-eyebrow">Qué no incluye</p>
+            <h3 className="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[32px]">
+              Y esto lo pagas aparte
+            </h3>
+
+            <ul className="mt-8 space-y-4">
+              {NO_INCLUIDO.map((item) => (
+                <li key={item} className="flex gap-3.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field bg-surface-100 text-ink-500">
+                    <Icon name="cerrar" size={15} />
+                  </span>
+                  <span className="pt-1 text-[14.5px] leading-relaxed text-ink-700">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-8 rounded-card border border-line-200 bg-white p-5 text-[13.5px] leading-relaxed text-ink-700">
+              El seguro de la red cubre robo e incendio hasta{' '}
+              <strong className="font-bold text-navy-900">
+                {formatCLP(INSURANCE_COVERAGE_CLP)}
+              </strong>{' '}
+              por PyME, sin costo adicional. Las exclusiones están en los{' '}
+              <Link href="/terminos" className="font-bold text-brand-600 hover:underline">
+                términos
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------- precios: la custodia */}
+      <section className="border-b border-line-100 px-5 py-20 md:py-24">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-eyebrow">Sin sorpresas</p>
+          <h3 className="mt-3 text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[38px]">
+            A dónde va cada peso
+          </h3>
+
+          <ol className="mt-10 space-y-6">
+            {[
+              {
+                t: 'Pagas por adelantado',
+                d: `El arriendo más el ${Math.round(PLATFORM_COMMISSION_RATE * 100)}% de comisión. El monto no se le entrega a nadie todavía: queda retenido por BodGo.`,
+              },
+              {
+                t: 'El bodeguero recibe tu mercadería',
+                d: 'Cuenta producto por producto contra tu manifiesto y lo fotografía. Si algo no calza, el pago sigue retenido mientras se resuelve.',
+              },
+              {
+                t: 'Recién ahí se libera',
+                d: `Al bodeguero se le liquida a fin de mes, neto del ${Math.round(HOST_COMMISSION_RATE * 100)}% que retiene BodGo por operar la red.`,
+              },
+              {
+                t: 'Si te vas antes, se prorratea',
+                d: 'Sobre un mes de 30 días. El bodeguero cobra los días usados y el resto vuelve a tu tarjeta en 3 a 5 días hábiles.',
+              },
+            ].map((paso, i) => (
+              <li key={paso.t} className="flex gap-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy-800 text-[14px] font-extrabold text-white">
+                  {i + 1}
+                </span>
+                <div>
+                  <h4 className="text-[17px] font-extrabold tracking-tight text-navy-900">
+                    {paso.t}
+                  </h4>
+                  <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-500">{paso.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
@@ -487,6 +846,15 @@ export default async function HomePage() {
         </Link>
       </section>
     </>
+  );
+}
+
+function FilaPrecio({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-ink-500">{label}</dt>
+      <dd className="font-bold text-navy-900 tabular-nums">{value}</dd>
+    </div>
   );
 }
 
