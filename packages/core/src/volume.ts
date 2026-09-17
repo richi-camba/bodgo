@@ -1,4 +1,5 @@
 import { GROSS_HEIGHT_M, USABLE_STACK_HEIGHT_M } from './constants';
+import { formatNumber } from './money';
 
 /**
  * Volumen del recinto: lo que mide el espacio de piso a techo.
@@ -69,3 +70,20 @@ export function checkCapacity(volumeM3: number, contractedM2: number): CapacityC
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Volumen legible para la pantalla.
+ *
+ * Bajo el metro cúbico el número se dice en litros. Con dos decimales de m³,
+ * una polera doblada (0,0035 m³) y hasta una caja entera se leían «0,00 m³»:
+ * el control de capacidad parecía roto justo cuando el envío es chico, que es
+ * como empieza toda PyME. Los productos ya se listan en litros por unidad, así
+ * que la unidad además coincide.
+ */
+export function formatVolume(m3: number): string {
+  if (m3 > 0 && m3 < 1) {
+    const litros = m3 * 1000;
+    return `${formatNumber(litros, litros < 10 ? 1 : 0)} L`;
+  }
+  return `${formatNumber(m3, 2)} m³`;
+}

@@ -7,10 +7,11 @@ import { HeroCount } from '@/components/marketing/hero-count';
 import { ContactForm } from '@/components/marketing/contact-form';
 import { Faq } from '@/components/marketing/faq';
 import { preguntasDe } from '@/components/marketing/faq-content';
+import { PricingCalculator } from '@/components/marketing/pricing-calculator';
 import { FaqSchema, OrganizationSchema } from '@/components/marketing/structured-data';
 import { Trust } from '@/components/marketing/trust';
 import { createClient } from '@/lib/supabase/server';
-import { calculateHostPayout, formatCLP, quoteContract } from '@bodgo/core';
+import { calculateHostPayout, formatCLP } from '@bodgo/core';
 
 // La red cambia poco de un minuto a otro; una revalidación por hora alcanza.
 export const revalidate = 3600;
@@ -56,12 +57,30 @@ const VALORES: { icon: IconName; titulo: string; texto: string }[] = [
   {
     icon: 'inventario',
     titulo: 'Simplifica tu operación',
-    texto: 'Gestiona inventario, preparación y despachos desde una sola plataforma.',
+    texto: 'Gestiona inventario, picking y despachos desde una sola plataforma.',
   },
   {
     icon: 'metricas',
     titulo: 'Escala a tu ritmo',
-    texto: 'Pagas sólo por el espacio y el tiempo que necesitas, sin infraestructura propia.',
+    texto: 'Paga sólo por el espacio y el tiempo que necesitas, sin infraestructura propia.',
+  },
+];
+
+/** Los tres pasos del prototipo, con su misma redacción. */
+const PASOS = [
+  {
+    titulo: 'Crea tu red de almacenamiento',
+    texto:
+      'Almacena tus productos en una o varias microbodegas urbanas según la demanda y la ubicación de tus clientes.',
+  },
+  {
+    titulo: 'Administra toda tu operación',
+    texto:
+      'Gestiona inventario, pedidos, picking y despachos desde una sola plataforma, sin importar cuántas microbodegas utilices.',
+  },
+  {
+    titulo: 'Decide desde dónde despachar',
+    texto: 'Visualiza tu operación y elige la mejor ubicación para preparar y enviar cada pedido.',
   },
 ];
 
@@ -182,30 +201,38 @@ export default async function HomePage() {
       </section>
 
       {/* ------------------------------------------------------------ caminos */}
-      <section className="mx-auto max-w-6xl px-5 py-20 md:py-24">
-        <p className="text-eyebrow">Dos formas de empezar</p>
-        <h2 className="mt-3 text-[30px] font-extrabold tracking-[-0.02em] text-navy-900 md:text-[38px]">
-          ¿Con cuál te identificas?
-        </h2>
+      {/* Dos tarjetas con la foto a sangre y el texto apoyado abajo sobre el
+          degradado, como en el prototipo. La versión con icono sobre fondo
+          plano perdía justamente lo que hace elegir: ver el lugar. */}
+      <section className="bg-white px-5 py-[clamp(48px,6vw,72px)]">
+        <div className="mx-auto max-w-[1080px]">
+          <div className="text-center">
+            <span className="inline-block rounded-pill bg-brand-50 px-3 py-1.5 text-[12px] font-bold tracking-[0.03em] text-brand-600">
+              DOS FORMAS DE EMPEZAR
+            </span>
+            <h2 className="mt-3.5 text-[clamp(26px,4vw,34px)] font-extrabold tracking-[-0.025em] text-navy-900">
+              ¿Con cuál te identificas?
+            </h2>
+          </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
-          <PathCard
-            eyebrow="Tengo una PyME"
-            icon="inventario"
-            title="Vendo online y necesito espacio"
-            body="Guarda tu stock cerca de tus clientes y despacha más rápido, sin arrendar una bodega completa ni contratar personal."
-            cta="Ver microbodegas"
-            href="/bodegas"
-          />
-          <PathCard
-            eyebrow="Quiero ser bodeguero"
-            icon="espacios"
-            title="Tengo espacio y quiero rentabilizarlo"
-            body="Convierte tu bodega o local en una microbodega BodGo: recibe mercancía, prepara pedidos y genera ingresos con lo que ya tienes."
-            cta="Cómo funciona para mí"
-            href="/para-bodegueros"
-            dark
-          />
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            <PathCard
+              foto="/fotos/camino-pyme.jpg"
+              eyebrow="TENGO UNA PYME"
+              title="Vendo online y necesito espacio"
+              body="Guarda tu stock cerca de tus clientes y despacha más rápido, sin arrendar una bodega completa."
+              cta="Buscar bodega"
+              href="/bodegas"
+            />
+            <PathCard
+              foto="/fotos/camino-bodeguero.jpg"
+              eyebrow="QUIERO SER BODEGUERO"
+              title="Tengo espacio y quiero rentabilizarlo"
+              body="Convierte tu bodega o local en una microbodega BodGo: recibe mercancía, prepara pedidos y genera ingresos."
+              cta="Empezar a ganar"
+              href="/para-bodegueros"
+            />
+          </div>
         </div>
       </section>
 
@@ -264,92 +291,120 @@ export default async function HomePage() {
       {/* --------------------------------------------------- cómo funciona */}
       <section
         id="como-funciona"
-        className="scroll-mt-16 border-y border-line-100 bg-surface-50 py-20 md:py-24"
+        className="scroll-mt-16 border-t border-line-100 bg-white px-5 py-[clamp(48px,6vw,72px)]"
       >
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 lg:grid-cols-2">
-          <div>
-            <p className="text-eyebrow">En 3 pasos</p>
-            <h2 className="mt-3 text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[38px]">
+        <div className="mx-auto max-w-[1080px]">
+          <div className="text-center">
+            <span className="inline-block rounded-pill bg-brand-50 px-3 py-1.5 text-[12px] font-bold tracking-[0.03em] text-brand-600">
+              EN 3 PASOS
+            </span>
+            <h2 className="mt-3.5 text-[clamp(26px,4vw,34px)] font-extrabold tracking-[-0.025em] text-navy-900">
               Cómo funciona
             </h2>
-
-            <ol className="mt-9 space-y-7">
-              {[
-                {
-                  t: 'Contrata una microbodega',
-                  d: 'Eliges un espacio cerca de tu demanda y pagas por mes. Tu pago queda en custodia hasta que confirmes que todo llegó bien.',
-                },
-                {
-                  t: 'Envías y administras tu stock',
-                  d: 'Despachas con un manifiesto de SKUs. El bodeguero cuenta contra esa lista y confirma la recepción con foto.',
-                },
-                {
-                  t: 'Despachas desde el punto más cercano',
-                  d: 'Cuando vendes, el bodeguero prepara el pedido y sale con el courier que elijas. Tu comprador recibe un enlace para seguirlo.',
-                },
-              ].map((step, i) => (
-                <li key={step.t} className="flex gap-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy-800 text-[14px] font-extrabold text-white">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <h3 className="text-[17.5px] font-extrabold tracking-tight text-navy-900">
-                      {step.t}
-                    </h3>
-                    <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-500">{step.d}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
           </div>
 
-          <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] shadow-lift lg:aspect-[5/4]">
-            <Image
-              src="/fotos/pyme-operacion.jpg"
-              alt="Una PyME preparando pedidos en su microbodega"
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
+          <ol className="mt-11 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {PASOS.map((paso, i) => (
+              <li key={paso.titulo} className="text-center">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] bg-navy-800 text-[22px] font-extrabold text-white">
+                  {i + 1}
+                </span>
+                <h3 className="mt-[18px] text-[18px] font-bold tracking-tight text-navy-900">
+                  {paso.titulo}
+                </h3>
+                <p className="mt-2 text-[14px] leading-[1.6] text-ink-500">{paso.texto}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------ bodegueros */}
+      {/* Banda con foto de fondo y las cuatro cifras en vidrio, como en el
+          prototipo. Las cifras son de la red real cuando hay red. */}
+      <section className="relative overflow-hidden px-5 py-[clamp(48px,6vw,72px)]">
+        <Image
+          src="/fotos/banda-bodegueros.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(160deg,rgb(22_54_90/0.97)_0%,rgb(15_39_66/0.9)_45%,rgb(15_39_66/0.7)_100%)]"
+        />
+
+        <div className="relative z-[2] mx-auto flex max-w-[1080px] flex-wrap items-center gap-[clamp(32px,5vw,60px)]">
+          <div className="min-w-[280px] flex-1">
+            <span className="inline-block rounded-pill bg-white/[0.12] px-3 py-1.5 text-[12px] font-bold tracking-[0.03em] text-[#BBD2E8]">
+              PARA BODEGUEROS
+            </span>
+            <h2 className="mt-4 text-[clamp(26px,4vw,34px)] font-extrabold leading-[1.1] tracking-[-0.025em] text-white">
+              Convierte espacio disponible en nuevos ingresos
+            </h2>
+            <p className="mt-3.5 max-w-[440px] text-[16px] leading-relaxed text-white/75">
+              Únete a la red BodGo y conecta tu bodega con empresas que necesitan almacenar más
+              cerca de sus clientes.
+            </p>
+            <Link
+              href="/para-bodegueros"
+              className="mt-[26px] inline-block rounded-[13px] bg-white px-[26px] py-[15px] text-[15px] font-bold text-navy-800 transition-colors hover:bg-white/90"
+            >
+              Quiero ser bodeguero
+            </Link>
+          </div>
+
+          <dl className="grid min-w-[280px] flex-1 grid-cols-2 gap-3.5">
+            <VidrioStat
+              valor={stats.mejorNeto ? formatCLP(stats.mejorNeto) : '$640k'}
+              label="ingreso mensual del mejor espacio"
             />
+            <VidrioStat valor="14–27 m³" label="por microbodega" />
+            <VidrioStat valor="0%" label="costo de inscripción" />
+            <VidrioStat valor="Fin de mes" label="pago garantizado" />
+          </dl>
+        </div>
+      </section>
+
+      {/* --------------------------------------------------------- precios */}
+      <section
+        id="precios"
+        className="scroll-mt-16 border-t border-line-100 bg-white px-5 py-[clamp(48px,6vw,72px)]"
+      >
+        <div className="mx-auto max-w-[1080px]">
+          <div className="text-center">
+            <span className="inline-block rounded-pill bg-brand-50 px-3 py-1.5 text-[12px] font-bold tracking-[0.03em] text-brand-600">
+              PRECIOS
+            </span>
+            <h2 className="mt-3.5 text-[clamp(26px,4vw,34px)] font-extrabold tracking-[-0.025em] text-navy-900">
+              Paga sólo por el espacio que necesitas
+            </h2>
+            <p className="mt-2.5 text-[16px] text-ink-500">
+              Arriendo mensual o por días. Comisión de plataforma de 8% incluida en cada operación.
+            </p>
           </div>
+
+          <div className="mt-9">
+            <PricingCalculator />
+          </div>
+
+          <p className="mt-6 text-center text-[13px] text-ink-400">
+            Incluye pago en custodia y seguro de contenido. Sin costo de instalación.
+          </p>
+          <p className="mt-[22px] text-center">
+            <Link
+              href="/registro"
+              className="inline-block rounded-[13px] bg-navy-800 px-9 py-[15px] text-[15px] font-bold text-white transition-colors hover:bg-navy-900"
+            >
+              Empieza hoy
+            </Link>
+          </p>
         </div>
       </section>
 
       {/* ----------------------------------------------------- confianza */}
       <Trust />
-
-      {/* ------------------------------------------------- las dos páginas */}
-      <section className="mx-auto max-w-6xl px-5 py-20 md:py-24">
-        <div className="grid gap-5 md:grid-cols-2">
-          <DeepLink
-            eyebrow="Precios"
-            title={
-              stats.desde
-                ? `Desde ${formatCLP(stats.desde)} por m² al mes`
-                : 'Paga sólo por el espacio que necesitas'
-            }
-            body={
-              stats.desde
-                ? `Un rincón de 2 m² sale ${formatCLP(quoteContract(2, stats.desde).total)} al mes, con la comisión del 8% ya incluida. Sin plazo mínimo ni costo de instalación.`
-                : 'Arriendo mensual por metro cuadrado, con la comisión de plataforma incluida en el precio que ves.'
-            }
-            cta="Ver precios y qué incluye"
-            href="/precios"
-          />
-          <DeepLink
-            eyebrow="Para bodegueros"
-            title="Convierte espacio vacío en ingresos"
-            body={
-              stats.mejorNeto
-                ? `El espacio mejor pagado de la red rinde ${formatCLP(stats.mejorNeto)} netos al mes con todos sus metros arrendados. Lo tuyo depende de cuántos metros tengas y de lo que cobres — la calculadora lo estima.`
-                : 'Si tienes entre 8 y 15 m² desocupados, puedes arrendarlos a PyMEs que necesitan guardar cerca de sus clientes. Sin costo de inscripción y con pago a fin de mes.'
-            }
-            cta="Calcular cuánto ganaría"
-            href="/para-bodegueros"
-            dark
-          />
-        </div>
-      </section>
 
       {/* ------------------------------------------------------------ faq */}
       <section
@@ -357,25 +412,24 @@ export default async function HomePage() {
         className="scroll-mt-16 border-t border-line-100 bg-surface-50 py-20 md:py-24"
       >
         <div className="mx-auto max-w-6xl px-5">
-          <p className="text-eyebrow text-center">Preguntas frecuentes</p>
-          <h2 className="mt-3 text-center text-[30px] font-extrabold tracking-[-0.02em] text-navy-900 md:text-[38px]">
-            Lo que más nos preguntan
-          </h2>
+          <div className="text-center">
+            <span className="inline-block rounded-pill bg-brand-50 px-3 py-1.5 text-[12px] font-bold tracking-[0.03em] text-brand-600">
+              PREGUNTAS FRECUENTES
+            </span>
+            <h2 className="mt-3.5 text-[clamp(26px,4vw,34px)] font-extrabold tracking-[-0.025em] text-navy-900">
+              Todo lo que necesitas saber
+            </h2>
+          </div>
 
           <div className="mt-12">
             <Faq preguntas={preguntas} />
           </div>
 
           <p className="mt-8 text-center text-[14px] text-ink-500">
-            Sobre precios y plazos hay más en{' '}
-            <Link href="/precios" className="font-bold text-brand-600 hover:underline">
-              la página de precios
-            </Link>
-            ; si tienes un espacio, en{' '}
-            <Link href="/para-bodegueros" className="font-bold text-brand-600 hover:underline">
-              la de bodegueros
-            </Link>
-            .
+            ¿Tienes otra pregunta?{' '}
+            <a href="mailto:hola@bodgo.cl" className="font-bold text-brand-600 hover:underline">
+              Escríbenos a hola@bodgo.cl
+            </a>
           </p>
         </div>
       </section>
@@ -415,6 +469,22 @@ export default async function HomePage() {
 
           <ContactForm />
         </div>
+      </section>
+
+      {/* ---------------------------------------------------- cierre */}
+      <section className="bg-[linear-gradient(135deg,#16365A,#0f2742)] px-5 py-[clamp(40px,6vw,56px)] text-center text-white">
+        <h2 className="text-[clamp(24px,4vw,30px)] font-extrabold tracking-[-0.02em]">
+          Lleva tu e-commerce más cerca de tus clientes
+        </h2>
+        <p className="mt-3 text-[16px] text-white/70">
+          Encuentra tu primera microbodega en minutos.
+        </p>
+        <Link
+          href="/registro"
+          className="mt-6 inline-block rounded-[13px] bg-white px-[30px] py-[15px] text-[15px] font-bold text-navy-800 transition-colors hover:bg-white/90"
+        >
+          Empieza gratis
+        </Link>
       </section>
     </>
   );
@@ -467,107 +537,66 @@ function ContactPoint({ title, value, href }: { title: string; value: string; hr
   );
 }
 
-/** Tarjeta que resume un tema y manda a su página. */
-function DeepLink({
+function PathCard({
+  foto,
   eyebrow,
   title,
   body,
   cta,
   href,
-  dark,
 }: {
+  foto: string;
   eyebrow: string;
   title: string;
   body: string;
   cta: string;
   href: string;
-  dark?: boolean;
 }) {
   return (
-    <div className={`flex flex-col rounded-[20px] p-8 ${dark ? 'bg-navy-800 text-white' : 'card'}`}>
-      <p
-        className={`text-[11px] font-bold uppercase tracking-[0.1em] ${
-          dark ? 'text-brand-400' : 'text-brand-600'
-        }`}
-      >
-        {eyebrow}
-      </p>
-      <h2
-        className={`mt-3 text-[24px] font-extrabold leading-tight tracking-[-0.02em] ${
-          dark ? 'text-white' : 'text-navy-900'
-        }`}
-      >
-        {title}
-      </h2>
-      <p
-        className={`mt-3 flex-1 text-[14.5px] leading-relaxed ${
-          dark ? 'text-white/70' : 'text-ink-500'
-        }`}
-      >
-        {body}
-      </p>
-      <ButtonLink
-        href={href}
-        variant={dark ? 'secondary' : 'primary'}
-        className={`mt-7 self-start ${dark ? 'border-transparent bg-white text-navy-800 hover:bg-white/90' : ''}`}
-      >
-        {cta}
-      </ButtonLink>
-    </div>
+    <Link
+      href={href}
+      className="group relative block h-[440px] overflow-hidden rounded-[24px] shadow-[0_12px_34px_rgba(16,36,58,.14)]"
+    >
+      <Image
+        src={foto}
+        alt=""
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+      />
+      <span
+        aria-hidden
+        className="absolute inset-0 bg-[linear-gradient(to_top,rgb(9_23_40/0.92)_8%,rgb(9_23_40/0.55)_45%,rgb(9_23_40/0.15)_100%)]"
+      />
+
+      <span className="absolute inset-x-0 bottom-0 block p-[30px]">
+        <span className="inline-block rounded-pill border border-[rgb(126_179_230/0.6)] bg-[rgb(91_166_230/0.32)] px-3 py-1.5 text-[11px] font-bold tracking-[0.05em] text-[#EAF4FF] backdrop-blur-[6px]">
+          {eyebrow}
+        </span>
+        <span className="mt-3.5 block text-[26px] font-extrabold leading-[1.1] tracking-[-0.02em] text-white">
+          {title}
+        </span>
+        <span className="mt-2.5 block text-[14px] leading-[1.55] text-white/80">{body}</span>
+        <span className="mt-5 inline-flex items-center gap-2 rounded-[12px] bg-white px-[22px] py-[13px] text-[14px] font-bold text-navy-800">
+          {cta}
+          <Icon name="siguiente" size={13} />
+        </span>
+      </span>
+    </Link>
   );
 }
 
-function PathCard({
-  eyebrow,
-  icon,
-  title,
-  body,
-  cta,
-  href,
-  dark,
-}: {
-  eyebrow: string;
-  icon: IconName;
-  title: string;
-  body: string;
-  cta: string;
-  href: string;
-  dark?: boolean;
-}) {
+/** Cifra sobre vidrio, para la banda de bodegueros. */
+function VidrioStat({ valor, label }: { valor: string; label: string }) {
   return (
-    <div className={`flex flex-col rounded-[20px] p-8 ${dark ? 'bg-navy-800 text-white' : 'card'}`}>
-      <span
-        className={`flex h-11 w-11 items-center justify-center rounded-field ${
-          dark ? 'bg-white/10 text-brand-400' : 'bg-brand-50 text-brand-600'
-        }`}
-      >
-        <Icon name={icon} size={20} />
-      </span>
-
-      <p
-        className={`mt-5 text-[11px] font-bold uppercase tracking-[0.1em] ${
-          dark ? 'text-brand-400' : 'text-brand-600'
-        }`}
-      >
-        {eyebrow}
-      </p>
-      <h3
-        className={`mt-2 text-[21px] font-extrabold leading-tight tracking-tight ${
-          dark ? 'text-white' : 'text-navy-900'
-        }`}
-      >
-        {title}
-      </h3>
-      <p className={`mt-3 flex-1 text-[14.5px] leading-relaxed ${dark ? 'text-white/70' : 'text-ink-500'}`}>
-        {body}
-      </p>
-      <ButtonLink
-        href={href}
-        variant={dark ? 'secondary' : 'primary'}
-        className={`mt-7 self-start ${dark ? 'border-transparent bg-white text-navy-800 hover:bg-white/90' : ''}`}
-      >
-        {cta}
-      </ButtonLink>
+    <div className="rounded-[16px] border border-white/[0.14] bg-white/[0.08] p-5">
+      <dt className="sr-only">{label}</dt>
+      <dd>
+        <span className="block text-[28px] font-extrabold tracking-[-0.5px] text-white">
+          {valor}
+        </span>
+        <span className="mt-1 block text-[13px] leading-snug text-white/60">{label}</span>
+      </dd>
     </div>
   );
 }

@@ -70,6 +70,7 @@ export function OrderBuilder({ warehouses }: { warehouses: Warehouse[] }) {
                 <input
                   type="radio"
                   name="origin"
+                  aria-label={`Despachar desde ${w.comuna}, ${w.items.length} ${w.items.length === 1 ? 'producto disponible' : 'productos disponibles'}`}
                   checked={warehouseId === w.id}
                   onChange={() => {
                     setWarehouseId(w.id);

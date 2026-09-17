@@ -13,13 +13,21 @@ type Props = {
   folder: string;
   /** Avisa la ruta subida, para flujos por pasos que necesitan saberlo. */
   onSubido?: (ruta: string) => void;
+  /**
+   * Fuerza la cámara en vez de dejar elegir de la galería. Sólo para lo que
+   * se fotografía en el momento — la recepción del bodeguero, que tiene la
+   * mercadería delante.
+   */
+  soloCamara?: boolean;
 };
 
 /**
  * Captura y sube una foto de respaldo.
  *
- * En el teléfono abre la cámara directamente (`capture="environment"`). El
- * archivo va al bucket privado `evidence`, bajo la carpeta del propio usuario:
+ * Por defecto deja elegir de la galería: quien fotografió los bultos antes de
+ * salir no tiene por qué volver a sacarles una foto. Con `soloCamara` abre la
+ * cámara directamente, para lo que se registra en el momento. El archivo va al
+ * bucket privado `evidence`, bajo la carpeta del propio usuario:
  * las políticas de storage sólo dejan escribir ahí. Al servidor viaja la ruta,
  * no el archivo — así una foto de varios megas no pasa por la función.
  *
@@ -27,7 +35,7 @@ type Props = {
  * por qué viajar en la carga inicial de una pantalla que un repartidor abre
  * con datos móviles y sin saber todavía si va a sacar una foto.
  */
-export function PhotoCapture({ name, label, hint, folder, onSubido }: Props) {
+export function PhotoCapture({ name, label, hint, folder, onSubido, soloCamara }: Props) {
   const inputId = useId();
   const [path, setPath] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -113,7 +121,7 @@ export function PhotoCapture({ name, label, hint, folder, onSubido }: Props) {
         id={inputId}
         type="file"
         accept="image/*"
-        capture="environment"
+        {...(soloCamara ? { capture: 'environment' as const } : {})}
         className="sr-only"
         disabled={status === 'uploading'}
         onChange={(e) => {

@@ -12,10 +12,10 @@ import { MobileMenu } from '@/components/marketing/mobile-menu';
  * URL aterriza en una pantalla sin salida.
  */
 export const SITE_NAV = [
-  { href: '/bodegas', label: 'Microbodegas' },
-  { href: '/precios', label: 'Precios' },
-  { href: '/para-bodegueros', label: 'Para bodegueros' },
   { href: '/#como-funciona', label: 'Cómo funciona' },
+  { href: '/bodegas', label: 'Para PyMEs' },
+  { href: '/para-bodegueros', label: 'Para bodegueros' },
+  { href: '/precios', label: 'Precios' },
 ];
 
 export function SiteHeader() {
@@ -57,17 +57,20 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="bg-navy-950 text-white">
-      <div className="border-b border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-5 py-10 text-center sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
-          {/* Sobre chip blanco y en sus colores: el logo de un organismo
-              público no se recolorea. */}
-          <span className="flex shrink-0 items-center justify-center rounded-[10px] bg-white px-4 py-3">
-            <Image src="/marcas/corfo.png" alt="Corfo" width={104} height={35} />
-          </span>
-          <p className="max-w-md text-[12.5px] leading-relaxed text-white/65">
-            Iniciativa financiada por <strong className="font-semibold text-white/90">Corfo</strong>{' '}
-            a través del instrumento Semilla Inicia (25INI2-312540), con el patrocinio de{' '}
-            <strong className="font-semibold text-white/90">Innovo</strong>.
+      {/* Los dos logos van sobre blanco y en sus colores: la marca de un
+          organismo público no se recolorea ni se pone en negativo. */}
+      <div className="bg-white px-5 py-[clamp(36px,5vw,48px)] text-navy-900">
+        <div className="mx-auto max-w-[1000px] text-center">
+          <p className="text-[12px] font-bold tracking-[0.1em] text-ink-400">PROYECTO APOYADO POR</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-[clamp(28px,6vw,64px)]">
+            <Image src="/marcas/corfo.png" alt="Corfo" width={154} height={52} className="h-[52px] w-auto object-contain" />
+            <span aria-hidden className="hidden h-[46px] w-px bg-line-200 sm:block" />
+            <Image src="/marcas/innovo.png" alt="Innovo" width={190} height={64} className="h-16 w-auto object-contain" />
+          </div>
+          <p className="mx-auto mt-[22px] max-w-[620px] text-[12px] leading-relaxed text-ink-400">
+            Iniciativa financiada por <strong className="font-semibold text-ink-700">Corfo</strong> a
+            través del instrumento Semilla Inicia (25INI2-312540), con el patrocinio de{' '}
+            <strong className="font-semibold text-ink-700">Innovo</strong>.
           </p>
         </div>
       </div>

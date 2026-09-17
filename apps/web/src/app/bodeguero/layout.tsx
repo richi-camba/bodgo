@@ -34,6 +34,7 @@ export default async function BodegueroLayout({ children }: { children: React.Re
           : 'Sin espacios publicados'
       }
       initials={user.initials}
+      perfilHref="/bodeguero/perfil"
       avisos={{ href: '/bodeguero/notificaciones', sinLeer: sinLeer ?? 0 }}
     >
       {children}

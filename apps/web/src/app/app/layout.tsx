@@ -34,6 +34,7 @@ export default async function PymeLayout({ children }: { children: React.ReactNo
       userName={user.fullName}
       userSubtitle={pyme?.business_name ?? undefined}
       initials={user.initials}
+      perfilHref="/app/perfil"
       tono="navy"
       avisos={{ href: '/app/notificaciones', sinLeer: sinLeer ?? 0 }}
     >

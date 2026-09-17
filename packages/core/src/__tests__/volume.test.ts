@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkCapacity,
   checkCapacityM3,
+  formatVolume,
   grossVolumeM3,
   pricePerM3,
   shipmentVolumeM3,
@@ -73,5 +74,21 @@ describe('checkCapacityM3', () => {
   it('ignora diferencias por debajo de los 5 litros', () => {
     expect(checkCapacityM3(21.604, 21.6).exceeds).toBe(false);
     expect(checkCapacityM3(21.61, 21.6).exceeds).toBe(true);
+  });
+});
+
+describe('formatVolume', () => {
+  it('dice litros cuando el envío no llega al metro cúbico', () => {
+    expect(formatVolume(0.0035)).toBe('3,5 L');
+    expect(formatVolume(0.252)).toBe('252 L');
+  });
+
+  it('dice metros cúbicos desde el metro cúbico', () => {
+    expect(formatVolume(1.222)).toBe('1,22 m³');
+    expect(formatVolume(21.6)).toBe('21,60 m³');
+  });
+
+  it('un envío vacío es cero metros cúbicos, no cero litros', () => {
+    expect(formatVolume(0)).toBe('0,00 m³');
   });
 });

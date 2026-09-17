@@ -45,8 +45,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   if (params.comuna) listings = listings.filter((l) => l.fila.comuna === params.comuna);
   if (params.max) listings = listings.filter((l) => (l.fila.price_per_m2 ?? 0) <= Number(params.max));
 
+  // Sin `?orden`, manda la cercanía si hay contra qué medirla — que es lo
+  // que el chip encendido promete. Ordenar por calificación mientras el chip
+  // dice «Cercanía» hacía que el buscador mintiera.
+  const orden = params.orden ?? (origen ? 'cercania' : 'rating');
+
   listings.sort((a, b) => {
-    switch (params.orden) {
+    switch (orden) {
       case 'precio':
         return (a.fila.price_per_m2 ?? 0) - (b.fila.price_per_m2 ?? 0);
       case 'espacio':

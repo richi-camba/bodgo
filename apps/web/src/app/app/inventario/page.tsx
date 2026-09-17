@@ -7,7 +7,6 @@ import { ProductCard, type ProductRow } from '@/components/app/product-row';
 import { createClient } from '@/lib/supabase/server';
 import { formatNumber, stockStatus } from '@bodgo/core';
 import { InventoryControls } from './controls';
-import { NewProductForm } from './new-product-form';
 
 export const metadata: Metadata = { title: 'Mi inventario' };
 
@@ -152,17 +151,22 @@ export default async function InventoryPage({
       )}
 
       {/* ------------------------------------------------------- acciones */}
-      <NewProductForm
-        secundario={
-          <Link
-            href="/app/inventario/importar"
-            className="flex items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-brand-600 bg-white p-3.5 text-[14px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
-          >
-            <Icon name="exportar" size={18} className="rotate-180" />
-            Carga masiva
-          </Link>
-        }
-      />
+      <div className="grid grid-cols-2 gap-2.5">
+        <Link
+          href="/app/inventario/nuevo"
+          className="flex items-center justify-center gap-2 rounded-[14px] bg-brand-600 p-3.5 text-[14px] font-bold text-white transition-colors hover:bg-brand-700"
+        >
+          <Icon name="agregar" size={18} />
+          Crear producto
+        </Link>
+        <Link
+          href="/app/inventario/importar"
+          className="flex items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-brand-600 bg-white p-3.5 text-[14px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
+        >
+          <Icon name="exportar" size={18} className="rotate-180" />
+          Carga masiva
+        </Link>
+      </div>
 
       <Link
         href="/app/despachos/nuevo"

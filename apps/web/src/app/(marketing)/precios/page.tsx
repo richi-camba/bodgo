@@ -83,7 +83,7 @@ export default async function PricingPage() {
       </section>
 
       {/* ------------------------------------------------------ calculadora */}
-      <section className="bg-navy-950 pb-20 md:pb-24">
+      <section className="bg-white py-20 md:py-24">
         <div className="mx-auto max-w-6xl px-5">
           <PricingCalculator />
         </div>

@@ -340,6 +340,7 @@ export function ReceptionForm({
           folder="recepciones"
           label="Foto de lo recibido"
           hint="Los bultos abiertos, con las etiquetas a la vista"
+          soloCamara
         />
 
         <Field

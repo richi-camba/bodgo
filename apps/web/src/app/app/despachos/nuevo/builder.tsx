@@ -5,10 +5,16 @@ import { useFormStatus } from 'react-dom';
 import { createShipment, type ActionState } from '@/app/app/actions';
 import { Button } from '@/components/ui/button';
 import { Field, FormError, Input, Textarea } from '@/components/ui/field';
-import { Icon } from '@/components/ui/icon';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { PhotoCapture } from '@/components/app/photo-capture';
 import { StepHeader, StickyBar } from '@/components/app/step-header';
-import { checkCapacityM3, formatNumber, shipmentVolumeM3, USABLE_STACK_HEIGHT_M } from '@bodgo/core';
+import {
+  checkCapacityM3,
+  formatNumber,
+  formatVolume,
+  shipmentVolumeM3,
+  USABLE_STACK_HEIGHT_M,
+} from '@bodgo/core';
 
 type Contract = {
   id: string;
@@ -85,8 +91,7 @@ export function ShipmentBuilder({
     paso === 1 ? Boolean(contractId)
     : paso === 2 ? descripcion.trim().length >= 3 && bultos >= 1
     : paso === 3 ? items.length > 0
-    : paso === 4 ? Boolean(method)
-    : Boolean(foto);
+    : true;
 
   const TITULOS = [
     '',
@@ -156,6 +161,7 @@ export function ShipmentBuilder({
                   <input
                     type="radio"
                     name="destino"
+                    aria-label={`${c.comuna}, ${formatNumber(c.m2, 0)} m², ${c.bodeguero}`}
                     checked={activo}
                     onChange={() => setContractId(c.id)}
                     className="sr-only"
@@ -238,6 +244,7 @@ export function ShipmentBuilder({
                     <input
                       id={`sel-${p.id}`}
                       type="checkbox"
+                      aria-label={`Incluir ${p.name} en el envío`}
                       checked={elegido}
                       onChange={() => toggle(p.id)}
                       className="h-[22px] w-[22px] shrink-0 cursor-pointer appearance-none rounded-[7px] border-2 border-line-300 bg-white bg-center bg-no-repeat checked:border-brand-600 checked:bg-brand-600 checked:bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%223.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M20 6L9 17l-5-5%22/></svg>')] checked:bg-[length:13px_13px]"
@@ -254,7 +261,7 @@ export function ShipmentBuilder({
                       </span>
                       {elegido ? (
                         <span className="mt-[3px] block text-[11.5px] font-bold text-brand-600">
-                          {formatNumber(qty * p.unitVolumeM3, 2)} m³
+                          {formatVolume(qty * p.unitVolumeM3)}
                         </span>
                       ) : null}
                     </label>
@@ -345,12 +352,25 @@ export function ShipmentBuilder({
 
       {/* ------------------------------------------------------- paso 5 */}
       {paso === 5 ? (
-        <PhotoCapture
-          name="fotoVisible"
-          folder="despachos"
-          hint="Con todos los bultos y etiquetas a la vista"
-          onSubido={setFoto}
-        />
+        <div className="space-y-3.5">
+          <PhotoCapture
+            name="fotoVisible"
+            folder="despachos"
+            hint="Con todos los bultos y etiquetas a la vista"
+            onSubido={setFoto}
+          />
+
+          {/* La foto es del lado de la PyME: es su prueba si el conteo del
+              bodeguero no calza. Bloquear el envío por no tenerla protegía a
+              quien ya decidió arriesgarse, y dejaba el flujo sin salida a
+              quien despacha desde el computador. */}
+          {foto ? null : (
+            <Aviso icon="camara">
+              Puedes seguir sin foto, pero es tu respaldo: si el bodeguero cuenta menos de lo que
+              declaraste, sin foto sólo queda tu palabra.
+            </Aviso>
+          )}
+        </div>
       ) : null}
 
       <div className="mt-4">
@@ -390,7 +410,7 @@ function Continuar({ listo }: { listo: boolean }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="lg" full disabled={!listo || pending}>
-      {pending ? 'Creando el envío…' : 'Continuar'}
+      {pending ? 'Creando el envío…' : 'Crear el envío'}
     </Button>
   );
 }
@@ -431,7 +451,7 @@ function Volumen({
       </div>
 
       <div className="mt-3.5 flex gap-2.5">
-        <Caja rotulo="Volumen total" valor={`${formatNumber(volume, 2)} m³`} />
+        <Caja rotulo="Volumen total" valor={formatVolume(volume)} />
         <Caja rotulo="Capacidad contratada" valor={`${formatNumber(capacity.capacityM3, 1)} m³`} />
       </div>
 
@@ -466,7 +486,7 @@ function Volumen({
           <span className="mt-px shrink-0">
             <Icon name="discrepancias" size={16} />
           </span>
-          Excedes tu capacidad en {formatNumber(capacity.excessM3, 2)} m³. Puedes ampliar el
+          Excedes tu capacidad en {formatVolume(capacity.excessM3)}. Puedes ampliar el
           contrato o dividir el envío; si llega así, el bodeguero puede rechazar el excedente.
         </p>
       ) : (
@@ -541,7 +561,7 @@ function Radio({ activo }: { activo: boolean }) {
   );
 }
 
-function Aviso({ icon, children }: { icon: 'bultos'; children: React.ReactNode }) {
+function Aviso({ icon, children }: { icon: IconName; children: React.ReactNode }) {
   return (
     <div className="flex gap-2.5 rounded-[13px] bg-brand-50 p-3.5">
       <span className="mt-px shrink-0 text-brand-600">

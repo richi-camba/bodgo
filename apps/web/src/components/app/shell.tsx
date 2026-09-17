@@ -19,6 +19,8 @@ type Props = {
   userName: string;
   userSubtitle?: string;
   initials: string;
+  /** A dónde lleva el bloque de la cuenta. Sin ruta, no es un enlace. */
+  perfilHref?: string;
   /** Navy en el backoffice, claro en las apps de PyME y bodeguero. */
   tono?: 'claro' | 'navy';
   /** Ruta y cantidad de avisos sin leer, para la campana. */
@@ -39,6 +41,7 @@ export function AppShell({
   userName,
   userSubtitle,
   initials,
+  perfilHref,
   tono = 'claro',
   avisos,
   children,
@@ -78,7 +81,12 @@ export function AppShell({
         </nav>
 
         <div className={`p-3 ${navy ? 'border-t border-white/10' : 'border-t border-line-100'}`}>
-          <div className="flex items-center gap-3 rounded-field px-2 py-2">
+          <Cuenta
+            href={perfilHref}
+            className={`flex items-center gap-3 rounded-field px-2 py-2 transition-colors ${
+              perfilHref ? (navy ? 'hover:bg-white/10' : 'hover:bg-surface-50') : ''
+            }`}
+          >
             <Avatar initials={initials} />
             <div className="min-w-0 flex-1">
               <p className={`truncate text-[13px] font-bold ${navy ? 'text-white' : 'text-navy-900'}`}>
@@ -90,7 +98,7 @@ export function AppShell({
                 </p>
               ) : null}
             </div>
-          </div>
+          </Cuenta>
           <SignOutButton navy={navy} />
         </div>
       </aside>
@@ -115,7 +123,13 @@ export function AppShell({
 
           <div className="flex items-center gap-1.5">
             {avisos ? <BellLink {...avisos} navy={navy} /> : null}
-            <Avatar initials={initials} size={30} />
+            {perfilHref ? (
+              <Link href={perfilHref} aria-label={`Tu cuenta, ${userName}`}>
+                <Avatar initials={initials} size={30} />
+              </Link>
+            ) : (
+              <Avatar initials={initials} size={30} />
+            )}
           </div>
         </header>
 
@@ -138,6 +152,29 @@ export function AppShell({
         </ul>
       </nav>
     </div>
+  );
+}
+
+/**
+ * El bloque de la cuenta es enlace cuando hay a dónde ir.
+ *
+ * Un avatar que parece botón y no hace nada se prueba una vez y se aprende
+ * que no sirve; mejor que no lo parezca cuando el rol no tiene perfil.
+ */
+function Cuenta({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (!href) return <div className={className}>{children}</div>;
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
   );
 }
 
