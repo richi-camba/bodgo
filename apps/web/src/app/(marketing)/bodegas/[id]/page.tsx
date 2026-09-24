@@ -29,7 +29,7 @@ export async function generateMetadata({
 
   return {
     title: `Microbodega en ${w.comuna} · ${formatNumber(Number(w.total_m2 ?? 0), 1)} m²`,
-    description: `Microbodega urbana en ${w.comuna}, ${formatNumber(Number(w.capacity_m3 ?? 0), 1)} m³ de capacidad apilable, desde ${formatCLP(w.price_per_m2 ?? 0)} por m² al mes. Pago en custodia y seguro de contenido incluidos.`,
+    description: `Microbodega urbana en ${w.comuna}, ${formatNumber(Number(w.capacity_m3 ?? 0), 1)} m³ de capacidad apilable, desde ${formatCLP(w.price_per_m2 ?? 0)} por m² al mes. Pago en custodia y recepción verificada contra tu manifiesto.`,
     alternates: { canonical: `/bodegas/${id}` },
   };
 }

@@ -25,10 +25,10 @@ describe('quoteContract', () => {
 });
 
 describe('calculateHostPayout', () => {
-  it('retiene 15% para BodGo', () => {
+  it('retiene 10% para BodGo', () => {
     const p = calculateHostPayout(640_000);
-    expect(p.commission).toBe(96_000);
-    expect(p.net).toBe(544_000);
+    expect(p.commission).toBe(64_000);
+    expect(p.net).toBe(576_000);
   });
 
   it('bruto = comisión + neto, siempre', () => {

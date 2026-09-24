@@ -5,7 +5,7 @@ const OPTIONS: { role: string; icon: IconName; title: string; body: string }[] =
   {
     role: 'pyme',
     icon: 'inventario',
-    title: 'Quiero enviar pedidos',
+    title: 'Quiero arrendar bodegas',
     body: 'Soy una PyME: contrato bodega, guardo stock y despacho a mis clientes.',
   },
   {

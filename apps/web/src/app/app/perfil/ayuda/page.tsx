@@ -3,7 +3,12 @@ import Link from 'next/link';
 import { Icon } from '@/components/ui/icon';
 import { StepHeader } from '@/components/app/step-header';
 import { SectionLabel } from '@/components/app/rows';
-import { CLAIM_WINDOW_HOURS, formatCompactCLP, INSURANCE_COVERAGE_CLP } from '@bodgo/core';
+import {
+  CLAIM_WINDOW_HOURS,
+  formatCompactCLP,
+  INSURANCE_COVERAGE_CLP,
+  INSURANCE_POLICY_ACTIVE,
+} from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Ayuda y soporte' };
 
@@ -17,8 +22,10 @@ const FAQ = [
     a: `El bodeguero cuenta línea a línea contra el manifiesto. Si algo no calza se abre una discrepancia, te avisamos al instante y la plata sigue retenida mientras se resuelve. Tu inventario suma lo recibido, nunca lo declarado.`,
   },
   {
-    q: '¿Qué cubre el seguro?',
-    a: `Robo e incendio hasta ${formatCompactCLP(INSURANCE_COVERAGE_CLP)} por PyME. Si algo llegó dañado o falta stock, abre el reclamo dentro de las ${CLAIM_WINDOW_HOURS} horas siguientes a la recepción.`,
+    q: INSURANCE_POLICY_ACTIVE ? '¿Qué cubre el seguro?' : '¿Y si algo llega dañado o falta?',
+    a: INSURANCE_POLICY_ACTIVE
+      ? `Robo e incendio hasta ${formatCompactCLP(INSURANCE_COVERAGE_CLP)} por PyME. Si algo llegó dañado o falta stock, abre el reclamo dentro de las ${CLAIM_WINDOW_HOURS} horas siguientes a la recepción.`
+      : `Abre el reclamo dentro de las ${CLAIM_WINDOW_HOURS} horas siguientes a la recepción: el pago en custodia queda retenido mientras lo revisamos.`,
   },
   {
     q: '¿Puedo cortar el contrato antes de tiempo?',

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { VolverLegal } from './volver-legal';
 
 /**
  * Armazón de las páginas legales.
@@ -22,6 +23,8 @@ export function LegalPage({
 }) {
   return (
     <article className="mx-auto max-w-3xl px-5 py-14 md:py-20">
+      <VolverLegal />
+
       <p className="text-eyebrow">Legal</p>
       <h1 className="mt-3 text-[34px] font-extrabold leading-tight tracking-[-0.025em] text-navy-900 md:text-[42px]">
         {title}
@@ -40,6 +43,10 @@ export function LegalPage({
           . Responde una persona, no un formulario.
         </p>
       </footer>
+
+      <div className="mt-8">
+        <VolverLegal abajo />
+      </div>
     </article>
   );
 }

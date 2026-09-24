@@ -5,10 +5,12 @@
  * archivos, tarde o temprano el buscador mostraría una respuesta que la página
  * ya no dice.
  *
- * El reparto importa. La portada muestra sólo lo que le sirve a cualquiera que
- * llega; lo de precios vive en /precios y lo de anfitriones en
- * /para-bodegueros, cerca de la decisión que cada uno está tomando.
+ * El reparto por tema sobrevive a la fusión de las páginas: la portada las
+ * muestra todas seguidas, pero el orden dentro de cada tema sigue siendo el
+ * que tiene sentido para quien está tomando esa decisión.
  */
+import { INSURANCE_POLICY_ACTIVE } from '@bodgo/core';
+
 export type FaqTema = 'general' | 'pymes' | 'precios' | 'bodegueros';
 
 export type Pregunta = { tema: FaqTema; q: string; a: string };
@@ -20,9 +22,15 @@ export const FAQ: Pregunta[] = [
     a: 'El bodeguero cuenta producto por producto contra tu manifiesto al recibir. Si algo no calza, se abre una discrepancia al instante, te llega el aviso con el detalle y el pago sigue retenido hasta que se resuelva.',
   },
   {
+    // Mientras no haya póliza firmada, la respuesta honesta es que no la hay.
+    // Esquivar la pregunta con lo que sí existe deja creer que sí: quien
+    // guarda su stock confiando en un seguro que no está contratado se entera
+    // el día que le pasa algo, y ese día ya no se arregla.
     tema: 'general',
     q: '¿Está asegurada mi mercadería?',
-    a: 'Sí. Todo espacio publicado queda cubierto por el seguro de la red, que responde por robo e incendio hasta 2 millones de pesos por PyME.',
+    a: INSURANCE_POLICY_ACTIVE
+      ? 'Sí. Todo espacio publicado queda cubierto por el seguro de la red, que responde por robo e incendio hasta 2 millones de pesos por PyME.'
+      : 'Todavía no hay póliza contratada, así que no te prometemos una cobertura que no existe. Lo que sí te respalda hoy: cada recepción se cuenta producto por producto contra tu manifiesto y se fotografía, el pago queda en custodia hasta que calce, y cada espacio pasa por una visita de habilitación antes de publicarse.',
   },
   {
     tema: 'pymes',
@@ -52,7 +60,7 @@ export const FAQ: Pregunta[] = [
   {
     tema: 'bodegueros',
     q: '¿Qué necesito para publicar mi espacio?',
-    a: 'Entre 8 y 15 m² libres con acceso independiente, piso despejado, cierre seguro y extintor al día. Publicas el aviso, un evaluador de BodGo agenda una visita de habilitación en 3 a 5 días hábiles y verifica el checklist antes de que aparezca en la red. No hay costo de inscripción.',
+    a: 'Un espacio libre que podamos dividir en módulos desde 1 m³, con acceso independiente de tu casa, piso seco, puerta con llave o candado y extintor vigente. Además, certificado de dominio o autorización del dueño si arriendas, un celular con cámara, tu cédula y una cuenta bancaria a tu nombre. Publicas el aviso, un evaluador de BodGo agenda una visita en 3 a 5 días hábiles y verifica el checklist antes de que aparezca en la red. No hay costo de inscripción.',
   },
   {
     tema: 'bodegueros',
@@ -62,7 +70,7 @@ export const FAQ: Pregunta[] = [
   {
     tema: 'bodegueros',
     q: '¿Respondo yo si le pasa algo a la mercadería?',
-    a: 'No con tu patrimonio. El seguro de la red cubre robo e incendio hasta 2 millones por PyME. Lo que sí te corresponde es contar bien lo que recibes: esa verificación es la que protege a las dos partes.',
+    a: 'Lo que te corresponde es contar bien lo que recibes y confirmarlo con foto: esa verificación es la que protege a las dos partes y la que libera tu pago.',
   },
 ];
 

@@ -130,10 +130,26 @@ async function bodeguero(supabase: Cliente, userId: string, fullName: string, n:
       <ul className="mt-5 space-y-2.5">
         {(items.length
           ? items
-          : [
-              { item: 'Contrato firmado', hint: 'Documento en línea', status: 'pending' },
-              { item: 'Seguro vigente', hint: 'Póliza de contenido', status: 'pending' },
-              { item: 'Fotos del espacio', hint: 'Mínimo 3 imágenes', status: 'pending' },
+          : // Los mismos puntos que siembra `seed_warehouse_checklist`, para
+            // que el ejemplo no prometa nada que la visita no revise.
+            [
+              {
+                item: 'Acceso independiente',
+                hint: 'Se puede entrar sin pasar por espacios privados',
+                status: 'pending',
+              },
+              {
+                item: 'Superficie despejada',
+                hint: 'Piso libre, sin humedad ni filtraciones',
+                status: 'pending',
+              },
+              { item: 'Extintor vigente', hint: 'Con carga al día y a la vista', status: 'pending' },
+              { item: 'Cierre seguro', hint: 'Puerta con llave o candado propio', status: 'pending' },
+              {
+                item: 'Documento del espacio',
+                hint: 'Certificado de dominio o contrato de arriendo',
+                status: 'pending',
+              },
             ]
         ).map((c) => {
           const listo = c.status === 'ok';

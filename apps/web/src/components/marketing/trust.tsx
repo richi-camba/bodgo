@@ -1,5 +1,10 @@
 import { Icon, type IconName } from '@/components/ui/icon';
-import { formatCompactCLP, INSURANCE_COVERAGE_CLP, PLATFORM_COMMISSION_RATE } from '@bodgo/core';
+import {
+  formatCompactCLP,
+  INSURANCE_COVERAGE_CLP,
+  INSURANCE_POLICY_ACTIVE,
+  PLATFORM_COMMISSION_RATE,
+} from '@bodgo/core';
 
 /**
  * Razones para confiar, verificables.
@@ -14,11 +19,16 @@ const REASONS: { icon: IconName; title: string; body: string }[] = [
     title: 'Tu pago queda en custodia',
     body: 'Se cobra al contratar, pero al bodeguero recién se le paga cuando confirma que recibió tu mercadería. Si algo no llega como lo declaraste, el dinero sigue retenido.',
   },
-  {
-    icon: 'seguro',
-    title: `Seguro de contenido hasta ${formatCompactCLP(INSURANCE_COVERAGE_CLP)}`,
-    body: 'Toda microbodega publicada queda cubierta por el seguro de la red, que responde por robo e incendio. Sin costo adicional.',
-  },
+  // Sólo con la póliza firmada: ver INSURANCE_POLICY_ACTIVE.
+  ...(INSURANCE_POLICY_ACTIVE
+    ? [
+        {
+          icon: 'seguro' as IconName,
+          title: `Seguro de contenido hasta ${formatCompactCLP(INSURANCE_COVERAGE_CLP)}`,
+          body: 'Toda microbodega publicada queda cubierta por el seguro de la red, que responde por robo e incendio. Sin costo adicional.',
+        },
+      ]
+    : []),
   {
     icon: 'listo',
     title: 'Espacios verificados uno por uno',

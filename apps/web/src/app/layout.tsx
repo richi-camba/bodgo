@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   // intenciones de búsqueda: guardar stock, cuánto cuesta y arrendar un
   // espacio propio.
   description:
-    'Guarda tu stock en microbodegas urbanas cerca de tus clientes y despacha más rápido. Arriendo mensual por m², con comisión del 8% incluida, pago en custodia y seguro de contenido. ¿Tienes una bodega vacía? Arriéndala y genera ingresos.',
+    'Guarda tu stock en microbodegas urbanas cerca de tus clientes y despacha más rápido. Arriendo mensual por m², con comisión del 8% incluida, pago en custodia y recepción verificada. ¿Tienes una bodega vacía? Arriéndala y genera ingresos.',
   openGraph: {
     type: 'website',
     locale: 'es_CL',

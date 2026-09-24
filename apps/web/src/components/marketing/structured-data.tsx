@@ -1,4 +1,3 @@
-import { INSURANCE_COVERAGE_CLP } from '@bodgo/core';
 import type { Pregunta } from './faq-content';
 
 const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bodgo.vercel.app';
@@ -24,7 +23,8 @@ export function OrganizationSchema() {
       name: 'Arriendo de microbodegas urbanas',
       provider: { '@type': 'Organization', name: 'BodGo' },
       areaServed: { '@type': 'City', name: 'Santiago', addressCountry: 'CL' },
-      description: `Arriendo mensual de microbodegas de 8 a 15 m² con pago en custodia y seguro de contenido hasta ${INSURANCE_COVERAGE_CLP} pesos.`,
+      description:
+        'Arriendo mensual de microbodegas urbanas con pago en custodia y recepción contada y fotografiada contra el manifiesto.',
     },
   ];
 

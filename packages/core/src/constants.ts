@@ -8,8 +8,25 @@
 /** Comisión que BodGo suma al arriendo que paga la PyME. */
 export const PLATFORM_COMMISSION_RATE = 0.08;
 
-/** Comisión que BodGo retiene del pago al bodeguero. */
-export const HOST_COMMISSION_RATE = 0.15;
+/**
+ * Comisión que BodGo retiene del pago al bodeguero.
+ *
+ * Bajó de 15% a 10% en la revisión comercial de sep-2026. El mismo número
+ * vive en `host_commission_rate()` en Postgres: si cambia acá, cambia allá.
+ */
+export const HOST_COMMISSION_RATE = 0.10;
+
+/** Lo que gana el bodeguero por cada pedido que prepara, en CLP. */
+export const PICKING_FEE_CLP = 400;
+
+/**
+ * Retención de impuesto sobre la boleta de honorarios del bodeguero.
+ * Es la tasa legal chilena vigente para 2026.
+ */
+export const PICKING_TAX_WITHHOLDING = 0.1525;
+
+/** Lo que se le cobra a la PyME por cada despacho, neto de IVA. */
+export const DISPATCH_FEE_CLP = 3_500;
 
 /**
  * Altura libre típica de una microbodega, en metros.
@@ -32,6 +49,17 @@ export const CLAIM_WINDOW_HOURS = 48;
 
 /** Cobertura del seguro de la red, por PyME, en CLP. */
 export const INSURANCE_COVERAGE_CLP = 2_000_000;
+
+/**
+ * Si la póliza está contratada de verdad.
+ *
+ * En falso, la cobertura no se menciona en ninguna parte del sitio. Prometer
+ * un seguro que todavía no existe es de las pocas cosas que no se arreglan
+ * con una corrección después: quien contrató confiando en eso ya guardó su
+ * mercadería. Se enciende el día que la póliza esté firmada, y ese día el
+ * número de arriba tiene que coincidir con la que se firmó.
+ */
+export const INSURANCE_POLICY_ACTIVE = false;
 
 /** Máximos de la carga masiva de inventario por CSV. */
 export const CSV_MAX_ROWS = 500;

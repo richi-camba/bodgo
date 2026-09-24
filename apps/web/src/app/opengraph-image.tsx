@@ -82,7 +82,7 @@ export default function OpenGraphImage() {
         <div style={{ display: 'flex', gap: 56 }}>
           {[
             ['Pago en custodia', 'hasta confirmar la recepción'],
-            ['Seguro incluido', 'robo e incendio'],
+            ['Recepción verificada', 'contada y con foto'],
             ['Sin bodega propia', 'pagas por m² y por mes'],
           ].map(([title, detail]) => (
             <div key={title} style={{ display: 'flex', flexDirection: 'column' }}>

@@ -14,10 +14,14 @@ import { Trust } from '@/components/marketing/trust';
 import { createClient } from '@/lib/supabase/server';
 import {
   calculateHostPayout,
+  DISPATCH_FEE_CLP,
   formatCLP,
   formatNumber,
   HOST_COMMISSION_RATE,
   INSURANCE_COVERAGE_CLP,
+  INSURANCE_POLICY_ACTIVE,
+  PICKING_FEE_CLP,
+  PICKING_TAX_WITHHOLDING,
   PLATFORM_COMMISSION_RATE,
   quoteContract,
   usableCapacityM3,
@@ -104,18 +108,31 @@ const PASOS = [
   },
 ];
 
-/** Qué incluye el precio y qué no. Sin letra chica escondida. */
-const INCLUIDO: { icon: IconName; label: string }[] = [
+/**
+ * Qué incluye el precio y qué no. Sin letra chica escondida.
+ *
+ * La línea del seguro sólo aparece si la póliza está contratada: ver
+ * INSURANCE_POLICY_ACTIVE.
+ */
+const INCLUIDO_ARRIENDO: { icon: IconName; label: string }[] = [
   { icon: 'pagos', label: 'Pago en custodia hasta confirmar la recepción' },
-  { icon: 'seguro', label: 'Seguro de contenido por robo e incendio' },
   { icon: 'recepciones', label: 'Recepción contada y fotografiada contra tu manifiesto' },
   { icon: 'inventario', label: 'Inventario multibodega en tiempo real' },
+  ...(INSURANCE_POLICY_ACTIVE
+    ? [{ icon: 'seguro' as IconName, label: 'Seguro de contenido por robo e incendio' }]
+    : []),
+];
+
+const INCLUIDO_DESPACHO: { icon: IconName; label: string }[] = [
   { icon: 'pedidos', label: 'Picking y packing del bodeguero' },
-  { icon: 'envios', label: 'Seguimiento del pedido para tu comprador' },
+  {
+    icon: 'envios',
+    label:
+      'Entrega a tu comprador por courier, con seguimiento en tiempo real y prueba de entrega',
+  },
 ];
 
 const NO_INCLUIDO = [
-  'El despacho al comprador final: lo cobras tú y lo paga el courier que elijas.',
   'El traslado de tu mercadería hasta la bodega.',
   'Embalaje y etiquetas.',
 ];
@@ -150,19 +167,19 @@ const PASOS_BODEGUERO: { icon: IconName; t: string; d: string }[] = [
 ];
 
 const REQUISITOS = [
-  'Entre 8 y 15 m² libres: una bodega, una pieza, un local o parte de una.',
-  'Acceso independiente, sin pasar por espacios privados de tu casa.',
-  'Piso despejado y seco, sin humedad ni filtraciones.',
-  'Puerta con cierre seguro, con llave o candado propio.',
-  'Extintor con carga al día.',
-  'Certificado de dominio o contrato de arriendo del espacio.',
+  'Un espacio libre que podamos dividir en módulos desde 1 m³, con acceso independiente de tu casa.',
+  'Piso seco, puerta con llave o candado y extintor vigente.',
+  'Certificado de dominio, o autorización del dueño si arriendas.',
+  'Un celular con cámara, tu cédula y una cuenta bancaria a tu nombre.',
 ];
 
 const NO_HACES = [
   'No pones plata: no hay costo de inscripción ni de instalación.',
   'No buscas clientes: las PyMEs llegan por el buscador.',
   'No cobras tú: BodGo te deposita a fin de mes.',
-  'No respondes por robo o incendio: para eso está el seguro de la red.',
+  ...(INSURANCE_POLICY_ACTIVE
+    ? ['No respondes por robo o incendio: para eso está el seguro de la red.']
+    : []),
 ];
 
 export default async function HomePage() {
@@ -500,9 +517,13 @@ export default async function HomePage() {
           <div>
             <p className="text-eyebrow">Qué necesitas</p>
             <h3 className="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-navy-900 md:text-[32px]">
-              Los requisitos son estos, y nada más
+              Qué necesitas para ser parte de BodGo
             </h3>
-            <ul className="mt-8 space-y-3.5">
+            <p className="mt-4 text-[14.5px] leading-relaxed text-ink-500">
+              Un espacio que hoy no usas puede acercar el stock de una PyME a sus clientes. Para
+              sumarlo a la red necesitas:
+            </p>
+            <ul className="mt-6 space-y-3.5">
               {REQUISITOS.map((r) => (
                 <li key={r} className="flex gap-3">
                   <span className="mt-0.5 shrink-0 text-success-700">
@@ -512,6 +533,10 @@ export default async function HomePage() {
                 </li>
               ))}
             </ul>
+            <p className="mt-6 text-[14.5px] leading-relaxed text-ink-500">
+              No necesitas estanterías ni equipamiento. Un evaluador de BodGo revisa todo en una
+              visita.
+            </p>
           </div>
 
           <div>
@@ -530,13 +555,15 @@ export default async function HomePage() {
               ))}
             </ul>
 
-            <p className="mt-8 rounded-card border border-line-200 bg-white p-5 text-[13.5px] leading-relaxed text-ink-700">
-              El seguro de la red responde por robo e incendio hasta{' '}
-              <strong className="font-bold text-navy-900">
-                {formatCLP(INSURANCE_COVERAGE_CLP)}
-              </strong>{' '}
-              por PyME. Tú guardas la mercadería; no la respaldas con tu patrimonio.
-            </p>
+            {INSURANCE_POLICY_ACTIVE ? (
+              <p className="mt-8 rounded-card border border-line-200 bg-white p-5 text-[13.5px] leading-relaxed text-ink-700">
+                El seguro de la red responde por robo e incendio hasta{' '}
+                <strong className="font-bold text-navy-900">
+                  {formatCLP(INSURANCE_COVERAGE_CLP)}
+                </strong>{' '}
+                por PyME. Tú guardas la mercadería; no la respaldas con tu patrimonio.
+              </p>
+            ) : null}
           </div>
         </div>
       </section>
@@ -549,22 +576,21 @@ export default async function HomePage() {
             Cuánto se queda BodGo
           </h3>
           <p className="mt-5 text-[15.5px] leading-relaxed text-ink-700">
-            El {Math.round(HOST_COMMISSION_RATE * 100)}% del arriendo. Eso cubre traerte las PyMEs,
-            cobrarles, mantener el dinero en custodia hasta que confirmes la recepción, el seguro
-            de la red y la aplicación con la que llevas todo desde el teléfono.
+            El {Math.round(HOST_COMMISSION_RATE * 100)}% del arriendo. Con eso te traemos las
+            PyMEs, les cobramos, guardamos el pago en custodia, hacemos tus boletas ante el SII y
+            te damos la app.
           </p>
           <p className="mt-4 text-[15.5px] leading-relaxed text-ink-700">
-            No hay costo de inscripción, ni mensualidad, ni comisión por pedido preparado. Si un
-            mes tu espacio está vacío, no pagas nada.
+            Por cada pedido que preparas ganas {formatCLP(PICKING_FEE_CLP)}, sin comisión (con
+            retención de {formatNumber(PICKING_TAX_WITHHOLDING * 100, 2)}% de impuesto). Sin
+            inscripción ni mensualidad: si tu espacio está vacío, no pagas nada.
           </p>
 
           <div className="mt-8 rounded-card bg-surface-50 p-6">
             <p className="text-[13.5px] leading-relaxed text-ink-700">
-              <strong className="font-bold text-navy-900">Sobre el pago:</strong> a la PyME se le
-              cobra por adelantado, pero ese dinero queda retenido —no es tuyo todavía— hasta que
-              confirmas que recibiste su mercadería y que coincide con lo declarado. Es la misma
-              garantía para los dos lados: ella sabe que no paga por un espacio que no existe, y tú
-              sabes que el mes ya está pagado antes de guardar nada.
+              <strong className="font-bold text-navy-900">Sobre el pago:</strong> la PyME paga por
+              adelantado y el dinero queda en custodia hasta que confirmas la recepción. El quinto
+              día hábil de cada mes recibes los días ocupados el mes anterior.
             </p>
           </div>
         </div>
@@ -593,7 +619,8 @@ export default async function HomePage() {
           </div>
 
           <p className="mt-6 text-center text-[13px] text-ink-400">
-            Incluye pago en custodia y seguro de contenido. Sin costo de instalación.
+            Incluye pago en custodia{INSURANCE_POLICY_ACTIVE ? ' y seguro de contenido' : ''}. Sin
+            costo de instalación.
           </p>
           <p className="mt-[22px] text-center">
             <Link
@@ -673,16 +700,21 @@ export default async function HomePage() {
               Todo esto va en el precio
             </h3>
 
-            <ul className="mt-8 space-y-4">
-              {INCLUIDO.map((item) => (
-                <li key={item.label} className="flex gap-3.5">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field bg-success-50 text-success-700">
-                    <Icon name={item.icon} size={16} />
-                  </span>
-                  <span className="pt-1 text-[14.5px] leading-relaxed text-ink-700">
-                    {item.label}
-                  </span>
-                </li>
+            <p className="mt-8 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-500">
+              En el arriendo mensual
+            </p>
+            <ul className="mt-4 space-y-4">
+              {INCLUIDO_ARRIENDO.map((item) => (
+                <ItemIncluido key={item.label} icon={item.icon} label={item.label} />
+              ))}
+            </ul>
+
+            <p className="mt-8 text-[12px] font-bold uppercase tracking-[0.08em] text-ink-500">
+              En cada despacho ({formatCLP(DISPATCH_FEE_CLP)} + IVA)
+            </p>
+            <ul className="mt-4 space-y-4">
+              {INCLUIDO_DESPACHO.map((item) => (
+                <ItemIncluido key={item.label} icon={item.icon} label={item.label} />
               ))}
             </ul>
           </div>
@@ -704,17 +736,19 @@ export default async function HomePage() {
               ))}
             </ul>
 
-            <p className="mt-8 rounded-card border border-line-200 bg-white p-5 text-[13.5px] leading-relaxed text-ink-700">
-              El seguro de la red cubre robo e incendio hasta{' '}
-              <strong className="font-bold text-navy-900">
-                {formatCLP(INSURANCE_COVERAGE_CLP)}
-              </strong>{' '}
-              por PyME, sin costo adicional. Las exclusiones están en los{' '}
-              <Link href="/terminos" className="font-bold text-brand-600 hover:underline">
-                términos
-              </Link>
-              .
-            </p>
+            {INSURANCE_POLICY_ACTIVE ? (
+              <p className="mt-8 rounded-card border border-line-200 bg-white p-5 text-[13.5px] leading-relaxed text-ink-700">
+                El seguro de la red cubre robo e incendio hasta{' '}
+                <strong className="font-bold text-navy-900">
+                  {formatCLP(INSURANCE_COVERAGE_CLP)}
+                </strong>{' '}
+                por PyME, sin costo adicional. Las exclusiones están en los{' '}
+                <Link href="/terminos" className="font-bold text-brand-600 hover:underline">
+                  términos
+                </Link>
+                .
+              </p>
+            ) : null}
           </div>
         </div>
       </section>
@@ -846,6 +880,17 @@ export default async function HomePage() {
         </Link>
       </section>
     </>
+  );
+}
+
+function ItemIncluido({ icon, label }: { icon: IconName; label: string }) {
+  return (
+    <li className="flex gap-3.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field bg-success-50 text-success-700">
+        <Icon name={icon} size={16} />
+      </span>
+      <span className="pt-1 text-[14.5px] leading-relaxed text-ink-700">{label}</span>
+    </li>
   );
 }
 

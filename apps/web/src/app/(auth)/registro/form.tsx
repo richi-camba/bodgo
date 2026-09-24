@@ -68,12 +68,28 @@ export function SignUpForm({ role }: { role: 'pyme' | 'bodeguero' }) {
           required
           className="mt-0.5 h-4 w-4 shrink-0 accent-navy-800"
         />
+        {/* En pestaña nueva a propósito: leer los términos no puede costar
+            el formulario a medio llenar. */}
         <span>
           Acepto los{' '}
-          <a href="/terminos" className="font-bold text-brand-600 hover:underline">
+          <a
+            href="/terminos"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-brand-600 hover:underline"
+          >
             Términos
           </a>{' '}
-          y la Política de Privacidad (Ley 19.628).
+          y la{' '}
+          <a
+            href="/privacidad"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-brand-600 hover:underline"
+          >
+            Política de Privacidad
+          </a>{' '}
+          (Ley 19.628).
         </span>
         </label>
 

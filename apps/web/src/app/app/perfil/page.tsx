@@ -5,7 +5,13 @@ import { SignOutButton } from '@/components/app/sign-out-button';
 import { DataRow, LinkRow, RowCard, SectionLabel } from '@/components/app/rows';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/session';
-import { CLAIM_WINDOW_HOURS, formatCompactCLP, INSURANCE_COVERAGE_CLP, LABELS } from '@bodgo/core';
+import {
+  CLAIM_WINDOW_HOURS,
+  formatCompactCLP,
+  INSURANCE_COVERAGE_CLP,
+  INSURANCE_POLICY_ACTIVE,
+  LABELS,
+} from '@bodgo/core';
 
 export const metadata: Metadata = { title: 'Mi perfil' };
 
@@ -118,16 +124,21 @@ export default async function ProfilePage() {
       </RowCard>
 
       {/* ------------------------------------------------------- cobertura */}
-      <SectionLabel>Cobertura y reclamos</SectionLabel>
+      <SectionLabel>{INSURANCE_POLICY_ACTIVE ? 'Cobertura y reclamos' : 'Reclamos'}</SectionLabel>
       <div className="rounded-[16px] border border-line-100 bg-white p-4">
         <p className="text-[12.5px] leading-relaxed text-ink-700">
-          Tu mercadería está cubierta por el seguro de la red hasta{' '}
-          <strong className="font-extrabold text-navy-900">
-            {formatCompactCLP(INSURANCE_COVERAGE_CLP)}
-          </strong>{' '}
-          por robo e incendio. Si algo llegó dañado o falta stock, abre un reclamo dentro de las{' '}
-          {CLAIM_WINDOW_HOURS} horas siguientes a la recepción: el pago en custodia queda retenido
-          mientras lo revisamos.
+          {INSURANCE_POLICY_ACTIVE ? (
+            <>
+              Tu mercadería está cubierta por el seguro de la red hasta{' '}
+              <strong className="font-extrabold text-navy-900">
+                {formatCompactCLP(INSURANCE_COVERAGE_CLP)}
+              </strong>{' '}
+              por robo e incendio.{' '}
+            </>
+          ) : null}
+          Si algo llegó dañado o falta stock, abre un reclamo dentro de las {CLAIM_WINDOW_HOURS}{' '}
+          horas siguientes a la recepción: el pago en custodia queda retenido mientras lo
+          revisamos.
         </p>
       </div>
 

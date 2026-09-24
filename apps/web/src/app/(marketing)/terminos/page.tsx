@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Bullets, Clause, LegalPage } from '@/components/marketing/legal';
+import { INSURANCE_POLICY_ACTIVE } from '@bodgo/core';
 
 export const metadata: Metadata = {
   title: 'Términos y condiciones',
@@ -107,12 +108,22 @@ export default function TermsPage() {
       </Clause>
 
       <Clause title="8. Seguro y límites de responsabilidad">
-        <p>
-          La mercadería almacenada en espacios publicados está cubierta por el seguro de la red por
-          robo e incendio, hasta 2 millones de pesos por PyME. La cobertura no alcanza a los bienes
-          del punto 7, ni a daños por embalaje inadecuado, vicio propio del producto o caso
-          fortuito ajeno a esas causas.
-        </p>
+        {INSURANCE_POLICY_ACTIVE ? (
+          <p>
+            La mercadería almacenada en espacios publicados está cubierta por el seguro de la red
+            por robo e incendio, hasta 2 millones de pesos por PyME. La cobertura no alcanza a los
+            bienes del punto 7, ni a daños por embalaje inadecuado, vicio propio del producto o
+            caso fortuito ajeno a esas causas.
+          </p>
+        ) : (
+          <p>
+            BodGo no tiene contratada una póliza de seguro sobre la mercadería almacenada. El
+            resguardo que ofrece la plataforma es operativo: la recepción se cuenta contra el
+            manifiesto y se fotografía, el pago queda en custodia hasta que calce, y cada espacio
+            pasa por una visita de habilitación antes de publicarse. Si quieres cobertura sobre tu
+            mercadería, tienes que contratarla por tu cuenta.
+          </p>
+        )}
         <p>
           Fuera de esa cobertura, la responsabilidad de BodGo frente a cualquier reclamo se limita
           al total de comisiones que hayas pagado en los últimos 3 meses. No respondemos por lucro
