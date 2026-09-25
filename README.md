@@ -2,11 +2,12 @@
 
 Red de microbodegas urbanas para el e-commerce de las PyMEs chilenas.
 
-**En vivo:** https://bodgo.vercel.app
+**En vivo:** https://bodgo.cl
 
 Una PyME que vende online no puede arrendar una bodega completa ni tener su stock
-lejos de sus clientes. BodGo conecta esa PyME con vecinos que tienen un espacio de
-8 a 15 m² desocupado: la PyME arrienda los metros que necesita cerca de su demanda,
+lejos de sus clientes. BodGo conecta esa PyME con vecinos que tienen un espacio
+desocupado que se pueda dividir en módulos: la PyME arrienda los metros que
+necesita cerca de su demanda,
 manda su mercadería con un manifiesto, y el bodeguero recibe, cuenta, guarda y
 prepara los pedidos.
 
@@ -22,7 +23,7 @@ cliente:
 
 **1. Pago en custodia.** A la PyME se le cobra por adelantado al contratar y el
 monto queda retenido (`payments.status = 'held'`). Al bodeguero se le paga a fin
-de mes, neto del 15% de comisión. La custodia se libera recién cuando el
+de mes, neto del 10% de comisión. La custodia se libera recién cuando el
 bodeguero confirma que recibió lo que se declaró. Si el contrato se corta antes,
 se prorratea sobre 30 días: el bodeguero cobra los días usados y el resto vuelve
 a la PyME.
@@ -108,11 +109,15 @@ comparten la contraseña de `BODGO_DEMO_PASSWORD`:
 
 | Rol | Cuenta | Qué se ve al entrar |
 |---|---|---|
-| PyME | `valentina@boutiquelua.cl` | Contrato en Providencia, 5 pedidos en distintos estados, un envío en camino |
+| PyME | `valentina@boutiquelua.cl` | Dos contratos (Providencia y Las Condes), envíos y pedidos en distintos estados — la cuenta más completa |
 | PyME | `diego@casanorte.cl` | Un envío recibido **con discrepancia** — el caso interesante |
-| Bodeguero | `marcela.rios@gmail.com` | Dos espacios, una recepción por verificar, 4 pedidos por preparar |
-| Bodeguero | `rodrigo.pena@gmail.com` | Las Condes y Vitacura, sin operación todavía |
+| Bodeguero | `marcela.rios@gmail.com` | Dos espacios, recepciones por verificar, pedidos por preparar |
+| Bodeguero | `rodrigo.pena@gmail.com` | Vitacura y Las Condes, con un contrato ya recibido |
 | Admin | `admin@bodgo.cl` | La red completa, la discrepancia abierta y los contactos de la web |
+
+El seed es idempotente pero no borra: si alguien contrata o despacha desde la
+app, ese movimiento queda y la tabla de arriba cambia. Para ver el estado real
+en cualquier momento, mira la base, no esta tabla.
 
 También existen `carolina.soto@`, `ignacio.vera@`, `paula.mendez@` y
 `tomas.reyes@gmail.com`: bodegueros con un espacio publicado cada uno, para
@@ -175,7 +180,45 @@ usuarios reales tienen que pasar por revisión legal en Chile: la Ley 19.628
 tratamiento de datos, y el registro hace que el usuario acepte los Términos al
 crear su cuenta.
 
+Ojo con la cláusula 8: mientras `INSURANCE_POLICY_ACTIVE` esté en `false`,
+los términos **afirman** que no hay póliza contratada sobre la mercadería. Es
+una declaración legal igual que la anterior y también tiene que pasar por
+revisión — decir de más y decir de menos se pagan distinto, pero los dos se
+pagan.
+
 ## Lo que falta
+
+- **El modelo comercial de sep-2026 está escrito, no implementado.** La
+  revisión del cliente («TMA Revision.docx») cambió tres cosas que hoy la
+  portada promete y el software no hace. Es lo primero que hay que resolver:
+
+  - *La entrega al comprador va incluida en $3.500 + IVA por despacho.* La app
+    hace otra cosa: le cobra el envío al comprador por zona
+    (`quoteDeliveryToComuna`), y después la PyME registra con qué courier salió
+    y cuánto costó de verdad; la diferencia es su margen. Hay que decidir cuál
+    de los dos modelos vale y alinear `orders`, el formulario de pedido y el
+    seguimiento.
+  - *El bodeguero gana $400 por pedido preparado* (`PICKING_FEE_CLP`, con
+    `PICKING_TAX_WITHHOLDING`). No se calcula en ninguna parte: la liquidación
+    es sólo arriendo menos comisión.
+  - *«Módulos desde 1 m³».* El buscador, los precios, los contratos y la
+    capacidad están todos en m², con los m³ derivados apilando a 1,8 m. Si la
+    unidad comercial pasa de verdad a módulos de m³, toca buscador, precios y
+    contratos.
+
+  Lo que sí se aplicó completo: la comisión del bodeguero bajó a 10% en los dos
+  lugares donde vive —`HOST_COMMISSION_RATE` y `host_commission_rate()` en
+  Postgres— y las liquidaciones ya emitidas quedaron como estaban.
+
+- **El seguro no existe todavía.** `INSURANCE_POLICY_ACTIVE` está en `false` y
+  de él cuelgan las once menciones que había de la cobertura: portada, banda de
+  confianza, perfil de la PyME, ayuda, preguntas frecuentes, metadatos, imagen
+  para compartir y la cláusula 8 de los términos. En falso, la pregunta «¿está
+  asegurada mi mercadería?» contesta que no, y la cláusula 8 dice que no hay
+  póliza. Se enciende el día que esté firmada, y ese día `INSURANCE_COVERAGE_CLP`
+  tiene que coincidir con la que se firmó. **No publicar la cobertura antes**:
+  quien guarda su stock creyendo que hay seguro se entera el día que le pasa
+  algo, y ese día ya no se arregla.
 
 - **Registro público bloqueado por la cuota de correo.** Supabase confirma el
   correo con su proveedor por defecto y la cuota es baja: al superarla, el
@@ -265,13 +308,15 @@ crear su cuenta.
 - **Lo público sale por vistas y funciones, no por políticas laxas.** El
   buscador de bodegas, los perfiles y el seguimiento del comprador son
   proyecciones deliberadas que listan sus columnas una a una.
-- **Cada tema vive en una sola página.** `/precios` y `/para-bodegueros`
-  cuentan lo suyo completo; la portada los resume en una tarjeta con la cifra
-  real de la red y manda para allá. Contar todo dos veces alarga la portada,
-  compite consigo mismo en el buscador y obliga a actualizar dos lugares
-  cuando cambia un precio. Las preguntas frecuentes están repartidas por
-  audiencia con el mismo criterio: cada página abre con la que le importa a
-  quien la está leyendo.
+- **La portada es una sola página que se recorre**, como el prototipo. Hubo
+  un tiempo con `/precios` y `/para-bodegueros` aparte, y terminó repitiendo
+  la calculadora y la banda de bodegueros: dos versiones del mismo texto que
+  había que mantener sincronizadas. Las dos URLs siguen existiendo como
+  redirección 308 a su sección (`#precios`, `#bodegueros`) porque estaban
+  indexadas y enlazadas desde fuera. El salto al ancla lo rehace
+  `ScrollToHash` con la página ya cargada: el salto nativo del navegador
+  ocurre antes de que las fotos reserven su alto y aterriza dos mil píxeles
+  más arriba.
 - **Lo que no se puede apagar, no se ofrece apagar.** Las preferencias de
   aviso dejan fuera los de pago y recepción: son plata retenida y mercadería
   que llegó. Mostrar el interruptor y mandar el aviso igual sería peor que no
@@ -279,7 +324,8 @@ crear su cuenta.
 - **Sin testimonios inventados.** El prototipo tenía un carrusel de citas de
   PyMEs. Con cero clientes reales, publicarlas en un sitio en línea sería
   fabricar prueba social: en su lugar la portada muestra respaldos
-  comprobables — la custodia, el seguro, la verificación de espacios.
+  comprobables — la custodia, la recepción contada y fotografiada, la
+  verificación de espacios.
 - **La fotografía es la del prototipo**, en `public/fotos/`. Venía en PNG
   (4,5 MB); convertida a JPEG queda en 413 KB y `next/image` la sirve en WebP
   con srcset. El logo de Corfo va en sus colores sobre fondo blanco: la marca
