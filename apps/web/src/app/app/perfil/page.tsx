@@ -71,6 +71,10 @@ export default async function ProfilePage() {
       </RowCard>
 
       {/* ------------------------------------------------------ medio pago */}
+      {/* Sólo se muestra la tarjeta ya registrada. Agregarla o cambiarla lo
+          hace el proveedor de pagos, que todavía no está contratado: un
+          formulario propio pidiendo el número sería pedir datos que no
+          podemos procesar. */}
       <SectionLabel>Método de pago</SectionLabel>
       <div className="rounded-[16px] border border-line-100 bg-white p-4">
         {principal ? (
@@ -99,14 +103,6 @@ export default async function ProfilePage() {
           <p className="text-[13px] text-ink-500">No tienes tarjetas guardadas.</p>
         )}
 
-        {/* El prototipo permite agregar tarjeta acá. La captura de datos de
-            tarjeta la hace el proveedor de pagos, que todavía no está
-            contratado: un formulario propio pidiendo el número sería pedir
-            datos que no podemos procesar. */}
-        <p className="mt-3 border-t border-line-100 pt-3 text-[12px] leading-relaxed text-ink-500">
-          Agregar o cambiar la tarjeta se habilita cuando esté el convenio con el proveedor de
-          pagos. BodGo nunca guarda el número completo, sólo la marca y los últimos cuatro dígitos.
-        </p>
       </div>
 
       {/* ---------------------------------------------------- preferencias */}
